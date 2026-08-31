@@ -735,3 +735,38 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
     </div>
   );
 }
+
+function PromoLinkCell({ profile, onSaved }: { profile: ProfileRow; onSaved: () => void }) {
+  const [link, setLink] = useState(profile.promo_link ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ promo_link: link.trim().slice(0, 500) })
+      .eq("id", profile.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Link de divulgação salvo!");
+    onSaved();
+  };
+
+  return (
+    <div className="flex min-w-[240px] items-center gap-2">
+      <Input
+        value={link}
+        onChange={(e) => setLink(e.target.value)}
+        placeholder="https://..."
+        className="h-9 text-xs"
+        maxLength={500}
+      />
+      <Button size="sm" variant="secondary" onClick={save} disabled={saving}>
+        Salvar
+      </Button>
+    </div>
+  );
+}
