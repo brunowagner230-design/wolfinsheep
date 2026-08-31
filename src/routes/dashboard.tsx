@@ -92,6 +92,8 @@ function DashboardPage() {
     { cpa: 0, clicks: 0, regs: 0, revenue: 0 },
   );
 
+  const betano = filtered.map((d) => houseLogo(d.betting_houses?.name)).find(Boolean) ?? null;
+
   const cards = [
     { label: "CPAs elegíveis", value: totals.cpa.toString(), icon: Handshake },
     { label: "Cliques", value: totals.clicks.toLocaleString("pt-BR"), icon: MousePointerClick },
