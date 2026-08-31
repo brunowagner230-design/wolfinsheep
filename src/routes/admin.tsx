@@ -140,6 +140,24 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["houses"] });
   };
 
+  const q = search.trim().toLowerCase();
+  const filteredProfiles = q
+    ? profiles.filter(
+        (p) =>
+          p.email.toLowerCase().includes(q) ||
+          p.full_name.toLowerCase().includes(q) ||
+          p.referral_code.toLowerCase().includes(q),
+      )
+    : profiles;
+  const filteredDeals = q
+    ? deals.filter(
+        (d) =>
+          (d.profiles?.email ?? "").toLowerCase().includes(q) ||
+          (d.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+          (d.betting_houses?.name ?? "").toLowerCase().includes(q),
+      )
+    : deals;
+
   if (!loading && !isAdmin) {
     return (
       <AppShell title="Administração">
