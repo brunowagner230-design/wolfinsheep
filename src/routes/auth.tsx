@@ -103,7 +103,7 @@ function AuthPage() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden flex-col justify-between border-r border-border p-12 lg:flex glow-panel">
-        <Wordmark className="text-lg" />
+        <Wordmark className="h-9" />
         <div>
           <h2 className="max-w-sm text-4xl font-bold leading-tight">
             O painel de CPA para quem caça acordos de verdade.
@@ -119,7 +119,7 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <Wordmark className="text-sm" />
+            <Wordmark className="h-7" />
           </div>
           {ref && (
             <p className="mb-4 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-foreground">
