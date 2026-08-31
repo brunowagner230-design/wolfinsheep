@@ -1,6 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Handshake, MousePointerClick, UserPlus, Wallet, Network } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,7 +66,22 @@ function DashboardPage() {
   });
 
 
-  const totals = deals.reduce(
+  const [houseId, setHouseId] = useState("todas");
+
+  const houses = useMemo(() => {
+    const map = new Map<string, string>();
+    deals.forEach((d) => {
+      if (d.house_id) map.set(d.house_id, d.betting_houses?.name ?? "Casa");
+    });
+    return [...map].map(([id, name]) => ({ id, name }));
+  }, [deals]);
+
+  const filtered = useMemo(
+    () => (houseId === "todas" ? deals : deals.filter((d) => d.house_id === houseId)),
+    [deals, houseId],
+  );
+
+  const totals = filtered.reduce(
     (acc, d) => ({
       cpa: acc.cpa + d.eligible_cpa,
       clicks: acc.clicks + d.clicks,
@@ -77,7 +100,24 @@ function DashboardPage() {
 
   return (
     <AppShell title="Painel" subtitle="Resumo dos seus acordos de CPA nas casas de aposta.">
-
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Casa de aposta
+        </span>
+        <Select value={houseId} onValueChange={setHouseId}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Todas as casas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas as casas</SelectItem>
+            {houses.map((h) => (
+              <SelectItem key={h.id} value={h.id}>
+                {h.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
@@ -101,12 +141,12 @@ function DashboardPage() {
             <CardTitle className="text-base">Seus acordos ativos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {deals.length === 0 && (
+            {filtered.length === 0 && (
               <p className="text-sm text-muted-foreground">
                 Nenhum acordo lançado ainda. A administração publica os acordos das casas aqui.
               </p>
             )}
-            {deals.slice(0, 5).map((d) => (
+            {filtered.slice(0, 5).map((d) => (
               <div
                 key={d.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
