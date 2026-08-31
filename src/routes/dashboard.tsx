@@ -120,6 +120,18 @@ function DashboardPage() {
         </Select>
       </div>
 
+      {betano && (
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[oklch(0.78_0.17_150/0.35)] bg-[oklch(0.78_0.17_150/0.1)] px-5 py-4">
+          <img src={betano} alt="Logo Betano" className="size-12 object-contain" />
+          <div>
+            <p className="font-display text-lg font-bold">Parceiro Betano ativo</p>
+            <p className="text-xs text-muted-foreground">
+              Você possui acordo de CPA configurado na Betano.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
           <Card key={c.label} className="glow-panel border-border/60">
