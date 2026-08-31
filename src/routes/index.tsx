@@ -54,10 +54,17 @@ function Home() {
         </Button>
       </header>
 
-      <section className="mx-auto max-w-5xl px-6 pb-16 pt-14 lg:pt-24">
+      <section className="relative mx-auto max-w-5xl overflow-hidden px-6 pb-16 pt-14 lg:pt-24">
+        <img
+          src={markImg}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute -right-10 top-0 h-64 w-auto opacity-20 blur-[1px] lg:h-96"
+        />
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
           CPA · Casas de aposta
         </p>
+
         <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.05] lg:text-6xl">
           O painel onde os acordos de CPA das casas viram números claros.
         </h1>
