@@ -164,31 +164,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approved: boolean
           created_at: string
           email: string
           full_name: string
           id: string
           phone: string
+          promo_link: string
           referral_code: string
           referred_by: string | null
           updated_at: string
         }
         Insert: {
+          approved?: boolean
           created_at?: string
           email?: string
           full_name?: string
           id: string
           phone?: string
+          promo_link?: string
           referral_code?: string
           referred_by?: string | null
           updated_at?: string
         }
         Update: {
+          approved?: boolean
           created_at?: string
           email?: string
           full_name?: string
           id?: string
           phone?: string
+          promo_link?: string
           referral_code?: string
           referred_by?: string | null
           updated_at?: string
