@@ -66,6 +66,20 @@ function DashboardPage() {
     },
   });
 
+  const { data: promoLink = "" } = useQuery({
+    queryKey: ["promo-link", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("promo_link")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.promo_link ?? "";
+    },
+  });
+
 
   const [houseId, setHouseId] = useState("todas");
 
