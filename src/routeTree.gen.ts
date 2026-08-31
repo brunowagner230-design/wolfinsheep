@@ -10,33 +10,84 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AcordosRouteImport } from './routes/acordos'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as RedeRouteImport } from './routes/rede'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AcordosRoute = AcordosRouteImport.update({
+  id: '/acordos',
+  path: '/acordos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedeRoute = RedeRouteImport.update({
+  id: '/rede',
+  path: '/rede',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/acordos': typeof AcordosRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/rede': typeof RedeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/acordos': typeof AcordosRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/rede': typeof RedeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/acordos': typeof AcordosRoute
+  '/admin': typeof AdminRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/rede': typeof RedeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/acordos' | '/admin' | '/auth' | '/dashboard' | '/rede'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/acordos' | '/admin' | '/auth' | '/dashboard' | '/rede'
+  id:
+    '__root__' | '/' | '/acordos' | '/admin' | '/auth' | '/dashboard' | '/rede'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcordosRoute: typeof AcordosRoute
+  AdminRoute: typeof AdminRoute
+  AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
+  RedeRoute: typeof RedeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +99,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/acordos': {
+      id: '/acordos'
+      path: '/acordos'
+      fullPath: '/acordos'
+      preLoaderRoute: typeof AcordosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rede': {
+      id: '/rede'
+      path: '/rede'
+      fullPath: '/rede'
+      preLoaderRoute: typeof RedeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcordosRoute: AcordosRoute,
+  AdminRoute: AdminRoute,
+  AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
+  RedeRoute: RedeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

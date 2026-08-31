@@ -1,0 +1,308 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { brl, type HouseRow, type NetworkPlanRow, type ProfileRow } from "@/lib/panel";
+
+export const Route = createFileRoute("/rede")({
+  head: () => ({
+    meta: [
+      { title: "Minha rede de afiliados | Wolf in Sheep Affiliates" },
+      {
+        name: "description",
+        content:
+          "Compartilhe seu link de indicação, acompanhe os afiliados cadastrados por você e defina o plano de CPA de cada um.",
+      },
+      { property: "og:title", content: "Minha rede de afiliados | Wolf in Sheep Affiliates" },
+      {
+        property: "og:description",
+        content: "Link de indicação, sub-afiliados e planos de CPA da sua rede.",
+      },
+    ],
+  }),
+  component: NetworkPage,
+});
+
+function NetworkPage() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+
+  const { data: me } = useQuery({
+    queryKey: ["me", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as unknown as ProfileRow | null;
+    },
+  });
+
+  const { data: downlines = [] } = useQuery({
+    queryKey: ["downlines", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("referred_by", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ProfileRow[];
+    },
+  });
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ["network-plans", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("network_plans")
+        .select("*, betting_houses(name)")
+        .eq("upline_id", user!.id);
+      if (error) throw error;
+      return (data ?? []) as unknown as NetworkPlanRow[];
+    },
+  });
+
+  const { data: houses = [] } = useQuery({
+    queryKey: ["houses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("betting_houses").select("*").order("name");
+      if (error) throw error;
+      return (data ?? []) as unknown as HouseRow[];
+    },
+  });
+
+  const link =
+    typeof window !== "undefined" && me
+      ? `${window.location.origin}/auth?ref=${me.referral_code}`
+      : "";
+
+  return (
+    <AppShell
+      title="Minha rede"
+      subtitle="Indique afiliados com seu link e defina o plano de CPA de cada um."
+    >
+      <Card className="glow-panel">
+        <CardHeader>
+          <CardTitle className="text-base">Seu link de indicação</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-3">
+          <Input readOnly value={link} className="max-w-xl font-mono text-xs" />
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              await navigator.clipboard.writeText(link);
+              toast.success("Link copiado!");
+            }}
+          >
+            <Copy className="mr-2 size-4" /> Copiar
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Código: <strong>{me?.referral_code ?? "—"}</strong>
+          </span>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base">Afiliados indicados ({downlines.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {downlines.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Ninguém se cadastrou pelo seu link ainda.
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Afiliado</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Planos definidos</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {downlines.map((d) => {
+                    const own = plans.filter((p) => p.downline_id === d.id);
+                    return (
+                      <TableRow key={d.id}>
+                        <TableCell>
+                          <p className="font-medium">{d.full_name || "Sem nome"}</p>
+                          <p className="text-xs text-muted-foreground">{d.referral_code}</p>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <p>{d.email}</p>
+                          <p className="text-xs text-muted-foreground">{d.phone}</p>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {own.length === 0 ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : (
+                            own.map((p) => (
+                              <p key={p.id}>
+                                {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
+                                {brl(Number(p.cpa_amount))}
+                              </p>
+                            ))
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <PlanDialog
+                            downline={d}
+                            houses={houses}
+                            uplineId={user!.id}
+                            onSaved={() => qc.invalidateQueries({ queryKey: ["network-plans"] })}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </AppShell>
+  );
+}
+
+function PlanDialog({
+  downline,
+  houses,
+  uplineId,
+  onSaved,
+}: {
+  downline: ProfileRow;
+  houses: HouseRow[];
+  uplineId: string;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [houseId, setHouseId] = useState<string>("");
+  const [planName, setPlanName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [baseline, setBaseline] = useState("");
+
+  const save = async () => {
+    if (!planName.trim()) return toast.error("Informe o nome do plano");
+    const { error } = await supabase.from("network_plans").upsert(
+      {
+        upline_id: uplineId,
+        downline_id: downline.id,
+        house_id: houseId || null,
+        plan_name: planName.trim().slice(0, 120),
+        cpa_amount: Number(amount) || 0,
+        baseline: baseline.trim().slice(0, 200),
+      },
+      { onConflict: "upline_id,downline_id,house_id" },
+    );
+    if (error) return toast.error(error.message);
+    toast.success("Plano de CPA definido!");
+    setOpen(false);
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="secondary">
+          Definir CPA
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Plano de CPA · {downline.full_name || downline.email}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Casa de aposta</Label>
+            <Select value={houseId} onValueChange={setHouseId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a casa" />
+              </SelectTrigger>
+              <SelectContent>
+                {houses.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="plan-name">Nome do plano</Label>
+            <Input
+              id="plan-name"
+              value={planName}
+              onChange={(e) => setPlanName(e.target.value)}
+              maxLength={120}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="plan-amount">Valor do CPA (R$)</Label>
+            <Input
+              id="plan-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="plan-baseline">Baseline</Label>
+            <Input
+              id="plan-baseline"
+              value={baseline}
+              onChange={(e) => setBaseline(e.target.value)}
+              placeholder="Ex.: depósito de R$ 30 + 1 aposta"
+              maxLength={200}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={save}>Salvar plano</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
