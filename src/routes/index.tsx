@@ -49,8 +49,7 @@ function Home() {
     <div className="min-h-screen">
       <header className="flex items-center justify-between px-6 py-5 lg:px-12">
         <div className="flex items-center gap-3">
-          <WolfMark className="h-10" />
-          <Wordmark className="h-6 sm:h-8" />
+          <Wordmark className="h-8 sm:h-10" />
         </div>
         <Button asChild variant="secondary" size="sm">
           <Link to="/auth">Entrar</Link>
