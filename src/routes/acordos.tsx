@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type DealRow } from "@/lib/panel";
+import { HouseBadge } from "@/components/HouseBadge";
 
 export const Route = createFileRoute("/acordos")({
   head: () => ({
@@ -82,7 +83,7 @@ function DealsPage() {
                   {deals.map((d) => (
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">
-                        {d.betting_houses?.name ?? "—"}
+                        <HouseBadge name={d.betting_houses?.name ?? null} />
                       </TableCell>
                       <TableCell>{d.deal_name || "—"}</TableCell>
                       <TableCell>{d.cpa_plan || "—"}</TableCell>

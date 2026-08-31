@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { HouseBadge } from "@/components/HouseBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -65,6 +66,7 @@ export const Route = createFileRoute("/admin")({
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
+  const [search, setSearch] = useState("");
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -138,6 +140,24 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["houses"] });
   };
 
+  const q = search.trim().toLowerCase();
+  const filteredProfiles = q
+    ? profiles.filter(
+        (p) =>
+          p.email.toLowerCase().includes(q) ||
+          p.full_name.toLowerCase().includes(q) ||
+          p.referral_code.toLowerCase().includes(q),
+      )
+    : profiles;
+  const filteredDeals = q
+    ? deals.filter(
+        (d) =>
+          (d.profiles?.email ?? "").toLowerCase().includes(q) ||
+          (d.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+          (d.betting_houses?.name ?? "").toLowerCase().includes(q),
+      )
+    : deals;
+
   if (!loading && !isAdmin) {
     return (
       <AppShell title="Administração">
@@ -153,19 +173,58 @@ function AdminPage() {
       title="Administração"
       subtitle="Afiliados cadastrados, casas de aposta e acordos de CPA."
     >
-      <Tabs defaultValue="afiliados">
+      <div className="mb-6 max-w-md">
+        <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
+          Pesquisar e-mail, nome, código ou casa
+        </Label>
+        <Input
+          id="admin-search"
+          className="mt-2"
+          placeholder="ex.: afiliado@email.com"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <Tabs defaultValue="metricas">
         <TabsList>
+          <TabsTrigger value="metricas">Métricas</TabsTrigger>
           <TabsTrigger value="afiliados">Afiliados</TabsTrigger>
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="metricas" className="pt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Cliques, registros e CPAs validados ({filteredDeals.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {filteredDeals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum acordo encontrado.</p>
+              ) : (
+                filteredDeals.map((d) => (
+                  <MetricsRow
+                    key={d.id}
+                    deal={d}
+                    onSaved={() => {
+                      qc.invalidateQueries({ queryKey: ["admin-deals"] });
+                    }}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="afiliados" className="pt-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                E-mails cadastrados ({profiles.length})
+                E-mails cadastrados ({filteredProfiles.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
@@ -181,7 +240,7 @@ function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((p) => (
+                  {filteredProfiles.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
                       <TableCell>{p.email}</TableCell>
@@ -208,7 +267,9 @@ function AdminPage() {
         <TabsContent value="acordos" className="pt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Acordos lançados ({deals.length})</CardTitle>
+              <CardTitle className="text-base">
+                Acordos lançados ({filteredDeals.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <Table>
@@ -225,12 +286,14 @@ function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {deals.map((d) => (
+                  {filteredDeals.map((d) => (
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">
                         {d.profiles?.full_name || d.profiles?.email || "—"}
                       </TableCell>
-                      <TableCell>{d.betting_houses?.name ?? "—"}</TableCell>
+                      <TableCell>
+                        <HouseBadge name={d.betting_houses?.name ?? null} />
+                      </TableCell>
                       <TableCell>{d.cpa_plan || d.deal_name || "—"}</TableCell>
                       <TableCell className="text-right">{brl(Number(d.cpa_amount))}</TableCell>
                       <TableCell className="text-right">{d.eligible_cpa}</TableCell>
@@ -579,5 +642,81 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    clicks: String(deal.clicks),
+    registrations: String(deal.registrations),
+    eligible_cpa: String(deal.eligible_cpa),
+  });
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("affiliate_deals")
+      .update({
+        clicks: Math.max(0, Number(form.clicks) || 0),
+        registrations: Math.max(0, Number(form.registrations) || 0),
+        eligible_cpa: Math.max(0, Number(form.eligible_cpa) || 0),
+      })
+      .eq("id", deal.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Métricas atualizadas!");
+    onSaved();
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold">
+            {deal.profiles?.full_name || deal.profiles?.email || "Afiliado"}
+          </p>
+          <p className="text-xs text-muted-foreground">{deal.profiles?.email}</p>
+        </div>
+        <HouseBadge name={deal.betting_houses?.name ?? null} />
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Cliques</Label>
+          <Input
+            type="number"
+            min="0"
+            value={form.clicks}
+            onChange={(e) => setForm((f) => ({ ...f, clicks: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Registros</Label>
+          <Input
+            type="number"
+            min="0"
+            value={form.registrations}
+            onChange={(e) => setForm((f) => ({ ...f, registrations: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">CPAs validados</Label>
+          <Input
+            type="number"
+            min="0"
+            value={form.eligible_cpa}
+            onChange={(e) => setForm((f) => ({ ...f, eligible_cpa: e.target.value }))}
+          />
+        </div>
+        <div className="flex items-end">
+          <Button className="w-full" onClick={save} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

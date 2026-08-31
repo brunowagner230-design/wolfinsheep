@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type DealRow } from "@/lib/panel";
+import { HouseBadge, houseLogo } from "@/components/HouseBadge";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -91,6 +92,8 @@ function DashboardPage() {
     { cpa: 0, clicks: 0, regs: 0, revenue: 0 },
   );
 
+  const betano = filtered.map((d) => houseLogo(d.betting_houses?.name)).find(Boolean) ?? null;
+
   const cards = [
     { label: "CPAs elegíveis", value: totals.cpa.toString(), icon: Handshake },
     { label: "Cliques", value: totals.clicks.toLocaleString("pt-BR"), icon: MousePointerClick },
@@ -118,6 +121,18 @@ function DashboardPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {betano && (
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[oklch(0.78_0.17_150/0.35)] bg-[oklch(0.78_0.17_150/0.1)] px-5 py-4">
+          <img src={betano} alt="Logo Betano" className="size-12 object-contain" />
+          <div>
+            <p className="font-display text-lg font-bold">Parceiro Betano ativo</p>
+            <p className="text-xs text-muted-foreground">
+              Você possui acordo de CPA configurado na Betano.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
@@ -152,7 +167,9 @@ function DashboardPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
               >
                 <div>
-                  <p className="font-semibold">{d.betting_houses?.name ?? "Casa"}</p>
+                  <p className="font-semibold">
+                    <HouseBadge name={d.betting_houses?.name ?? "Casa"} />
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {d.cpa_plan || d.deal_name || "Plano CPA"}
                   </p>
