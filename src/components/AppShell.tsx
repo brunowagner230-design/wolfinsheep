@@ -46,8 +46,8 @@ export function AppShell({
         )}
       >
         <Link to="/dashboard" className="flex items-center gap-3">
-          <WolfMark />
-          <Wordmark className="text-[11px]" />
+          <WolfMark className="h-8" />
+          <Wordmark className="h-6" />
         </Link>
 
         <nav className="mt-8 flex flex-1 flex-col gap-1">
