@@ -72,7 +72,6 @@ function DealsPage() {
                     <TableHead>Plano CPA</TableHead>
                     <TableHead>Baseline</TableHead>
                     <TableHead className="text-right">CPA</TableHead>
-                    <TableHead className="text-right">Rev</TableHead>
                     <TableHead className="text-right">Elegíveis</TableHead>
                     <TableHead className="text-right">Cliques</TableHead>
                     <TableHead className="text-right">Registros</TableHead>
@@ -89,7 +88,6 @@ function DealsPage() {
                       <TableCell>{d.cpa_plan || "—"}</TableCell>
                       <TableCell>{d.baseline || "—"}</TableCell>
                       <TableCell className="text-right">{brl(Number(d.cpa_amount))}</TableCell>
-                      <TableCell className="text-right">{Number(d.revshare)}%</TableCell>
                       <TableCell className="text-right">{d.eligible_cpa}</TableCell>
                       <TableCell className="text-right">{d.clicks}</TableCell>
                       <TableCell className="text-right">{d.registrations}</TableCell>

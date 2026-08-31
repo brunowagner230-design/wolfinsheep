@@ -6,7 +6,6 @@ export type DealRow = {
   cpa_plan: string;
   cpa_amount: number | string;
   baseline: string;
-  revshare: number | string;
   eligible_cpa: number;
   clicks: number;
   registrations: number;
