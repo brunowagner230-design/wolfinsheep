@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BarChart3, Network, ShieldCheck } from "lucide-react";
 import { Wordmark, WolfMark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
+import markImg from "@/assets/wolf-mark.png";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
