@@ -2,7 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { HouseMarquee } from "@/components/HouseMarquee";
 import { Wordmark } from "@/components/Wordmark";
+import bannerImg from "@/assets/wolf-banner.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -102,21 +104,33 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between border-r border-border p-12 lg:flex glow-panel">
-        <Wordmark className="h-9" />
-        <div>
-          <h2 className="max-w-sm text-4xl font-bold leading-tight">
-            O painel de CPA para quem caça acordos de verdade.
+      <div className="relative hidden flex-col justify-between overflow-hidden border-r border-border p-12 lg:flex glow-panel">
+        <img
+          src={bannerImg}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 blur-[2px]"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+        <div className="relative">
+          <Wordmark className="h-9" />
+        </div>
+        <div className="relative">
+          <h2 className="max-w-sm text-4xl leading-tight">
+            O painel de CPA para quem <span className="text-gradient-brand">caça acordos</span> de
+            verdade.
           </h2>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             Acompanhe acordos das casas de aposta, CPAs elegíveis, cliques, registros e o plano de
             cada afiliado da sua rede.
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">Wolf in Sheep Affiliates</p>
+        <div className="relative">
+          <HouseMarquee />
+        </div>
       </div>
 
-      <div className="flex items-center justify-center p-6">
+      <div className="flex flex-col items-center justify-center gap-8 p-6">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
             <Wordmark className="h-7" />
@@ -189,7 +203,9 @@ function AuthPage() {
                     minLength={6}
                     maxLength={72}
                   />
-                  <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Mínimo de 6 caracteres — sem exigência de maiúsculas ou símbolos.
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   Criar minha conta
@@ -197,6 +213,9 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+        </div>
+        <div className="w-full max-w-sm lg:hidden">
+          <HouseMarquee />
         </div>
       </div>
     </div>

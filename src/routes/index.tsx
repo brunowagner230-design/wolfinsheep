@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BarChart3, Network, ShieldCheck } from "lucide-react";
+import { HouseMarquee } from "@/components/HouseMarquee";
 import { Wordmark, WolfMark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
 import markImg from "@/assets/wolf-mark.png";
@@ -82,7 +83,11 @@ function Home() {
           </Button>
         </div>
 
-        <div className="mt-16 grid gap-4 md:grid-cols-3">
+        <div className="mt-14">
+          <HouseMarquee />
+        </div>
+
+        <div className="mt-12 grid gap-4 md:grid-cols-3">
           {features.map((f) => (
             <div key={f.title} className="glow-panel rounded-2xl border border-border/60 p-6">
               <f.icon className="size-5 text-primary" />
