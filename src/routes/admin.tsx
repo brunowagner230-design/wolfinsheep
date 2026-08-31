@@ -267,7 +267,9 @@ function AdminPage() {
         <TabsContent value="acordos" className="pt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Acordos lançados ({deals.length})</CardTitle>
+              <CardTitle className="text-base">
+                Acordos lançados ({filteredDeals.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <Table>
