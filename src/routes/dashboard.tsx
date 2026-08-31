@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Handshake, MousePointerClick, UserPlus, Wallet, Network } from "lucide-react";
-import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +29,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-  const { user, isAdmin } = useAuth();
-  const qc = useQueryClient();
+  const { user } = useAuth();
 
   const { data: deals = [] } = useQuery({
     queryKey: ["my-deals", user?.id],
