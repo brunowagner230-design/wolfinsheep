@@ -58,9 +58,15 @@ export const Route = createFileRoute("/carteira")({
 });
 
 const statusBadge = (status: string) => {
-  if (status === "aprovado") return { variant: "default" as const, icon: CheckCircle2 };
-  if (status === "rejeitado") return { variant: "destructive" as const, icon: XCircle };
-  return { variant: "secondary" as const, icon: Clock };
+  if (status === "aprovado")
+    return {
+      variant: "secondary" as const,
+      icon: CheckCircle2,
+      className: "border-transparent bg-success text-success-foreground",
+    };
+  if (status === "rejeitado")
+    return { variant: "destructive" as const, icon: XCircle, className: "" };
+  return { variant: "secondary" as const, icon: Clock, className: "" };
 };
 
 function WalletPage() {
