@@ -59,14 +59,6 @@ function DashboardPage() {
     },
   });
 
-  const { data: adminExists = true } = useQuery({
-    queryKey: ["admin-exists"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_exists");
-      if (error) throw error;
-      return Boolean(data);
-    },
-  });
 
   const totals = deals.reduce(
     (acc, d) => ({
