@@ -109,7 +109,7 @@ function AuthPage() {
           src={bannerImg}
           alt=""
           aria-hidden
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 blur-[2px]"
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
         <div className="relative">
