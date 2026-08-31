@@ -96,7 +96,10 @@ function DashboardPage() {
             <Button
               onClick={async () => {
                 const { error } = await supabase.rpc("claim_first_admin");
-                if (error) return toast.error(error.message);
+                if (error) {
+                  toast.error(error.message);
+                  return;
+                }
                 toast.success("Você agora é administrador. Recarregue a página.");
                 qc.invalidateQueries();
               }}

@@ -223,7 +223,10 @@ function PlanDialog({
   const [baseline, setBaseline] = useState("");
 
   const save = async () => {
-    if (!planName.trim()) return toast.error("Informe o nome do plano");
+    if (!planName.trim()) {
+      toast.error("Informe o nome do plano");
+      return;
+    }
     const { error } = await supabase.from("network_plans").upsert(
       {
         upline_id: uplineId,
@@ -235,7 +238,10 @@ function PlanDialog({
       },
       { onConflict: "upline_id,downline_id,house_id" },
     );
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Plano de CPA definido!");
     setOpen(false);
     onSaved();
