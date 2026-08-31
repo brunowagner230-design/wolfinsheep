@@ -286,12 +286,14 @@ function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {deals.map((d) => (
+                  {filteredDeals.map((d) => (
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">
                         {d.profiles?.full_name || d.profiles?.email || "—"}
                       </TableCell>
-                      <TableCell>{d.betting_houses?.name ?? "—"}</TableCell>
+                      <TableCell>
+                        <HouseBadge name={d.betting_houses?.name} />
+                      </TableCell>
                       <TableCell>{d.cpa_plan || d.deal_name || "—"}</TableCell>
                       <TableCell className="text-right">{brl(Number(d.cpa_amount))}</TableCell>
                       <TableCell className="text-right">{d.eligible_cpa}</TableCell>
