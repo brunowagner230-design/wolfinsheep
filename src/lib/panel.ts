@@ -49,3 +49,17 @@ export const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
     Number.isFinite(value) ? value : 0,
   );
+
+export type WithdrawalRow = {
+  id: string;
+  user_id: string;
+  amount: number | string;
+  pix_key: string;
+  pix_key_type: string;
+  holder_name: string;
+  status: string;
+  admin_note: string | null;
+  processed_at: string | null;
+  created_at: string;
+  profiles?: { full_name: string; email: string } | null;
+};

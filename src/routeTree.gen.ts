@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcordosRouteImport } from './routes/acordos'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as RedeRouteImport } from './routes/rede'
 
@@ -36,6 +37,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CarteiraRoute = CarteiraRouteImport.update({
+  id: '/carteira',
+  path: '/carteira',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/acordos': typeof AcordosRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/carteira': typeof CarteiraRoute
   '/dashboard': typeof DashboardRoute
   '/rede': typeof RedeRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/acordos': typeof AcordosRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/carteira': typeof CarteiraRoute
   '/dashboard': typeof DashboardRoute
   '/rede': typeof RedeRoute
 }
@@ -69,16 +77,26 @@ export interface FileRoutesById {
   '/acordos': typeof AcordosRoute
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
+  '/carteira': typeof CarteiraRoute
   '/dashboard': typeof DashboardRoute
   '/rede': typeof RedeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/acordos' | '/admin' | '/auth' | '/dashboard' | '/rede'
+  fullPaths:
+    '/' | '/acordos' | '/admin' | '/auth' | '/carteira' | '/dashboard' | '/rede'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/acordos' | '/admin' | '/auth' | '/dashboard' | '/rede'
+  to:
+    '/' | '/acordos' | '/admin' | '/auth' | '/carteira' | '/dashboard' | '/rede'
   id:
-    '__root__' | '/' | '/acordos' | '/admin' | '/auth' | '/dashboard' | '/rede'
+    | '__root__'
+    | '/'
+    | '/acordos'
+    | '/admin'
+    | '/auth'
+    | '/carteira'
+    | '/dashboard'
+    | '/rede'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -86,6 +104,7 @@ export interface RootRouteChildren {
   AcordosRoute: typeof AcordosRoute
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
+  CarteiraRoute: typeof CarteiraRoute
   DashboardRoute: typeof DashboardRoute
   RedeRoute: typeof RedeRoute
 }
@@ -120,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/carteira': {
+      id: '/carteira'
+      path: '/carteira'
+      fullPath: '/carteira'
+      preLoaderRoute: typeof CarteiraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -142,6 +168,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcordosRoute: AcordosRoute,
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
+  CarteiraRoute: CarteiraRoute,
   DashboardRoute: DashboardRoute,
   RedeRoute: RedeRoute,
 }

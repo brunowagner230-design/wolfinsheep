@@ -34,7 +34,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { brl, type DealRow, type HouseRow, type ProfileRow } from "@/lib/panel";
+import {
+  brl,
+  type DealRow,
+  type HouseRow,
+  type ProfileRow,
+  type WithdrawalRow,
+} from "@/lib/panel";
+import { Trash2, Check, X } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -95,6 +102,42 @@ function AdminPage() {
     },
   });
 
+  const { data: withdrawals = [] } = useQuery({
+    queryKey: ["admin-withdrawals"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("withdrawals")
+        .select("*, profiles(full_name, email)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as WithdrawalRow[];
+    },
+  });
+
+  const setWithdrawStatus = async (id: string, status: string) => {
+    const { error } = await supabase
+      .from("withdrawals")
+      .update({ status, processed_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "aprovado" ? "Saque aprovado e pago!" : "Saque rejeitado");
+    qc.invalidateQueries({ queryKey: ["admin-withdrawals"] });
+  };
+
+  const deleteHouse = async (h: HouseRow) => {
+    const { error } = await supabase.from("betting_houses").delete().eq("id", h.id);
+    if (error) {
+      toast.error("Não foi possível excluir. Remova antes os acordos dessa casa.");
+      return;
+    }
+    toast.success("Casa excluída");
+    qc.invalidateQueries({ queryKey: ["houses"] });
+  };
+
   if (!loading && !isAdmin) {
     return (
       <AppShell title="Administração">
@@ -115,6 +158,7 @@ function AdminPage() {
           <TabsTrigger value="afiliados">Afiliados</TabsTrigger>
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
+          <TabsTrigger value="saques">Saques</TabsTrigger>
         </TabsList>
 
         <TabsContent value="afiliados" className="pt-6">
@@ -217,10 +261,105 @@ function AdminPage() {
                   key={h.id}
                   className="rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
                 >
-                  <p className="font-semibold">{h.name}</p>
-                  <p className="text-xs text-muted-foreground">{h.country}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">{h.name}</p>
+                      <p className="text-xs text-muted-foreground">{h.country}</p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Excluir ${h.name}`}
+                      onClick={() => deleteHouse(h)}
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="saques" className="pt-6">
+          <Card className="money-panel border-primary/30">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Saques solicitados ({withdrawals.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {withdrawals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum saque solicitado ainda.</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Afiliado</TableHead>
+                      <TableHead>Chave Pix</TableHead>
+                      <TableHead>Titular</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {withdrawals.map((w) => (
+                      <TableRow key={w.id}>
+                        <TableCell className="font-medium">
+                          {w.profiles?.full_name || w.profiles?.email || "—"}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {w.pix_key_type.toUpperCase()} · {w.pix_key}
+                        </TableCell>
+                        <TableCell>{w.holder_name || "—"}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {brl(Number(w.amount))}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              w.status === "aprovado"
+                                ? "default"
+                                : w.status === "rejeitado"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
+                          >
+                            {w.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {w.status === "pendente" ? (
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                className="gap-1"
+                                onClick={() => setWithdrawStatus(w.id, "aprovado")}
+                              >
+                                <Check className="size-3" /> Pago
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="gap-1"
+                                onClick={() => setWithdrawStatus(w.id, "rejeitado")}
+                              >
+                                <X className="size-3" /> Rejeitar
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              {w.processed_at
+                                ? new Date(w.processed_at).toLocaleDateString("pt-BR")
+                                : "—"}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
