@@ -58,9 +58,15 @@ export const Route = createFileRoute("/carteira")({
 });
 
 const statusBadge = (status: string) => {
-  if (status === "aprovado") return { variant: "default" as const, icon: CheckCircle2 };
-  if (status === "rejeitado") return { variant: "destructive" as const, icon: XCircle };
-  return { variant: "secondary" as const, icon: Clock };
+  if (status === "aprovado")
+    return {
+      variant: "secondary" as const,
+      icon: CheckCircle2,
+      className: "border-transparent bg-success text-success-foreground",
+    };
+  if (status === "rejeitado")
+    return { variant: "destructive" as const, icon: XCircle, className: "" };
+  return { variant: "secondary" as const, icon: Clock, className: "" };
 };
 
 function WalletPage() {
@@ -184,7 +190,7 @@ function WalletPage() {
                         {brl(Number(w.amount))}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={s.variant} className="gap-1">
+                        <Badge variant={s.variant} className={`gap-1 ${s.className}`}>
                           <s.icon className="size-3" />
                           {w.status}
                         </Badge>
@@ -262,15 +268,47 @@ function WithdrawDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="w-amount">Valor (R$)</Label>
-            <Input
-              id="w-amount"
-              type="number"
-              min="50"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            <Label htmlFor="w-amount">Valor do saque</Label>
+            <div className="rounded-xl border border-primary/30 bg-secondary/40 p-3">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-lg font-bold text-primary">R$</span>
+                <Input
+                  id="w-amount"
+                  type="number"
+                  min="50"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="h-11 border-0 bg-transparent px-0 font-display text-2xl font-bold shadow-none focus-visible:ring-0"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  className="shrink-0"
+                  onClick={() => setAmount(available.toFixed(2))}
+                >
+                  Sacar tudo
+                </Button>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>Disponível: {brl(available)}</span>
+                <div className="flex gap-1">
+                  {[50, 100, 250].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setAmount(String(v))}
+                      disabled={v > available}
+                      className="rounded-full border border-border/60 px-2 py-0.5 transition-colors hover:border-primary/60 hover:text-foreground disabled:opacity-40"
+                    >
+                      {brl(v)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="space-y-2">
             <Label>Tipo de chave</Label>

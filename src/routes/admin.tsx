@@ -380,12 +380,11 @@ function AdminPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={
+                            variant={w.status === "rejeitado" ? "destructive" : "secondary"}
+                            className={
                               w.status === "aprovado"
-                                ? "default"
-                                : w.status === "rejeitado"
-                                  ? "destructive"
-                                  : "secondary"
+                                ? "border-transparent bg-success text-success-foreground"
+                                : undefined
                             }
                           >
                             {w.status}
@@ -396,14 +395,14 @@ function AdminPage() {
                             <div className="flex justify-end gap-2">
                               <Button
                                 size="sm"
-                                className="gap-1"
+                                className="gap-1 bg-success text-success-foreground hover:bg-success/90"
                                 onClick={() => setWithdrawStatus(w.id, "aprovado")}
                               >
                                 <Check className="size-3" /> Pago
                               </Button>
                               <Button
                                 size="sm"
-                                variant="secondary"
+                                variant="destructive"
                                 className="gap-1"
                                 onClick={() => setWithdrawStatus(w.id, "rejeitado")}
                               >

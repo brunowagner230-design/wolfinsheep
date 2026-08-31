@@ -13,9 +13,13 @@ export function HouseBadge({ name }: { name: string | null | undefined }) {
   if (!name) return <span className="text-muted-foreground">—</span>;
   if (!logo) return <span>{name}</span>;
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.78_0.17_150/0.4)] bg-[oklch(0.78_0.17_150/0.12)] px-2.5 py-1">
-      <img src={logo} alt={`Logo ${name}`} className="size-5 rounded-sm object-contain" />
-      <span className="font-semibold">{name}</span>
+    <span className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[oklch(0.78_0.17_150/0.4)] bg-[oklch(0.78_0.17_150/0.12)] py-1 pl-1.5 pr-3 align-middle">
+      <img
+        src={logo}
+        alt={`Logo ${name}`}
+        className="size-5 shrink-0 rounded-sm object-contain"
+      />
+      <span className="truncate font-semibold leading-none">{name}</span>
     </span>
   );
 }
