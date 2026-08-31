@@ -66,6 +66,7 @@ export const Route = createFileRoute("/admin")({
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
+  const [search, setSearch] = useState("");
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
