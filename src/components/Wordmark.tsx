@@ -1,30 +1,25 @@
 import { cn } from "@/lib/utils";
+import lockup from "@/assets/wolf-lockup.png";
+import mark from "@/assets/wolf-mark.png";
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "font-display font-extrabold tracking-tight leading-none whitespace-nowrap",
-        className,
-      )}
-    >
-      <span className="text-primary">WOLF</span>{" "}
-      <span className="text-foreground">IN</span>{" "}
-      <span className="text-primary">SHEEP</span>{" "}
-      <span className="text-foreground">AFFILIATES</span>
-    </span>
+    <img
+      src={lockup}
+      alt="WOLF IN SHEEP AFFILIATES"
+      className={cn("h-8 w-auto select-none object-contain", className)}
+      draggable={false}
+    />
   );
 }
 
 export function WolfMark({ className }: { className?: string }) {
   return (
-    <div
-      className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/40",
-        className,
-      )}
-    >
-      <span className="font-display text-lg font-extrabold text-primary">W</span>
-    </div>
+    <img
+      src={mark}
+      alt="Wolf in Sheep"
+      className={cn("h-9 w-auto shrink-0 select-none object-contain", className)}
+      draggable={false}
+    />
   );
 }
