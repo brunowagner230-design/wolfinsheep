@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Handshake, MousePointerClick, UserPlus, Wallet, Network } from "lucide-react";
-import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,8 +29,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-  const { user, isAdmin } = useAuth();
-  const qc = useQueryClient();
+  const { user } = useAuth();
 
   const { data: deals = [] } = useQuery({
     queryKey: ["my-deals", user?.id],
@@ -59,14 +57,6 @@ function DashboardPage() {
     },
   });
 
-  const { data: adminExists = true } = useQuery({
-    queryKey: ["admin-exists"],
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("admin_exists");
-      if (error) throw error;
-      return Boolean(data);
-    },
-  });
 
   const totals = deals.reduce(
     (acc, d) => ({
@@ -87,28 +77,7 @@ function DashboardPage() {
 
   return (
     <AppShell title="Painel" subtitle="Resumo dos seus acordos de CPA nas casas de aposta.">
-      {!adminExists && !isAdmin && (
-        <Card className="mb-6 border-primary/40">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
-            <p className="text-sm text-muted-foreground">
-              Nenhum administrador definido ainda. Assuma o controle do painel.
-            </p>
-            <Button
-              onClick={async () => {
-                const { error } = await supabase.rpc("claim_first_admin");
-                if (error) {
-                  toast.error(error.message);
-                  return;
-                }
-                toast.success("Você agora é administrador. Recarregue a página.");
-                qc.invalidateQueries();
-              }}
-            >
-              Tornar-me administrador
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (

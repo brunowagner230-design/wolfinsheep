@@ -229,8 +229,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_exists: { Args: never; Returns: boolean }
-      claim_first_admin: { Args: never; Returns: boolean }
       gen_ref_code: { Args: never; Returns: string }
       has_role: {
         Args: {
