@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type DealRow } from "@/lib/panel";
+import { HouseBadge, houseLogo } from "@/components/HouseBadge";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -152,7 +153,9 @@ function DashboardPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
               >
                 <div>
-                  <p className="font-semibold">{d.betting_houses?.name ?? "Casa"}</p>
+                  <p className="font-semibold">
+                    <HouseBadge name={d.betting_houses?.name ?? "Casa"} />
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {d.cpa_plan || d.deal_name || "Plano CPA"}
                   </p>
