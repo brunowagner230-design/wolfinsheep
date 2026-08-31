@@ -1,7 +1,17 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LayoutDashboard, Handshake, Network, ShieldCheck, LogOut, Menu } from "lucide-react";
+import {
+  LayoutDashboard,
+  Handshake,
+  Network,
+  Wallet,
+  ShieldCheck,
+  LogOut,
+  Menu,
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, type ReactNode } from "react";
-import { Wordmark, WolfMark } from "@/components/Wordmark";
+import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -10,6 +20,7 @@ const navItems = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
   { to: "/acordos", label: "Acordos CPA", icon: Handshake },
   { to: "/rede", label: "Minha rede", icon: Network },
+  { to: "/carteira", label: "Carteira", icon: Wallet },
 ] as const;
 
 export function AppShell({
@@ -24,6 +35,19 @@ export function AppShell({
   const { user, loading, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  const { data: profile } = useQuery({
+    queryKey: ["shell-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -45,9 +69,8 @@ export function AppShell({
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <Link to="/dashboard" className="flex items-center gap-3">
-          <WolfMark className="h-8" />
-          <Wordmark className="h-6" />
+        <Link to="/dashboard" className="flex items-center">
+          <Wordmark className="h-9" />
         </Link>
 
         <nav className="mt-8 flex flex-1 flex-col gap-1">
@@ -83,7 +106,9 @@ export function AppShell({
         </nav>
 
         <div className="mt-auto space-y-3 border-t border-sidebar-border pt-4">
-          <p className="truncate px-1 text-xs text-muted-foreground">{user.email}</p>
+          <p className="truncate px-1 text-sm font-semibold">
+            {profile?.full_name || user.email}
+          </p>
           <Button
             variant="secondary"
             size="sm"
