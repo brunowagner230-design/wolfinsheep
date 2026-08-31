@@ -130,6 +130,16 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["admin-withdrawals"] });
   };
 
+  const approveProfile = async (id: string) => {
+    const { error } = await supabase.from("profiles").update({ approved: true }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Cadastro aprovado!");
+    qc.invalidateQueries({ queryKey: ["admin-profiles"] });
+  };
+
   const deleteHouse = async (h: HouseRow) => {
     const { error } = await supabase.from("betting_houses").delete().eq("id", h.id);
     if (error) {
@@ -234,8 +244,8 @@ function AdminPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Celular</TableHead>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Indicado por</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead>Link de divulgação</TableHead>
                     <TableHead className="text-right">Acordo</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -245,9 +255,26 @@ function AdminPage() {
                       <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
                       <TableCell>{p.email}</TableCell>
                       <TableCell>{p.phone || "—"}</TableCell>
-                      <TableCell className="font-mono text-xs">{p.referral_code}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {profiles.find((x) => x.id === p.referred_by)?.full_name ?? "Direto"}
+                      <TableCell>
+                        {p.approved ? (
+                          <Badge className="gap-1 border-transparent bg-success text-success-foreground">
+                            <Check className="size-3" /> aprovado
+                          </Badge>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="gap-1 bg-success text-success-foreground hover:bg-success/90"
+                            onClick={() => approveProfile(p.id)}
+                          >
+                            <Check className="size-3" /> Aprovar
+                          </Button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <PromoLinkCell
+                          profile={p}
+                          onSaved={() => qc.invalidateQueries({ queryKey: ["admin-profiles"] })}
+                        />
                       </TableCell>
                       <TableCell className="text-right">
                         <DealDialog
@@ -446,7 +473,7 @@ function DealDialog({
     cpa_plan: "",
     cpa_amount: "",
     baseline: "",
-    revshare: "",
+    
     eligible_cpa: "",
     clicks: "",
     registrations: "",
@@ -467,7 +494,7 @@ function DealDialog({
       cpa_plan: form.cpa_plan.trim().slice(0, 160),
       cpa_amount: Number(form.cpa_amount) || 0,
       baseline: form.baseline.trim().slice(0, 240),
-      revshare: Number(form.revshare) || 0,
+      
       eligible_cpa: Number(form.eligible_cpa) || 0,
       clicks: Number(form.clicks) || 0,
       registrations: Number(form.registrations) || 0,
@@ -528,17 +555,6 @@ function DealDialog({
               step="0.01"
               value={form.cpa_amount}
               onChange={set("cpa_amount")}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="d-rev">RevShare (%)</Label>
-            <Input
-              id="d-rev"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.revshare}
-              onChange={set("revshare")}
             />
           </div>
           <div className="space-y-2 sm:col-span-2">
