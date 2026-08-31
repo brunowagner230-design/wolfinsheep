@@ -292,7 +292,7 @@ function AdminPage() {
                         {d.profiles?.full_name || d.profiles?.email || "—"}
                       </TableCell>
                       <TableCell>
-                        <HouseBadge name={d.betting_houses?.name} />
+                        <HouseBadge name={d.betting_houses?.name ?? null} />
                       </TableCell>
                       <TableCell>{d.cpa_plan || d.deal_name || "—"}</TableCell>
                       <TableCell className="text-right">{brl(Number(d.cpa_amount))}</TableCell>
@@ -642,5 +642,81 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    clicks: String(deal.clicks),
+    registrations: String(deal.registrations),
+    eligible_cpa: String(deal.eligible_cpa),
+  });
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from("affiliate_deals")
+      .update({
+        clicks: Math.max(0, Number(form.clicks) || 0),
+        registrations: Math.max(0, Number(form.registrations) || 0),
+        eligible_cpa: Math.max(0, Number(form.eligible_cpa) || 0),
+      })
+      .eq("id", deal.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Métricas atualizadas!");
+    onSaved();
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold">
+            {deal.profiles?.full_name || deal.profiles?.email || "Afiliado"}
+          </p>
+          <p className="text-xs text-muted-foreground">{deal.profiles?.email}</p>
+        </div>
+        <HouseBadge name={deal.betting_houses?.name ?? null} />
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        <div className="space-y-1">
+          <Label className="text-xs">Cliques</Label>
+          <Input
+            type="number"
+            min="0"
+            value={form.clicks}
+            onChange={(e) => setForm((f) => ({ ...f, clicks: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Registros</Label>
+          <Input
+            type="number"
+            min="0"
+            value={form.registrations}
+            onChange={(e) => setForm((f) => ({ ...f, registrations: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">CPAs validados</Label>
+          <Input
+            type="number"
+            min="0"
+            value={form.eligible_cpa}
+            onChange={(e) => setForm((f) => ({ ...f, eligible_cpa: e.target.value }))}
+          />
+        </div>
+        <div className="flex items-end">
+          <Button className="w-full" onClick={save} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

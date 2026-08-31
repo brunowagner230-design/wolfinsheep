@@ -8,7 +8,7 @@ export function houseLogo(name?: string | null) {
   return key ? LOGOS[key] : null;
 }
 
-export function HouseBadge({ name }: { name?: string | null }) {
+export function HouseBadge({ name }: { name: string | null | undefined }) {
   const logo = houseLogo(name);
   if (!name) return <span className="text-muted-foreground">—</span>;
   if (!logo) return <span>{name}</span>;
