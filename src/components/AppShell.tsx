@@ -42,7 +42,7 @@ export function AppShell({
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("full_name, email")
+        .select("full_name, email, approved")
         .eq("id", user!.id)
         .maybeSingle();
       return data;
@@ -57,6 +57,22 @@ export function AppShell({
     return (
       <div className="flex min-h-screen items-center justify-center">
         <span className="text-sm text-muted-foreground">Carregando painel…</span>
+      </div>
+    );
+  }
+
+  if (profile && !profile.approved && !isAdmin) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+        <Wordmark className="h-10" />
+        <h1 className="font-display text-2xl font-bold">Cadastro em análise</h1>
+        <p className="max-w-md text-sm text-muted-foreground">
+          Sua conta foi criada e está aguardando a aprovação da administração. Você receberá acesso
+          ao painel assim que o cadastro for liberado.
+        </p>
+        <Button variant="secondary" className="gap-2" onClick={() => signOut()}>
+          <LogOut className="size-4" /> Sair
+        </Button>
       </div>
     );
   }

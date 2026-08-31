@@ -6,7 +6,6 @@ export type DealRow = {
   cpa_plan: string;
   cpa_amount: number | string;
   baseline: string;
-  revshare: number | string;
   eligible_cpa: number;
   clicks: number;
   registrations: number;
@@ -25,6 +24,8 @@ export type ProfileRow = {
   referral_code: string;
   referred_by: string | null;
   created_at: string;
+  promo_link: string;
+  approved: boolean;
 };
 
 export type HouseRow = {

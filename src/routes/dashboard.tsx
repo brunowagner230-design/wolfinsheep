@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Handshake, MousePointerClick, UserPlus, Wallet, Network } from "lucide-react";
+import { Handshake, MousePointerClick, UserPlus, Wallet, Network, Copy } from "lucide-react";
+import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import {
   Select,
@@ -66,6 +67,20 @@ function DashboardPage() {
     },
   });
 
+  const { data: promoLink = "" } = useQuery({
+    queryKey: ["promo-link", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("promo_link")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.promo_link ?? "";
+    },
+  });
+
 
   const [houseId, setHouseId] = useState("todas");
 
@@ -121,6 +136,28 @@ function DashboardPage() {
           </SelectContent>
         </Select>
       </div>
+
+      {promoLink && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-secondary/40 px-5 py-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Seu link de divulgação
+            </p>
+            <p className="truncate font-mono text-sm">{promoLink}</p>
+          </div>
+          <Button
+            className="gap-2"
+            onClick={() => {
+              navigator.clipboard.writeText(promoLink);
+              toast.success("Link copiado!");
+            }}
+          >
+            <Copy className="size-4" /> Copiar link
+          </Button>
+        </div>
+      )}
+
+
 
       {betano && (
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[oklch(0.78_0.17_150/0.35)] bg-[oklch(0.78_0.17_150/0.1)] px-5 py-4">
