@@ -87,28 +87,7 @@ function DashboardPage() {
 
   return (
     <AppShell title="Painel" subtitle="Resumo dos seus acordos de CPA nas casas de aposta.">
-      {!adminExists && !isAdmin && (
-        <Card className="mb-6 border-primary/40">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
-            <p className="text-sm text-muted-foreground">
-              Nenhum administrador definido ainda. Assuma o controle do painel.
-            </p>
-            <Button
-              onClick={async () => {
-                const { error } = await supabase.rpc("claim_first_admin");
-                if (error) {
-                  toast.error(error.message);
-                  return;
-                }
-                toast.success("Você agora é administrador. Recarregue a página.");
-                qc.invalidateQueries();
-              }}
-            >
-              Tornar-me administrador
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((c) => (
