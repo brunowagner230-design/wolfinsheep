@@ -203,7 +203,9 @@ function AuthPage() {
                     minLength={6}
                     maxLength={72}
                   />
-                  <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Mínimo de 6 caracteres — sem exigência de maiúsculas ou símbolos.
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={busy}>
                   Criar minha conta
@@ -211,6 +213,9 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+        </div>
+        <div className="w-full max-w-sm lg:hidden">
+          <HouseMarquee />
         </div>
       </div>
     </div>
