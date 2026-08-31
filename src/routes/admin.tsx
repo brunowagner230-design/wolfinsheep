@@ -173,19 +173,58 @@ function AdminPage() {
       title="Administração"
       subtitle="Afiliados cadastrados, casas de aposta e acordos de CPA."
     >
-      <Tabs defaultValue="afiliados">
+      <div className="mb-6 max-w-md">
+        <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
+          Pesquisar e-mail, nome, código ou casa
+        </Label>
+        <Input
+          id="admin-search"
+          className="mt-2"
+          placeholder="ex.: afiliado@email.com"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      <Tabs defaultValue="metricas">
         <TabsList>
+          <TabsTrigger value="metricas">Métricas</TabsTrigger>
           <TabsTrigger value="afiliados">Afiliados</TabsTrigger>
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="metricas" className="pt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Cliques, registros e CPAs validados ({filteredDeals.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {filteredDeals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum acordo encontrado.</p>
+              ) : (
+                filteredDeals.map((d) => (
+                  <MetricsRow
+                    key={d.id}
+                    deal={d}
+                    onSaved={() => {
+                      qc.invalidateQueries({ queryKey: ["admin-deals"] });
+                    }}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="afiliados" className="pt-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                E-mails cadastrados ({profiles.length})
+                E-mails cadastrados ({filteredProfiles.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
@@ -201,7 +240,7 @@ function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((p) => (
+                  {filteredProfiles.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
                       <TableCell>{p.email}</TableCell>
