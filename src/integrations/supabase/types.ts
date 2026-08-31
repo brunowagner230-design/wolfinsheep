@@ -224,6 +224,56 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          holder_name: string
+          id: string
+          pix_key: string
+          pix_key_type: string
+          processed_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          holder_name?: string
+          id?: string
+          pix_key?: string
+          pix_key_type?: string
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          amount?: number
+          created_at?: string
+          holder_name?: string
+          id?: string
+          pix_key?: string
+          pix_key_type?: string
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
