@@ -190,7 +190,7 @@ function WalletPage() {
                         {brl(Number(w.amount))}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={s.variant} className="gap-1">
+                        <Badge variant={s.variant} className={`gap-1 ${s.className}`}>
                           <s.icon className="size-3" />
                           {w.status}
                         </Badge>
