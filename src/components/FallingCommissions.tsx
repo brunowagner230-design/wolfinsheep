@@ -45,7 +45,14 @@ function generateDrop(id: number): Drop {
 
 export function FallingCommissions() {
   const [mounted, setMounted] = useState(false);
-  const drops = useMemo(() => Array.from({ length: 16 }).map((_, i) => generateDrop(i)), []);
+  const drops = useMemo(
+    () =>
+      Array.from({ length: 8 }).map((_, i) => ({
+        ...generateDrop(i),
+        startY: Math.random() * 70,
+      })),
+    []
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -61,21 +68,22 @@ export function FallingCommissions() {
       {drops.map((drop) => (
         <div
           key={drop.id}
-          className="falling-commission absolute top-0 flex items-center gap-2 rounded-full border border-success/30 bg-card/70 px-2.5 py-1 shadow-lg backdrop-blur-sm"
+          className="falling-commission absolute flex items-center gap-1.5 rounded-full border border-success/20 bg-card/50 px-2 py-1 shadow-sm backdrop-blur-sm"
           style={{
             left: `${drop.left}%`,
+            top: `${drop.startY}vh`,
             animationDuration: `${drop.duration}s`,
             animationDelay: `${drop.delay}s`,
-            fontSize: `${drop.size * 0.9}rem`,
-            boxShadow: "0 0 20px oklch(0.7 0.16 155 / 0.3)",
+            fontSize: `${drop.size}rem`,
+            boxShadow: "0 0 16px oklch(0.7 0.16 155 / 0.18)",
           }}
         >
-          <span className="size-1.5 shrink-0 rounded-full bg-success shadow-[0_0_8px_currentColor]" />
-          <span className="whitespace-nowrap font-semibold text-foreground/90">
+          <span className="size-1 shrink-0 rounded-full bg-success shadow-[0_0_6px_currentColor]" />
+          <span className="whitespace-nowrap font-medium text-foreground/80">
             {drop.phrase}
           </span>
           <span className="whitespace-nowrap font-bold text-success">{drop.value}</span>
-          <span className="hidden whitespace-nowrap text-[0.7em] text-muted-foreground sm:inline">
+          <span className="hidden whitespace-nowrap text-[0.7em] text-muted-foreground/80 sm:inline">
             · {drop.house}
           </span>
         </div>
