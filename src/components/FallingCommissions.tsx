@@ -36,10 +36,10 @@ function generateDrop(id: number): Drop {
     phrase: pick(PHRASES),
     house: pick(HOUSES),
     value: `+R$ ${randomValue().toString()}`,
-    left: Math.random() * 92 + 4,
-    duration: 7 + Math.random() * 8,
-    delay: Math.random() * 6,
-    size: 0.85 + Math.random() * 0.35,
+    left: Math.random() * 90 + 5,
+    duration: 10 + Math.random() * 10,
+    delay: Math.random() * 8,
+    size: 0.65 + Math.random() * 0.2,
   };
 }
 
