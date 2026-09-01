@@ -45,7 +45,7 @@ function generateDrop(id: number): Drop {
 
 export function FallingCommissions() {
   const [mounted, setMounted] = useState(false);
-  const drops = useMemo(() => Array.from({ length: 24 }).map((_, i) => generateDrop(i)), []);
+  const drops = useMemo(() => Array.from({ length: 16 }).map((_, i) => generateDrop(i)), []);
 
   useEffect(() => {
     setMounted(true);
@@ -61,16 +61,16 @@ export function FallingCommissions() {
       {drops.map((drop) => (
         <div
           key={drop.id}
-          className="falling-commission absolute top-0 flex items-center gap-2 rounded-full border border-success/30 bg-card/80 px-3 py-1.5 shadow-lg backdrop-blur-sm"
+          className="falling-commission absolute top-0 flex items-center gap-2 rounded-full border border-success/30 bg-card/70 px-2.5 py-1 shadow-lg backdrop-blur-sm"
           style={{
             left: `${drop.left}%`,
             animationDuration: `${drop.duration}s`,
             animationDelay: `${drop.delay}s`,
-            fontSize: `${drop.size}rem`,
-            boxShadow: "0 0 24px oklch(0.7 0.16 155 / 0.35)",
+            fontSize: `${drop.size * 0.9}rem`,
+            boxShadow: "0 0 20px oklch(0.7 0.16 155 / 0.3)",
           }}
         >
-          <span className="size-2 shrink-0 rounded-full bg-success shadow-[0_0_10px_currentColor]" />
+          <span className="size-1.5 shrink-0 rounded-full bg-success shadow-[0_0_8px_currentColor]" />
           <span className="whitespace-nowrap font-semibold text-foreground/90">
             {drop.phrase}
           </span>
