@@ -266,11 +266,13 @@ function NetworkPage() {
 function PlanDialog({
   downline,
   houses,
+  caps,
   uplineId,
   onSaved,
 }: {
   downline: ProfileRow;
   houses: HouseRow[];
+  caps: Record<string, number>;
   uplineId: string;
   onSaved: () => void;
 }) {
@@ -280,9 +282,25 @@ function PlanDialog({
   const [amount, setAmount] = useState("");
   const [baseline, setBaseline] = useState("");
 
+  const cap = caps[houseId || "geral"] ?? 0;
+  const value = Number(amount) || 0;
+  const margin = cap - value;
+
   const save = async () => {
     if (!planName.trim()) {
       toast.error("Informe o nome do plano");
+      return;
+    }
+    if (cap <= 0) {
+      toast.error("Você não tem acordo de CPA nesta casa, então não pode repassar comissão.");
+      return;
+    }
+    if (value <= 0) {
+      toast.error("Informe o valor do CPA do afiliado");
+      return;
+    }
+    if (value > cap) {
+      toast.error(`O valor não pode passar do seu teto de ${brl(cap)}`);
       return;
     }
     const { error } = await supabase.from("network_plans").upsert(
@@ -291,11 +309,12 @@ function PlanDialog({
         downline_id: downline.id,
         house_id: houseId || null,
         plan_name: planName.trim().slice(0, 120),
-        cpa_amount: Number(amount) || 0,
+        cpa_amount: value,
         baseline: baseline.trim().slice(0, 200),
       },
       { onConflict: "upline_id,downline_id,house_id" },
     );
+
     if (error) {
       toast.error(error.message);
       return;
