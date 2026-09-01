@@ -186,6 +186,7 @@ function NetworkPage() {
                   <TableRow>
                     <TableHead>Afiliado</TableHead>
                     <TableHead>Contato</TableHead>
+                    <TableHead>Cadastro</TableHead>
                     <TableHead>Planos definidos</TableHead>
                     <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
@@ -203,26 +204,56 @@ function NetworkPage() {
                           <p>{d.email}</p>
                           <p className="text-xs text-muted-foreground">{d.phone}</p>
                         </TableCell>
+                        <TableCell>
+                          {d.approved ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-success/15 px-2 py-1 text-xs font-semibold text-success">
+                              <Check className="size-3" /> aprovado
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="gap-1 bg-success text-success-foreground hover:bg-success/90"
+                              onClick={() => approve(d.id)}
+                            >
+                              <Check className="size-3" /> Aprovar
+                            </Button>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm">
                           {own.length === 0 ? (
                             <span className="text-muted-foreground">—</span>
                           ) : (
-                            own.map((p) => (
-                              <p key={p.id}>
-                                {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
-                                {brl(Number(p.cpa_amount))}
-                              </p>
-                            ))
+                            own.map((p) => {
+                              const cap = caps[p.house_id ?? "geral"] ?? 0;
+                              const margin = cap - Number(p.cpa_amount);
+                              return (
+                                <p key={p.id}>
+                                  {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
+                                  {brl(Number(p.cpa_amount))}
+                                  {cap > 0 && (
+                                    <span className="text-xs text-success">
+                                      {" "}
+                                      (seu lucro: {brl(margin)})
+                                    </span>
+                                  )}
+                                </p>
+                              );
+                            })
                           )}
                         </TableCell>
                         <TableCell className="text-right">
                           <PlanDialog
                             downline={d}
                             houses={houses}
+                            caps={caps}
                             uplineId={user!.id}
                             onSaved={() => qc.invalidateQueries({ queryKey: ["network-plans"] })}
                           />
                         </TableCell>
+                      </TableRow>
+                    );
+                  })}
+
                       </TableRow>
                     );
                   })}
