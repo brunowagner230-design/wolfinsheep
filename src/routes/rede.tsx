@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -108,10 +108,41 @@ function NetworkPage() {
     },
   });
 
+  // Teto de comissão: o maior CPA que o próprio usuário recebe em cada casa
+  const { data: myDeals = [] } = useQuery({
+    queryKey: ["my-deals-caps", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("affiliate_deals")
+        .select("house_id, cpa_amount")
+        .eq("affiliate_id", user!.id);
+      if (error) throw error;
+      return (data ?? []) as { house_id: string | null; cpa_amount: number | string }[];
+    },
+  });
+
+  const caps: Record<string, number> = {};
+  for (const d of myDeals) {
+    const key = d.house_id ?? "geral";
+    caps[key] = Math.max(caps[key] ?? 0, Number(d.cpa_amount) || 0);
+  }
+
+  const approve = async (id: string) => {
+    const { error } = await supabase.from("profiles").update({ approved: true }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Cadastro aprovado!");
+    qc.invalidateQueries({ queryKey: ["downlines"] });
+  };
+
   const link =
     typeof window !== "undefined" && me
       ? `${window.location.origin}/auth?ref=${me.referral_code}`
       : "";
+
 
   return (
     <AppShell
@@ -155,6 +186,7 @@ function NetworkPage() {
                   <TableRow>
                     <TableHead>Afiliado</TableHead>
                     <TableHead>Contato</TableHead>
+                    <TableHead>Cadastro</TableHead>
                     <TableHead>Planos definidos</TableHead>
                     <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
@@ -172,22 +204,48 @@ function NetworkPage() {
                           <p>{d.email}</p>
                           <p className="text-xs text-muted-foreground">{d.phone}</p>
                         </TableCell>
+                        <TableCell>
+                          {d.approved ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-success/15 px-2 py-1 text-xs font-semibold text-success">
+                              <Check className="size-3" /> aprovado
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="gap-1 bg-success text-success-foreground hover:bg-success/90"
+                              onClick={() => approve(d.id)}
+                            >
+                              <Check className="size-3" /> Aprovar
+                            </Button>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm">
                           {own.length === 0 ? (
                             <span className="text-muted-foreground">—</span>
                           ) : (
-                            own.map((p) => (
-                              <p key={p.id}>
-                                {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
-                                {brl(Number(p.cpa_amount))}
-                              </p>
-                            ))
+                            own.map((p) => {
+                              const cap = caps[p.house_id ?? "geral"] ?? 0;
+                              const margin = cap - Number(p.cpa_amount);
+                              return (
+                                <p key={p.id}>
+                                  {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
+                                  {brl(Number(p.cpa_amount))}
+                                  {cap > 0 && (
+                                    <span className="text-xs text-success">
+                                      {" "}
+                                      (seu lucro: {brl(margin)})
+                                    </span>
+                                  )}
+                                </p>
+                              );
+                            })
                           )}
                         </TableCell>
                         <TableCell className="text-right">
                           <PlanDialog
                             downline={d}
                             houses={houses}
+                            caps={caps}
                             uplineId={user!.id}
                             onSaved={() => qc.invalidateQueries({ queryKey: ["network-plans"] })}
                           />
@@ -208,11 +266,13 @@ function NetworkPage() {
 function PlanDialog({
   downline,
   houses,
+  caps,
   uplineId,
   onSaved,
 }: {
   downline: ProfileRow;
   houses: HouseRow[];
+  caps: Record<string, number>;
   uplineId: string;
   onSaved: () => void;
 }) {
@@ -222,9 +282,25 @@ function PlanDialog({
   const [amount, setAmount] = useState("");
   const [baseline, setBaseline] = useState("");
 
+  const cap = caps[houseId || "geral"] ?? 0;
+  const value = Number(amount) || 0;
+  const margin = cap - value;
+
   const save = async () => {
     if (!planName.trim()) {
       toast.error("Informe o nome do plano");
+      return;
+    }
+    if (cap <= 0) {
+      toast.error("Você não tem acordo de CPA nesta casa, então não pode repassar comissão.");
+      return;
+    }
+    if (value <= 0) {
+      toast.error("Informe o valor do CPA do afiliado");
+      return;
+    }
+    if (value > cap) {
+      toast.error(`O valor não pode passar do seu teto de ${brl(cap)}`);
       return;
     }
     const { error } = await supabase.from("network_plans").upsert(
@@ -233,11 +309,12 @@ function PlanDialog({
         downline_id: downline.id,
         house_id: houseId || null,
         plan_name: planName.trim().slice(0, 120),
-        cpa_amount: Number(amount) || 0,
+        cpa_amount: value,
         baseline: baseline.trim().slice(0, 200),
       },
       { onConflict: "upline_id,downline_id,house_id" },
     );
+
     if (error) {
       toast.error(error.message);
       return;
@@ -284,16 +361,34 @@ function PlanDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="plan-amount">Valor do CPA (R$)</Label>
+            <Label htmlFor="plan-amount">Valor do CPA do afiliado (R$)</Label>
             <Input
               id="plan-amount"
               type="number"
               min="0"
+              max={cap || undefined}
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+            {cap > 0 ? (
+              <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
+                <p>
+                  Seu teto nesta casa: <strong>{brl(cap)}</strong>
+                </p>
+                <p className={margin < 0 ? "text-destructive" : "text-success"}>
+                  {margin < 0
+                    ? "Valor acima do seu teto — reduza a comissão."
+                    : `Seu lucro por CPA validado: ${brl(margin)}`}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Você ainda não tem acordo de CPA nesta casa, então não há teto para repassar.
+              </p>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="plan-baseline">Baseline</Label>
             <Input
