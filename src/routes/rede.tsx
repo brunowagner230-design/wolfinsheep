@@ -361,16 +361,34 @@ function PlanDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="plan-amount">Valor do CPA (R$)</Label>
+            <Label htmlFor="plan-amount">Valor do CPA do afiliado (R$)</Label>
             <Input
               id="plan-amount"
               type="number"
               min="0"
+              max={cap || undefined}
               step="0.01"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+            {cap > 0 ? (
+              <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
+                <p>
+                  Seu teto nesta casa: <strong>{brl(cap)}</strong>
+                </p>
+                <p className={margin < 0 ? "text-destructive" : "text-success"}>
+                  {margin < 0
+                    ? "Valor acima do seu teto — reduza a comissão."
+                    : `Seu lucro por CPA validado: ${brl(margin)}`}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Você ainda não tem acordo de CPA nesta casa, então não há teto para repassar.
+              </p>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="plan-baseline">Baseline</Label>
             <Input
