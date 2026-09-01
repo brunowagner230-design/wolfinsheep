@@ -51,7 +51,7 @@ export function FallingCommissions() {
     () =>
       Array.from({ length: 6 }).map((_, i) => ({
         ...generateDrop(i),
-        startY: Math.random() * 75,
+        startY: 25 + Math.random() * 60,
       })),
     []
   );
