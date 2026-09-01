@@ -73,11 +73,11 @@ function Home() {
         </p>
 
         <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.05] lg:text-6xl">
-          O painel onde os acordos de CPA das casas viram números claros.
+          Ganhe dinheiro indicando no iGaming com os melhores acordos CPA.
         </h1>
         <p className="mt-6 max-w-xl text-base text-muted-foreground">
-          Cadastre-se, acompanhe seus acordos por casa de aposta e construa sua rede de afiliados com
-          planos de CPA definidos por você.
+          Junte-se à rede que já pagou mais de R$ 15 milhões em comissões. Indique jogadores,
+          construa sua rede de afiliados e receba via Pix de forma rápida e transparente.
         </p>
         <div className="mt-8">
           <Button asChild size="lg">
@@ -91,7 +91,7 @@ function Home() {
           <HouseMarquee />
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
             <div key={f.title} className="glow-panel rounded-2xl border border-border/60 p-6">
               <f.icon className="size-5 text-primary" />
