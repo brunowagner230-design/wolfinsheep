@@ -31,21 +31,30 @@ function randomValue(): number {
 }
 
 function generateDrop(id: number): Drop {
+  const side = Math.random() > 0.5 ? "left" : "right";
+  const left = side === "left" ? Math.random() * 18 + 2 : Math.random() * 18 + 80;
   return {
     id,
     phrase: pick(PHRASES),
     house: pick(HOUSES),
     value: `+R$ ${randomValue().toString()}`,
-    left: Math.random() * 92 + 4,
-    duration: 7 + Math.random() * 8,
-    delay: Math.random() * 6,
-    size: 0.85 + Math.random() * 0.35,
+    left,
+    duration: 12 + Math.random() * 10,
+    delay: Math.random() * 10,
+    size: 0.55 + Math.random() * 0.15,
   };
 }
 
 export function FallingCommissions() {
   const [mounted, setMounted] = useState(false);
-  const drops = useMemo(() => Array.from({ length: 16 }).map((_, i) => generateDrop(i)), []);
+  const drops = useMemo(
+    () =>
+      Array.from({ length: 6 }).map((_, i) => ({
+        ...generateDrop(i),
+        startY: 25 + Math.random() * 60,
+      })),
+    []
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -57,25 +66,30 @@ export function FallingCommissions() {
     <div
       aria-hidden
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      style={{
+        maskImage: "linear-gradient(180deg, transparent 0%, black 18%, black 92%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(180deg, transparent 0%, black 18%, black 92%, transparent 100%)",
+      }}
     >
       {drops.map((drop) => (
         <div
           key={drop.id}
-          className="falling-commission absolute top-0 flex items-center gap-2 rounded-full border border-success/30 bg-card/70 px-2.5 py-1 shadow-lg backdrop-blur-sm"
+          className="falling-commission absolute flex items-center gap-1.5 rounded-full border border-success/15 bg-card/35 px-2 py-1 opacity-40 shadow-sm backdrop-blur-sm"
           style={{
             left: `${drop.left}%`,
+            top: `${drop.startY}vh`,
             animationDuration: `${drop.duration}s`,
             animationDelay: `${drop.delay}s`,
-            fontSize: `${drop.size * 0.9}rem`,
-            boxShadow: "0 0 20px oklch(0.7 0.16 155 / 0.3)",
+            fontSize: `${drop.size}rem`,
+            boxShadow: "0 0 12px oklch(0.7 0.16 155 / 0.12)",
           }}
         >
-          <span className="size-1.5 shrink-0 rounded-full bg-success shadow-[0_0_8px_currentColor]" />
-          <span className="whitespace-nowrap font-semibold text-foreground/90">
+          <span className="size-1 shrink-0 rounded-full bg-success/80 shadow-[0_0_5px_currentColor]" />
+          <span className="whitespace-nowrap font-medium text-foreground/70">
             {drop.phrase}
           </span>
-          <span className="whitespace-nowrap font-bold text-success">{drop.value}</span>
-          <span className="hidden whitespace-nowrap text-[0.7em] text-muted-foreground sm:inline">
+          <span className="whitespace-nowrap font-bold text-success/90">{drop.value}</span>
+          <span className="hidden whitespace-nowrap text-[0.7em] text-muted-foreground/60 sm:inline">
             · {drop.house}
           </span>
         </div>
