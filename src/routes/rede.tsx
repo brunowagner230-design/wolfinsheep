@@ -253,10 +253,6 @@ function NetworkPage() {
                       </TableRow>
                     );
                   })}
-
-                      </TableRow>
-                    );
-                  })}
                 </TableBody>
               </Table>
             </div>
