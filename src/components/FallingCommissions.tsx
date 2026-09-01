@@ -31,15 +31,17 @@ function randomValue(): number {
 }
 
 function generateDrop(id: number): Drop {
+  const side = Math.random() > 0.5 ? "left" : "right";
+  const left = side === "left" ? Math.random() * 18 + 2 : Math.random() * 18 + 80;
   return {
     id,
     phrase: pick(PHRASES),
     house: pick(HOUSES),
     value: `+R$ ${randomValue().toString()}`,
-    left: Math.random() * 90 + 5,
-    duration: 10 + Math.random() * 10,
-    delay: Math.random() * 8,
-    size: 0.65 + Math.random() * 0.2,
+    left,
+    duration: 12 + Math.random() * 10,
+    delay: Math.random() * 10,
+    size: 0.55 + Math.random() * 0.15,
   };
 }
 
