@@ -108,10 +108,41 @@ function NetworkPage() {
     },
   });
 
+  // Teto de comissão: o maior CPA que o próprio usuário recebe em cada casa
+  const { data: myDeals = [] } = useQuery({
+    queryKey: ["my-deals-caps", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("affiliate_deals")
+        .select("house_id, cpa_amount")
+        .eq("affiliate_id", user!.id);
+      if (error) throw error;
+      return (data ?? []) as { house_id: string | null; cpa_amount: number | string }[];
+    },
+  });
+
+  const caps: Record<string, number> = {};
+  for (const d of myDeals) {
+    const key = d.house_id ?? "geral";
+    caps[key] = Math.max(caps[key] ?? 0, Number(d.cpa_amount) || 0);
+  }
+
+  const approve = async (id: string) => {
+    const { error } = await supabase.from("profiles").update({ approved: true }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Cadastro aprovado!");
+    qc.invalidateQueries({ queryKey: ["downlines"] });
+  };
+
   const link =
     typeof window !== "undefined" && me
       ? `${window.location.origin}/auth?ref=${me.referral_code}`
       : "";
+
 
   return (
     <AppShell
