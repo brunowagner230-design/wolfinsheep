@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Gift, TrendingUp, Wallet, Zap } from "lucide-react";
+import { FallingCommissions } from "@/components/FallingCommissions";
 import { HouseMarquee } from "@/components/HouseMarquee";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
 import markImg from "@/assets/wolf-mark.png";
+
 
 
 export const Route = createFileRoute("/")({
