@@ -21,7 +21,7 @@ interface Drop {
   size: number;
 }
 
-function randomValue() {
+function randomValue(): number {
   const values = [150, 200, 250, 300, 350, 400, 500, 600, 750, 900];
   return values[Math.floor(Math.random() * values.length)];
 }
@@ -31,7 +31,7 @@ function generateDrop(id: number): Drop {
     id,
     phrase: PHRASES[Math.floor(Math.random() * PHRASES.length)],
     house: HOUSES[Math.floor(Math.random() * HOUSES.length)],
-    value: `+R$ ${randomValue()}`,
+    value: `+R$ ${randomValue().toString()}`,
     left: Math.random() * 92 + 4,
     duration: 7 + Math.random() * 8,
     delay: Math.random() * 6,
