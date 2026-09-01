@@ -131,6 +131,27 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  useEffect(() => {
+    const blockMenu = (e: MouseEvent) => e.preventDefault();
+    const blockKeys = (e: KeyboardEvent) => {
+      const k = e.key.toUpperCase();
+      if (
+        e.key === "F12" ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && ["I", "J", "C"].includes(k)) ||
+        ((e.ctrlKey || e.metaKey) && k === "U")
+      ) {
+        e.preventDefault();
+      }
+    };
+    document.addEventListener("contextmenu", blockMenu);
+    document.addEventListener("keydown", blockKeys);
+    return () => {
+      document.removeEventListener("contextmenu", blockMenu);
+      document.removeEventListener("keydown", blockKeys);
+    };
+  }, []);
+
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
