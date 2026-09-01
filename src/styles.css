@@ -120,6 +120,36 @@
   animation: marquee-x 28s linear infinite;
 }
 
+@keyframes fall-down {
+  0% {
+    transform: translateY(-10vh) translateX(0) scale(0.95);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(25vh) translateX(12px) scale(1);
+  }
+  50% {
+    transform: translateY(55vh) translateX(-10px) scale(1);
+  }
+  75% {
+    transform: translateY(85vh) translateX(8px) scale(0.98);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(115vh) translateX(-4px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@utility falling-commission {
+  animation-name: fall-down;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
 @keyframes money-shine {
   from {
     background-position: 0% 50%;
