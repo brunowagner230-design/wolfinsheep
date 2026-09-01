@@ -21,16 +21,20 @@ interface Drop {
   size: number;
 }
 
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]!;
+}
+
 function randomValue(): number {
   const values = [150, 200, 250, 300, 350, 400, 500, 600, 750, 900];
-  return values[Math.floor(Math.random() * values.length)];
+  return pick(values);
 }
 
 function generateDrop(id: number): Drop {
   return {
     id,
-    phrase: PHRASES[Math.floor(Math.random() * PHRASES.length)],
-    house: HOUSES[Math.floor(Math.random() * HOUSES.length)],
+    phrase: pick(PHRASES),
+    house: pick(HOUSES),
     value: `+R$ ${randomValue().toString()}`,
     left: Math.random() * 92 + 4,
     duration: 7 + Math.random() * 8,
