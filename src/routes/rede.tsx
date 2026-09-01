@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
