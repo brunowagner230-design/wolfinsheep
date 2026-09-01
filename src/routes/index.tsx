@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Gift, TrendingUp, Wallet, Zap } from "lucide-react";
-import { FallingCommissions } from "@/components/FallingCommissions";
 import { HouseMarquee } from "@/components/HouseMarquee";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
 import markImg from "@/assets/wolf-mark.png";
+import lockupImg from "@/assets/wolf-lockup.png";
 
 
 
@@ -54,8 +54,6 @@ const features = [
 function Home() {
   return (
     <div className="relative min-h-screen">
-      <FallingCommissions />
-
       <div className="relative z-10">
         <header className="flex items-center justify-between px-6 py-5 lg:px-12">
           <div className="flex items-center gap-3">
@@ -72,6 +70,11 @@ function Home() {
             alt=""
             aria-hidden
             className="pointer-events-none absolute -right-10 top-0 h-64 w-auto opacity-20 blur-[1px] lg:h-96"
+          />
+          <img
+            src={lockupImg}
+            alt="Wolf in Sheep Affiliates"
+            className="mb-8 h-24 w-auto drop-shadow-[0_0_28px_oklch(0.58_0.24_300/0.45)] lg:h-32"
           />
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
             CPA · Casas de aposta
