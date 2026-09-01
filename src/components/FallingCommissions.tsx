@@ -49,9 +49,9 @@ export function FallingCommissions() {
   const [mounted, setMounted] = useState(false);
   const drops = useMemo(
     () =>
-      Array.from({ length: 8 }).map((_, i) => ({
+      Array.from({ length: 6 }).map((_, i) => ({
         ...generateDrop(i),
-        startY: Math.random() * 70,
+        startY: Math.random() * 75,
       })),
     []
   );
@@ -70,22 +70,22 @@ export function FallingCommissions() {
       {drops.map((drop) => (
         <div
           key={drop.id}
-          className="falling-commission absolute flex items-center gap-1.5 rounded-full border border-success/20 bg-card/50 px-2 py-1 shadow-sm backdrop-blur-sm"
+          className="falling-commission absolute flex items-center gap-1.5 rounded-full border border-success/15 bg-card/35 px-2 py-1 opacity-40 shadow-sm backdrop-blur-sm"
           style={{
             left: `${drop.left}%`,
             top: `${drop.startY}vh`,
             animationDuration: `${drop.duration}s`,
             animationDelay: `${drop.delay}s`,
             fontSize: `${drop.size}rem`,
-            boxShadow: "0 0 16px oklch(0.7 0.16 155 / 0.18)",
+            boxShadow: "0 0 12px oklch(0.7 0.16 155 / 0.12)",
           }}
         >
-          <span className="size-1 shrink-0 rounded-full bg-success shadow-[0_0_6px_currentColor]" />
-          <span className="whitespace-nowrap font-medium text-foreground/80">
+          <span className="size-1 shrink-0 rounded-full bg-success/80 shadow-[0_0_5px_currentColor]" />
+          <span className="whitespace-nowrap font-medium text-foreground/70">
             {drop.phrase}
           </span>
-          <span className="whitespace-nowrap font-bold text-success">{drop.value}</span>
-          <span className="hidden whitespace-nowrap text-[0.7em] text-muted-foreground/80 sm:inline">
+          <span className="whitespace-nowrap font-bold text-success/90">{drop.value}</span>
+          <span className="hidden whitespace-nowrap text-[0.7em] text-muted-foreground/60 sm:inline">
             · {drop.house}
           </span>
         </div>
