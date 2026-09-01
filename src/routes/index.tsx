@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BarChart3, Network, ShieldCheck } from "lucide-react";
+import { ArrowRight, Gift, TrendingUp, Wallet, Zap } from "lucide-react";
 import { HouseMarquee } from "@/components/HouseMarquee";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,17 @@ import markImg from "@/assets/wolf-mark.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Wolf in Sheep Affiliates | Painel de acordos CPA" },
+      { title: "Wolf in Sheep Affiliates | Indicações CPA iGaming" },
       {
         name: "description",
         content:
-          "Painel de afiliados para gestão de acordos CPA das casas de aposta: planos, CPAs elegíveis, cliques, registros e rede de sub-afiliados.",
+          "Ganhe com indicações CPA no iGaming. Acesso aos melhores acordos, pagamentos rápidos via Pix e mais de R$ 15 milhões já pagos aos afiliados.",
       },
-      { property: "og:title", content: "Wolf in Sheep Affiliates | Painel de acordos CPA" },
+      { property: "og:title", content: "Wolf in Sheep Affiliates | Indicações CPA iGaming" },
       {
         property: "og:description",
         content:
-          "Gestão de acordos CPA, casas de aposta e rede de afiliados em um único painel.",
+          "Os melhores acordos CPA de iGaming. Pagamentos rápidos, transparentes e mais de R$ 15 milhões já liberados para afiliados.",
       },
     ],
   }),
@@ -28,19 +28,24 @@ export const Route = createFileRoute("/")({
 
 const features = [
   {
-    icon: BarChart3,
-    title: "Acordos e planos de CPA",
-    text: "Cada afiliado vê o acordo da casa, o plano de CPA, baseline, CPAs elegíveis, cliques e registros.",
+    icon: TrendingUp,
+    title: "Indicações CPA iGaming",
+    text: "Indique jogadores e afiliados para as principais casas de aposta do mercado e monetize cada conversão com acordos CPA claros.",
   },
   {
-    icon: Network,
-    title: "Rede de sub-afiliados",
-    text: "Compartilhe seu link, receba cadastros na sua rede e defina o plano de CPA de cada indicado.",
+    icon: Gift,
+    title: "Os melhores acordos do mercado",
+    text: "Negociamos condições exclusivas para você ter as maiores comissões, os melhores baselines e vantagens reais sobre a concorrência.",
   },
   {
-    icon: ShieldCheck,
-    title: "Área administradora",
-    text: "Cadastros, casas de aposta e lançamento de acordos de CPA sobre cada afiliado.",
+    icon: Wallet,
+    title: "+ de R$ 15 milhões em pagamentos",
+    text: "Já pagamos mais de 15 milhões em comissões para nossa rede de afiliados. Transparência total em cada lançamento e saque.",
+  },
+  {
+    icon: Zap,
+    title: "Pagamentos rápidos via Pix",
+    text: "Saque seu saldo disponível quando quiser. Processamos os pagamentos via Pix com aprovação administrativa ágil e segura.",
   },
 ];
 
