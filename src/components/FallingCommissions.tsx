@@ -66,6 +66,10 @@ export function FallingCommissions() {
     <div
       aria-hidden
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      style={{
+        maskImage: "linear-gradient(180deg, transparent 0%, black 18%, black 92%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(180deg, transparent 0%, black 18%, black 92%, transparent 100%)",
+      }}
     >
       {drops.map((drop) => (
         <div
