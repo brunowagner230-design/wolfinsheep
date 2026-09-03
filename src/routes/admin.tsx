@@ -205,17 +205,23 @@ function AdminPage() {
       title="Administração"
       subtitle="Afiliados cadastrados, casas de aposta e acordos de CPA."
     >
-      <div className="mb-6 max-w-md">
-        <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
-          Pesquisar e-mail, nome, código ou casa
-        </Label>
-        <Input
-          id="admin-search"
-          className="mt-2"
-          placeholder="ex.: afiliado@email.com"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="w-full max-w-md">
+          <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
+            Pesquisar e-mail, nome, código ou casa
+          </Label>
+          <Input
+            id="admin-search"
+            className="mt-2"
+            placeholder="ex.: afiliado@email.com"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Button className="gap-2" onClick={exportSpreadsheet}>
+          <FileSpreadsheet className="size-4" />
+          Exportar planilha (Excel)
+        </Button>
       </div>
 
       <Tabs defaultValue="metricas">
