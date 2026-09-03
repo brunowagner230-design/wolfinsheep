@@ -168,6 +168,28 @@ function AdminPage() {
       )
     : deals;
 
+  const exportSpreadsheet = async () => {
+    if (filteredProfiles.length === 0) {
+      toast.error("Nenhum afiliado para exportar.");
+      return;
+    }
+    const XLSX = await import("xlsx");
+    const rows = filteredProfiles.map((p) => ({
+      Nome: p.full_name || "",
+      "E-mail": p.email || "",
+      Celular: p.phone || "",
+      "Link de divulgação": p.promo_link || "",
+      "Código": p.referral_code || "",
+      CPA: "",
+    }));
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    sheet["!cols"] = [{ wch: 28 }, { wch: 32 }, { wch: 18 }, { wch: 45 }, { wch: 14 }, { wch: 12 }];
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Afiliados");
+    XLSX.writeFile(book, `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success("Planilha gerada!");
+  };
+
   if (!loading && !isAdmin) {
     return (
       <AppShell title="Administração">
