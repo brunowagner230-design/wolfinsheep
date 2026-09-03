@@ -143,7 +143,7 @@ function WalletPage() {
         <div className="flex-1">
           <p className="font-display text-lg font-bold">Sacar comissões via Pix</p>
           <p className="text-sm text-muted-foreground">
-            Saque mínimo de R$ 50,00 · pagamento após aprovação da administração.
+            Saque mínimo de R$ 210,00 · pagamento após aprovação da administração.
           </p>
         </div>
         <WithdrawDialog
@@ -224,8 +224,8 @@ function WithdrawDialog({
 
   const save = async () => {
     const value = Number(amount);
-    if (!Number.isFinite(value) || value < 50) {
-      toast.error("O valor mínimo de saque é R$ 50,00");
+    if (!Number.isFinite(value) || value < 210) {
+      toast.error("O valor mínimo de saque é R$ 210,00");
       return;
     }
     if (value > available) {
@@ -275,7 +275,7 @@ function WithdrawDialog({
                 <Input
                   id="w-amount"
                   type="number"
-                  min="50"
+                  min="210"
                   step="0.01"
                   placeholder="0,00"
                   value={amount}
@@ -295,7 +295,7 @@ function WithdrawDialog({
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <span>Disponível: {brl(available)}</span>
                 <div className="flex gap-1">
-                  {[50, 100, 250].map((v) => (
+                  {[210, 500, 1000].map((v) => (
                     <button
                       key={v}
                       type="button"
