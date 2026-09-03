@@ -42,7 +42,7 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X } from "lucide-react";
+import { Trash2, Check, X, FileSpreadsheet } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -168,6 +168,28 @@ function AdminPage() {
       )
     : deals;
 
+  const exportSpreadsheet = async () => {
+    if (filteredProfiles.length === 0) {
+      toast.error("Nenhum afiliado para exportar.");
+      return;
+    }
+    const XLSX = await import("xlsx");
+    const rows = filteredProfiles.map((p) => ({
+      Nome: p.full_name || "",
+      "E-mail": p.email || "",
+      Celular: p.phone || "",
+      "Link de divulgação": p.promo_link || "",
+      "Código": p.referral_code || "",
+      CPA: "",
+    }));
+    const sheet = XLSX.utils.json_to_sheet(rows);
+    sheet["!cols"] = [{ wch: 28 }, { wch: 32 }, { wch: 18 }, { wch: 45 }, { wch: 14 }, { wch: 12 }];
+    const book = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(book, sheet, "Afiliados");
+    XLSX.writeFile(book, `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    toast.success("Planilha gerada!");
+  };
+
   if (!loading && !isAdmin) {
     return (
       <AppShell title="Administração">
@@ -183,17 +205,23 @@ function AdminPage() {
       title="Administração"
       subtitle="Afiliados cadastrados, casas de aposta e acordos de CPA."
     >
-      <div className="mb-6 max-w-md">
-        <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
-          Pesquisar e-mail, nome, código ou casa
-        </Label>
-        <Input
-          id="admin-search"
-          className="mt-2"
-          placeholder="ex.: afiliado@email.com"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="w-full max-w-md">
+          <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
+            Pesquisar e-mail, nome, código ou casa
+          </Label>
+          <Input
+            id="admin-search"
+            className="mt-2"
+            placeholder="ex.: afiliado@email.com"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Button className="gap-2" onClick={exportSpreadsheet}>
+          <FileSpreadsheet className="size-4" />
+          Exportar planilha (Excel)
+        </Button>
       </div>
 
       <Tabs defaultValue="metricas">
