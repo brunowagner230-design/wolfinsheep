@@ -38,6 +38,11 @@ export function HouseBadge({ name }: { name: string | null | undefined }) {
         className="size-5 shrink-0 rounded-sm object-contain"
       />
       <span className="truncate font-semibold leading-none">{name}</span>
+      {isWeeklyPayout(name) && (
+        <span className="shrink-0 rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-primary">
+          Saque semanal
+        </span>
+      )}
     </span>
   );
 }
