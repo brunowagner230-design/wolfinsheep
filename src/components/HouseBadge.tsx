@@ -1,6 +1,11 @@
 import betanoLogo from "@/assets/betano-logo.png";
+import apostaTudoLogo from "@/assets/aposta-tudo.jpeg";
 
-const LOGOS: Record<string, string> = { betano: betanoLogo };
+const LOGOS: Record<string, string> = {
+  betano: betanoLogo,
+  "aposta-tudo": apostaTudoLogo,
+  "aposta tudo": apostaTudoLogo,
+};
 
 export function houseLogo(name?: string | null) {
   if (!name) return null;
