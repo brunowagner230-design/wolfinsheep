@@ -13,10 +13,23 @@ export function houseLogo(name?: string | null) {
   return key ? LOGOS[key] : null;
 }
 
+export const isWeeklyPayout = (name?: string | null) =>
+  !!name && name.toLowerCase().replace("-", " ").includes("aposta tudo");
+
 export function HouseBadge({ name }: { name: string | null | undefined }) {
   const logo = houseLogo(name);
   if (!name) return <span className="text-muted-foreground">—</span>;
-  if (!logo) return <span>{name}</span>;
+  if (!logo)
+    return (
+      <span className="inline-flex max-w-full items-center gap-2">
+        <span className="truncate">{name}</span>
+        {isWeeklyPayout(name) && (
+          <span className="shrink-0 rounded-full border border-primary/40 bg-primary/15 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wide text-primary">
+            Saque semanal
+          </span>
+        )}
+      </span>
+    );
   return (
     <span className="inline-flex max-w-full items-center gap-2 overflow-hidden rounded-full border border-[oklch(0.78_0.17_150/0.4)] bg-[oklch(0.78_0.17_150/0.12)] py-1 pl-1.5 pr-3 align-middle">
       <img
