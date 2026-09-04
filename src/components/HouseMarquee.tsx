@@ -9,6 +9,7 @@ const houses = [
   { name: "Blaze", color: "oklch(0.72 0.2 40)" },
   { name: "Vera Bet", color: "oklch(0.74 0.17 330)" },
   { name: "Bet7k", color: "oklch(0.76 0.17 170)" },
+  { name: "Aposta-Tudo", color: "oklch(0.7 0.22 320)" },
   { name: "Esportiva Bet", color: "oklch(0.74 0.18 130)" },
   { name: "MC Games", color: "oklch(0.75 0.18 60)" },
 ];
