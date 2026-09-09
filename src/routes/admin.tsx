@@ -407,6 +407,107 @@ function AdminPage() {
           </Card>
         </TabsContent>
         <TabsContent value="saques" className="pt-6">
+          <div className="mb-6 grid gap-4 sm:grid-cols-3">
+            <Card className="money-panel border-success/40">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Total já pago
+                </CardTitle>
+                <Check className="size-4 text-success" />
+              </CardHeader>
+              <CardContent>
+                <p className="font-display text-3xl font-bold text-success">{brl(totalPaid)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {paidWithdrawals.length} saque(s) pago(s)
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="glow-panel border-border/60">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Aguardando pagamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-display text-3xl font-bold">{brl(totalPending)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {withdrawals.filter((w) => w.status === "pendente").length} pendente(s)
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="glow-panel border-destructive/40">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Total rejeitado
+                </CardTitle>
+                <X className="size-4 text-destructive" />
+              </CardHeader>
+              <CardContent>
+                <p className="font-display text-3xl font-bold text-destructive">
+                  {brl(totalRejected)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {withdrawals.filter((w) => w.status === "rejeitado").length} rejeitado(s)
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="money-panel border-primary/30 mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Relatório de pagamentos realizados ({paidWithdrawals.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {paidWithdrawals.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum pagamento realizado ainda. Quando você marcar um saque como pago, ele
+                  aparece aqui somando no total.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Afiliado</TableHead>
+                      <TableHead>Chave Pix</TableHead>
+                      <TableHead>Data do pagamento</TableHead>
+                      <TableHead className="text-right">Valor pago</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paidWithdrawals.map((w) => (
+                      <TableRow key={w.id}>
+                        <TableCell className="font-medium">
+                          {w.profiles?.full_name || w.profiles?.email || "—"}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {w.pix_key_type.toUpperCase()} · {w.pix_key}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {w.processed_at
+                            ? new Date(w.processed_at).toLocaleDateString("pt-BR")
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-success">
+                          {brl(Number(w.amount))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-right font-bold">
+                        TOTAL PAGO
+                      </TableCell>
+                      <TableCell className="text-right font-display text-lg font-bold text-success">
+                        {brl(totalPaid)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="money-panel border-primary/30">
             <CardHeader>
               <CardTitle className="text-base">
