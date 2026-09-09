@@ -117,6 +117,15 @@ function AdminPage() {
     },
   });
 
+  const paidWithdrawals = withdrawals.filter((w) => w.status === "aprovado");
+  const totalPaid = paidWithdrawals.reduce((s, w) => s + Number(w.amount), 0);
+  const totalPending = withdrawals
+    .filter((w) => w.status === "pendente")
+    .reduce((s, w) => s + Number(w.amount), 0);
+  const totalRejected = withdrawals
+    .filter((w) => w.status === "rejeitado")
+    .reduce((s, w) => s + Number(w.amount), 0);
+
   const setWithdrawStatus = async (id: string, status: string) => {
     const { error } = await supabase
       .from("withdrawals")
