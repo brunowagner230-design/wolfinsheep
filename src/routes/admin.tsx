@@ -417,9 +417,6 @@ function AdminPage() {
               </CardHeader>
               <CardContent>
                 <p className="font-display text-3xl font-bold text-success">{brl(totalPaid)}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {paidWithdrawals.length} saque(s) pago(s)
-                </p>
               </CardContent>
             </Card>
             <Card className="glow-panel border-border/60">
