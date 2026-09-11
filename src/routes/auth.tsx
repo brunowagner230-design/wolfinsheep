@@ -103,7 +103,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
+    <div className="grid min-h-screen grid-cols-[minmax(0,1fr)] lg:grid-cols-2">
       <div className="relative hidden flex-col justify-between overflow-hidden border-r border-border p-12 lg:flex glow-panel">
         <img
           src={bannerImg}
@@ -130,8 +130,8 @@ function AuthPage() {
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-8 p-6">
-        <div className="w-full max-w-sm">
+      <div className="flex min-w-0 flex-col items-center justify-center gap-8 p-6">
+        <div className="w-full min-w-0 max-w-sm">
           <div className="mb-8 lg:hidden">
             <Wordmark className="h-7" />
           </div>
@@ -214,7 +214,7 @@ function AuthPage() {
             </TabsContent>
           </Tabs>
         </div>
-        <div className="w-full max-w-sm lg:hidden">
+        <div className="w-full min-w-0 max-w-sm lg:hidden">
           <HouseMarquee />
         </div>
       </div>

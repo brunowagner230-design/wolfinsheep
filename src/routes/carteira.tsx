@@ -231,13 +231,13 @@ function WalletPage() {
                   type="button"
                   onClick={() => setSelected(b.key)}
                   className={cn(
-                    "rounded-2xl border p-5 text-left transition-all",
+                    "w-full min-w-0 rounded-2xl border p-5 text-left transition-all",
                     isActive
                       ? "money-panel border-primary/60 shadow-lg"
                       : "glow-panel border-border/60 hover:border-primary/40",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     {b.key === NETWORK_KEY ? (
                       <span className="inline-flex items-center gap-2 text-sm font-semibold">
                         <Network className="size-4 text-primary" /> Comissões da rede
