@@ -1251,13 +1251,33 @@ function LinkRequestCard({
   const [saving, setSaving] = useState(false);
   const sb = supabase as unknown as { from: (t: string) => any };
 
+  const { data: plan } = useQuery({
+    queryKey: ["link-request-plan", request.user_id, request.house_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("network_plans")
+        .select("cpa_amount, house_id")
+        .eq("downline_id", request.user_id)
+        .order("created_at", { ascending: false });
+      const rows = data ?? [];
+      const match =
+        rows.find((r: any) => r.house_id === request.house_id) ??
+        rows.find((r: any) => !r.house_id) ??
+        null;
+      return match ? Number(match.cpa_amount) : null;
+    },
+  });
+
+  const autoAmount = plan && plan > 0 ? plan : null;
+  const effectiveAmount = autoAmount ?? (Number(form.cpa_amount) || 0);
+
   const release = async () => {
     if (!form.promo_link.trim()) {
       toast.error("Informe o link de divulgação.");
       return;
     }
     setSaving(true);
-    const amount = Number(form.cpa_amount) || 0;
+    const amount = effectiveAmount;
     const link = form.promo_link.trim().slice(0, 500);
     const houseName = request.betting_houses?.name ?? "Acordo CPA";
 
