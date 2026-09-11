@@ -12,7 +12,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, type ReactNode } from "react";
-import { InstallAppButton } from "@/components/InstallAppButton";
+import { EnableNotificationsButton, InstallAppButton } from "@/components/InstallAppButton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
