@@ -999,21 +999,25 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [country, setCountry] = useState("BR");
+  const [logoUrl, setLogoUrl] = useState("");
 
   const save = async () => {
     if (!name.trim()) {
       toast.error("Informe o nome da casa");
       return;
     }
-    const { error } = await supabase
-      .from("betting_houses")
-      .insert({ name: name.trim().slice(0, 120), country: country.trim().slice(0, 8) || "BR" });
+    const { error } = await supabase.from("betting_houses").insert({
+      name: name.trim().slice(0, 120),
+      country: country.trim().slice(0, 8) || "BR",
+      logo_url: logoUrl.trim() ? logoUrl.trim().slice(0, 500) : null,
+    });
     if (error) {
       toast.error(error.message);
       return;
     }
     toast.success("Casa cadastrada!");
     setName("");
+    setLogoUrl("");
     setOpen(false);
     onSaved();
   };

@@ -16,8 +16,14 @@ export function houseLogo(name?: string | null) {
 export const isWeeklyPayout = (name?: string | null) =>
   !!name && name.toLowerCase().replace("-", " ").includes("aposta tudo");
 
-export function HouseBadge({ name }: { name: string | null | undefined }) {
-  const logo = houseLogo(name);
+export function HouseBadge({
+  name,
+  logoUrl,
+}: {
+  name: string | null | undefined;
+  logoUrl?: string | null;
+}) {
+  const logo = houseLogo(name) ?? (logoUrl || null);
   if (!name) return <span className="text-muted-foreground">—</span>;
   if (!logo)
     return (
