@@ -466,6 +466,9 @@ function AdminPage() {
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
+          <TabsTrigger value="suporte" className="gap-2">
+            <MessageCircle className="size-4" /> Suporte
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="solicitacoes" className="pt-6">
