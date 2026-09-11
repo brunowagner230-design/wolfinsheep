@@ -258,9 +258,10 @@ function NetworkPage() {
             })}
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            Você ganha {rateOf(1)}% do faturamento em CPA dos seus afiliados diretos,{" "}
-            {rateOf(2)}% dos afiliados deles e {rateOf(3)}% do terceiro nível. As comissões entram
-            automaticamente no saldo da sua carteira.
+            Seu ganho é o valor fixo da diferença: se o seu CPA é R$ 100 e você repassa R$ 80 ao
+            seu afiliado direto, você ganha R$ 20 por CPA validado — e continua ganhando esses R$ 20
+            em cada CPA dos níveis 2 e 3 daquela linha, mesmo que eles repassem valores menores
+            entre si. As comissões entram automaticamente no saldo da sua carteira.
           </p>
         </CardContent>
       </Card>
