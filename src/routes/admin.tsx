@@ -440,7 +440,7 @@ function AdminPage() {
       </div>
 
       <Tabs defaultValue="solicitacoes">
-        <TabsList>
+        <TabsList className="h-auto w-full flex-wrap justify-start">
           <TabsTrigger value="solicitacoes">
             Solicitações de links
             {pendingRequests.length > 0 && (

@@ -231,7 +231,7 @@ function WalletPage() {
                   type="button"
                   onClick={() => setSelected(b.key)}
                   className={cn(
-                    "rounded-2xl border p-5 text-left transition-all",
+                    "w-full min-w-0 rounded-2xl border p-5 text-left transition-all",
                     isActive
                       ? "money-panel border-primary/60 shadow-lg"
                       : "glow-panel border-border/60 hover:border-primary/40",
