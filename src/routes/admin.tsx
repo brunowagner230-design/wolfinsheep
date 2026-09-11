@@ -1391,15 +1391,13 @@ function LinkRequestCard({
               </Badge>
             </div>
           ) : (
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.cpa_amount}
-              onChange={(e) => setForm((f) => ({ ...f, cpa_amount: e.target.value }))}
-            />
+            <div className="rounded-md border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
+              Aguardando o gerente da rede definir o CPA deste afiliado em Minha rede. Você pode
+              liberar o link agora — o valor entra automaticamente quando ele for definido.
+            </div>
           )}
         </div>
+
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
