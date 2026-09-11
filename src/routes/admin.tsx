@@ -209,32 +209,42 @@ function AdminPage() {
   };
 
   const q = search.trim().toLowerCase();
-  const filteredProfiles = q
-    ? profiles.filter(
-        (p) =>
-          p.email.toLowerCase().includes(q) ||
-          p.full_name.toLowerCase().includes(q) ||
-          p.referral_code.toLowerCase().includes(q),
-      )
-    : profiles;
-  const filteredDeals = q
-    ? deals.filter(
-        (d) =>
-          (d.profiles?.email ?? "").toLowerCase().includes(q) ||
-          (d.profiles?.full_name ?? "").toLowerCase().includes(q) ||
-          (d.betting_houses?.name ?? "").toLowerCase().includes(q),
-      )
-    : deals;
+  const matchHouse = (id?: string | null) => houseFilter === "todas" || id === houseFilter;
+
+  const houseAffiliateIds = new Set(
+    deals.filter((d) => matchHouse(d.house_id)).map((d) => d.affiliate_id),
+  );
+
+  const filteredProfiles = profiles.filter((p) => {
+    const okText =
+      !q ||
+      p.email.toLowerCase().includes(q) ||
+      p.full_name.toLowerCase().includes(q) ||
+      (p.phone ?? "").toLowerCase().includes(q) ||
+      p.referral_code.toLowerCase().includes(q);
+    const okHouse = houseFilter === "todas" || houseAffiliateIds.has(p.id);
+    return okText && okHouse;
+  });
+
+  const filteredDeals = deals.filter((d) => {
+    const okText =
+      !q ||
+      (d.profiles?.email ?? "").toLowerCase().includes(q) ||
+      (d.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+      (d.betting_houses?.name ?? "").toLowerCase().includes(q);
+    return okText && matchHouse(d.house_id);
+  });
 
   const pendingRequests = linkRequests.filter((r) => r.status === "pendente");
-  const filteredRequests: AdminLinkRequest[] = q
-    ? linkRequests.filter(
-        (r) =>
-          (r.profiles?.email ?? "").toLowerCase().includes(q) ||
-          (r.profiles?.full_name ?? "").toLowerCase().includes(q) ||
-          (r.betting_houses?.name ?? "").toLowerCase().includes(q),
-      )
-    : linkRequests;
+  const filteredRequests: AdminLinkRequest[] = linkRequests.filter((r) => {
+    const okText =
+      !q ||
+      (r.profiles?.email ?? "").toLowerCase().includes(q) ||
+      (r.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+      (r.betting_houses?.name ?? "").toLowerCase().includes(q);
+    const okStatus = statusFilter === "todos" || r.status === statusFilter;
+    return okText && okStatus && matchHouse(r.house_id);
+  });
 
   const exportSpreadsheet = async () => {
     if (filteredProfiles.length === 0) {
