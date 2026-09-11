@@ -164,15 +164,6 @@ function NetworkPage() {
     },
   });
 
-  // Ganho fixo por CPA em cada nível: diferença entre o seu teto e o valor repassado
-  const perCpaOf = (level: number) => {
-    const rows = cascade.filter((c) => c.level === level && Number(c.cpas) > 0);
-    const cpas = rows.reduce((s, r) => s + Number(r.cpas), 0);
-    if (cpas > 0) return rows.reduce((s, r) => s + Number(r.commission), 0) / cpas;
-    const cap = Math.max(0, ...Object.values(caps), 0);
-    const passed = Math.max(0, ...plans.map((p) => Number(p.cpa_amount) || 0), 0);
-    return cap > 0 && passed > 0 ? cap - passed : 0;
-  };
   const levelTotal = (level: number) =>
     cascade.filter((c) => c.level === level).reduce((s, c) => s + Number(c.commission), 0);
   const networkTotal = cascade.reduce((s, c) => s + Number(c.commission), 0);
@@ -221,9 +212,6 @@ function NetworkPage() {
                 >
                   <div className="flex items-baseline justify-between">
                     <p className="font-display text-lg font-bold">Nível {level}</p>
-                    <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-                      {brl(perCpaOf(level))} / CPA
-                    </span>
                   </div>
                   <p className="mt-2 font-display text-2xl font-bold">{brl(levelTotal(level))}</p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
@@ -255,8 +243,13 @@ function NetworkPage() {
                           key={r.affiliate_id}
                           className="flex items-center justify-between gap-2 text-xs"
                         >
-                          <span className="truncate">
-                            {r.affiliate_name || r.affiliate_email}
+                       <span className="min-w-0 truncate">
+                            <span className="block truncate font-medium">
+                              {r.affiliate_name || "Sem nome"}
+                            </span>
+                            <span className="block truncate text-muted-foreground">
+                              {r.affiliate_email}
+                            </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-2">
                             <span className="rounded-full bg-primary/15 px-2 py-0.5 font-semibold text-primary">
@@ -372,6 +365,53 @@ function NetworkPage() {
           )}
         </CardContent>
       </Card>
+
+      {[2, 3].map((level) => {
+        const rows = cascade.filter((c) => c.level === level);
+        return (
+          <Card key={level} className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Afiliados do nível {level} ({rows.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {rows.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Quando seus afiliados indicarem, o nível {level} aparece aqui.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Afiliado</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead className="text-right">CPAs</TableHead>
+                        <TableHead className="text-right">Sua comissão</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.map((r) => (
+                        <TableRow key={r.affiliate_id}>
+                          <TableCell className="font-medium">
+                            {r.affiliate_name || "Sem nome"}
+                          </TableCell>
+                          <TableCell className="text-sm">{r.affiliate_email}</TableCell>
+                          <TableCell className="text-right">{Number(r.cpas)}</TableCell>
+                          <TableCell className="text-right font-semibold text-success">
+                            {brl(Number(r.commission))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </AppShell>
   );
 }
