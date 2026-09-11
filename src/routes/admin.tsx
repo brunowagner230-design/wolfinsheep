@@ -43,7 +43,18 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown, Search } from "lucide-react";
+import {
+  Trash2,
+  Check,
+  X,
+  FileSpreadsheet,
+  Plus,
+  ChevronDown,
+  Search,
+  Pencil,
+  MessageCircle,
+  Send,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
