@@ -1,17 +1,33 @@
-// Service worker mínimo: habilita a instalação do app e o clique nas notificações.
+// Service worker: instalação do app + notificações push (app aberto ou fechado).
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+function show(data) {
+  return self.registration.showNotification(data.title || "Wolf in Sheep Affiliates", {
+    body: data.body || "",
+    icon: "/favicon.png",
+    badge: "/favicon.png",
+    vibrate: [120, 60, 120],
+    tag: data.tag,
+    renotify: true,
+    data: { url: data.url || "/dashboard" },
+  });
+}
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(show(data));
+});
 
 self.addEventListener("message", (event) => {
   const data = event.data || {};
   if (data.type === "notify" && self.registration.showNotification) {
-    self.registration.showNotification(data.title || "Wolf in Sheep Affiliates", {
-      body: data.body || "",
-      icon: "/favicon.png",
-      badge: "/favicon.png",
-      tag: data.tag,
-      data: { url: data.url || "/dashboard" },
-    });
+    event.waitUntil(show(data));
   }
 });
 
