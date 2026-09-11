@@ -104,6 +104,20 @@ function AdminPage() {
     },
   });
 
+  const { data: linkRequests = [] } = useQuery({
+    queryKey: ["admin-link-requests"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const sb = supabase as unknown as { from: (t: string) => any };
+      const { data, error } = await sb
+        .from("link_requests")
+        .select("*, betting_houses(name), profiles(full_name, email)")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as AdminLinkRequest[];
+    },
+  });
+
   const { data: withdrawals = [] } = useQuery({
     queryKey: ["admin-withdrawals"],
     enabled: isAdmin,
