@@ -325,20 +325,25 @@ function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Cliques, registros e CPAs validados ({filteredDeals.length})
+                Afiliados · clique no e-mail para configurar o CPA ({filteredProfiles.length})
               </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Selecione o afiliado, escolha a casa de aposta e use{" "}
+                <strong className="text-foreground">+1 CPA</strong> para lançar na hora. O afiliado
+                recebe a notificação automaticamente.
+              </p>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {filteredDeals.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum acordo encontrado.</p>
+              {filteredProfiles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum afiliado encontrado.</p>
               ) : (
-                filteredDeals.map((d) => (
-                  <MetricsRow
-                    key={d.id}
-                    deal={d}
-                    onSaved={() => {
-                      qc.invalidateQueries({ queryKey: ["admin-deals"] });
-                    }}
+                filteredProfiles.map((p) => (
+                  <AffiliateMetricsCard
+                    key={p.id}
+                    profile={p}
+                    deals={deals.filter((d) => d.affiliate_id === p.id)}
+                    houses={houses}
+                    onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
                   />
                 ))
               )}
