@@ -1277,13 +1277,17 @@ function LinkRequestCard({
       return;
     }
     setSaving(true);
-    const amount = effectiveAmount;
+    const amount = autoAmount;
     const link = form.promo_link.trim().slice(0, 500);
     const houseName = request.betting_houses?.name ?? "Acordo CPA";
 
     const { error } = await sb
       .from("link_requests")
-      .update({ promo_link: link, cpa_amount: amount, status: "liberado" })
+      .update({
+        promo_link: link,
+        ...(amount !== null ? { cpa_amount: amount } : {}),
+        status: "liberado",
+      })
       .eq("id", request.id);
 
     if (error) {
@@ -1304,14 +1308,18 @@ function LinkRequestCard({
     const dealResult = existing?.[0]?.id
       ? await supabase
           .from("affiliate_deals")
-          .update({ cpa_amount: amount, deal_name: houseName })
+          .update({
+            ...(amount !== null ? { cpa_amount: amount } : {}),
+            deal_name: houseName,
+          })
           .eq("id", existing[0].id)
       : await supabase.from("affiliate_deals").insert({
           affiliate_id: request.user_id,
           house_id: request.house_id,
           deal_name: houseName,
-          cpa_amount: amount,
+          cpa_amount: amount ?? 0,
         });
+
 
     setSaving(false);
     if (dealResult.error) {
