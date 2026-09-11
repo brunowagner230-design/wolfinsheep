@@ -1,4 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { flushPush } from "@/lib/push.functions";
 import {
   LayoutDashboard,
   Handshake,
@@ -56,6 +58,17 @@ export function AppShell({
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
   }, [loading, user, navigate]);
+
+  const flush = useServerFn(flushPush);
+  useEffect(() => {
+    if (!user) return;
+    const run = () => {
+      flush({}).catch(() => undefined);
+    };
+    run();
+    const id = window.setInterval(run, 30_000);
+    return () => window.clearInterval(id);
+  }, [user, flush]);
 
   if (loading || !user) {
     return (
