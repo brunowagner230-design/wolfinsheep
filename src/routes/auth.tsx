@@ -214,7 +214,7 @@ function AuthPage() {
             </TabsContent>
           </Tabs>
         </div>
-        <div className="w-full max-w-sm lg:hidden">
+        <div className="w-full min-w-0 max-w-sm lg:hidden">
           <HouseMarquee />
         </div>
       </div>
