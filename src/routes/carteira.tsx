@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BanknoteArrowUp, Coins, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { BanknoteArrowUp, Coins, Clock, CheckCircle2, XCircle, Network } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -125,7 +125,8 @@ function WalletPage() {
     { label: "Saldo disponível", value: brl(available), icon: Coins, glow: true },
     { label: "Em análise", value: brl(pending), icon: Clock, glow: false },
     { label: "Já pago via Pix", value: brl(paid), icon: CheckCircle2, glow: false },
-    { label: "Comissões geradas", value: brl(earned), icon: BanknoteArrowUp, glow: false },
+    { label: "CPA próprio", value: brl(ownEarned), icon: BanknoteArrowUp, glow: false },
+    { label: "Comissões da rede", value: brl(networkEarned), icon: Network, glow: false },
   ];
 
   return (
