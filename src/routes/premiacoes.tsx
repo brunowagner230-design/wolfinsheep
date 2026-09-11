@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Trophy, Lock } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WolfMark } from "@/components/Wordmark";
+import { Wordmark } from "@/components/Wordmark";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AWARD_TIERS, tierProgress } from "@/lib/awards";
