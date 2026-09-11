@@ -107,6 +107,21 @@ export type Database = {
         }
         Relationships: []
       }
+      cascade_settings: {
+        Row: {
+          level: number
+          percent: number
+        }
+        Insert: {
+          level: number
+          percent?: number
+        }
+        Update: {
+          level?: number
+          percent?: number
+        }
+        Relationships: []
+      }
       network_plans: {
         Row: {
           baseline: string
@@ -156,6 +171,44 @@ export type Database = {
           {
             foreignKeyName: "network_plans_upline_id_fkey"
             columns: ["upline_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          read: boolean
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          title?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          read?: boolean
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -285,6 +338,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cascade_network: {
+        Args: { _user_id: string }
+        Returns: {
+          affiliate_email: string
+          affiliate_id: string
+          affiliate_name: string
+          commission: number
+          cpas: number
+          gross: number
+          level: number
+        }[]
+      }
       gen_ref_code: { Args: never; Returns: string }
       has_role: {
         Args: {
