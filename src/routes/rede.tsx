@@ -365,6 +365,53 @@ function NetworkPage() {
           )}
         </CardContent>
       </Card>
+
+      {[2, 3].map((level) => {
+        const rows = cascade.filter((c) => c.level === level);
+        return (
+          <Card key={level} className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Afiliados do nível {level} ({rows.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {rows.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Quando seus afiliados indicarem, o nível {level} aparece aqui.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Afiliado</TableHead>
+                        <TableHead>E-mail</TableHead>
+                        <TableHead className="text-right">CPAs</TableHead>
+                        <TableHead className="text-right">Sua comissão</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.map((r) => (
+                        <TableRow key={r.affiliate_id}>
+                          <TableCell className="font-medium">
+                            {r.affiliate_name || "Sem nome"}
+                          </TableCell>
+                          <TableCell className="text-sm">{r.affiliate_email}</TableCell>
+                          <TableCell className="text-right">{Number(r.cpas)}</TableCell>
+                          <TableCell className="text-right font-semibold text-success">
+                            {brl(Number(r.commission))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
     </AppShell>
   );
 }
