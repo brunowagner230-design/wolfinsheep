@@ -226,10 +226,22 @@ function NetworkPage() {
                     </span>
                   </div>
                   <p className="mt-2 font-display text-2xl font-bold">{brl(levelTotal(level))}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {rows.length} afiliado(s) ·{" "}
-                    {rows.reduce((s, r) => s + Number(r.cpas), 0)} CPA validados
-                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                        CPAs do nível {level}
+                      </p>
+                      <p className="font-display text-xl font-bold text-primary">
+                        {rows.reduce((s, r) => s + Number(r.cpas), 0)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Afiliados
+                      </p>
+                      <p className="font-display text-xl font-bold">{rows.length}</p>
+                    </div>
+                  </div>
                   <div className="mt-3 space-y-1.5">
                     {rows.length === 0 ? (
                       <p className="text-xs text-muted-foreground">
