@@ -192,7 +192,13 @@ function DashboardPage() {
     { label: "CPAs elegíveis", value: totals.cpa.toString(), icon: Handshake },
     { label: "Cliques", value: totals.clicks.toLocaleString("pt-BR"), icon: MousePointerClick },
     { label: "Registros", value: totals.regs.toLocaleString("pt-BR"), icon: UserPlus },
-    { label: "Estimativa CPA", value: brl(totals.revenue), icon: Wallet },
+    { label: "Ganhos CPA próprios", value: brl(totals.revenue), icon: Wallet },
+    { label: "Ganhos com rede", value: brl(networkEarnings), icon: Network },
+    {
+      label: "Ganhos totais",
+      value: brl(totals.revenue + networkEarnings),
+      icon: TrendingUp,
+    },
   ];
 
   return (
