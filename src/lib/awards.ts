@@ -9,20 +9,6 @@ export type AwardTier = {
 
 export const AWARD_TIERS: AwardTier[] = [
   {
-    label: "10K",
-    goal: 10_000,
-    metal: "linear-gradient(150deg, oklch(0.72 0.06 250), oklch(0.42 0.04 265))",
-    ring: "oklch(0.75 0.05 250 / 0.55)",
-    plate: "linear-gradient(160deg, oklch(0.32 0.05 250), oklch(0.18 0.03 265))",
-  },
-  {
-    label: "30K",
-    goal: 30_000,
-    metal: "linear-gradient(150deg, oklch(0.8 0.05 200), oklch(0.45 0.05 230))",
-    ring: "oklch(0.8 0.06 205 / 0.55)",
-    plate: "linear-gradient(160deg, oklch(0.33 0.06 205), oklch(0.18 0.03 230))",
-  },
-  {
     label: "50K",
     goal: 50_000,
     metal: "linear-gradient(150deg, oklch(0.82 0.04 150), oklch(0.44 0.07 165))",
