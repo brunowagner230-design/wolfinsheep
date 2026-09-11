@@ -237,7 +237,7 @@ function WalletPage() {
                       : "glow-panel border-border/60 hover:border-primary/40",
                   )}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     {b.key === NETWORK_KEY ? (
                       <span className="inline-flex items-center gap-2 text-sm font-semibold">
                         <Network className="size-4 text-primary" /> Comissões da rede
