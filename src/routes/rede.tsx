@@ -164,17 +164,15 @@ function NetworkPage() {
     },
   });
 
-  const { data: rates = [] } = useQuery({
-    queryKey: ["cascade-settings"],
-    queryFn: async () => {
-      const sb = supabase as unknown as { from: (t: string) => any };
-      const { data, error } = await sb.from("cascade_settings").select("*").order("level");
-      if (error) throw error;
-      return (data ?? []) as { level: number; percent: number | string }[];
-    },
-  });
-
-  const rateOf = (level: number) => Number(rates.find((r) => r.level === level)?.percent ?? 0);
+  // Ganho fixo por CPA em cada nível: diferença entre o seu teto e o valor repassado
+  const perCpaOf = (level: number) => {
+    const rows = cascade.filter((c) => c.level === level && Number(c.cpas) > 0);
+    const cpas = rows.reduce((s, r) => s + Number(r.cpas), 0);
+    if (cpas > 0) return rows.reduce((s, r) => s + Number(r.commission), 0) / cpas;
+    const cap = Math.max(0, ...Object.values(caps), 0);
+    const passed = Math.max(0, ...plans.map((p) => Number(p.cpa_amount) || 0), 0);
+    return cap > 0 && passed > 0 ? cap - passed : 0;
+  };
   const levelTotal = (level: number) =>
     cascade.filter((c) => c.level === level).reduce((s, c) => s + Number(c.commission), 0);
   const networkTotal = cascade.reduce((s, c) => s + Number(c.commission), 0);
