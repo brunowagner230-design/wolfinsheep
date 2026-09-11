@@ -134,7 +134,7 @@ function WalletPage() {
       title="Carteira"
       subtitle="Comissões de CPA liberadas, chave Pix e histórico de saques."
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((c) => (
           <Card
             key={c.label}

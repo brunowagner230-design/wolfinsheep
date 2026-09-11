@@ -143,6 +143,32 @@ function NetworkPage() {
       ? `${window.location.origin}/auth?ref=${me.referral_code}`
       : "";
 
+  const { data: cascade = [] } = useQuery({
+    queryKey: ["cascade", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const rpc = supabase as unknown as { rpc: (fn: string, args: unknown) => any };
+      const { data, error } = await rpc.rpc("cascade_network", { _user_id: user!.id });
+      if (error) throw error;
+      return (data ?? []) as CascadeRow[];
+    },
+  });
+
+  const { data: rates = [] } = useQuery({
+    queryKey: ["cascade-settings"],
+    queryFn: async () => {
+      const sb = supabase as unknown as { from: (t: string) => any };
+      const { data, error } = await sb.from("cascade_settings").select("*").order("level");
+      if (error) throw error;
+      return (data ?? []) as { level: number; percent: number | string }[];
+    },
+  });
+
+  const rateOf = (level: number) => Number(rates.find((r) => r.level === level)?.percent ?? 0);
+  const levelTotal = (level: number) =>
+    cascade.filter((c) => c.level === level).reduce((s, c) => s + Number(c.commission), 0);
+  const networkTotal = cascade.reduce((s, c) => s + Number(c.commission), 0);
+
 
   return (
     <AppShell
