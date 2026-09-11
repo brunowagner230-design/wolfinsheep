@@ -402,9 +402,7 @@ function PlanDialog({
         upline_id: uplineId,
         downline_id: downline.id,
         house_id: houseId || null,
-        plan_name: planName.trim().slice(0, 120),
         cpa_amount: value,
-        baseline: baseline.trim().slice(0, 200),
       },
       { onConflict: "upline_id,downline_id,house_id" },
     );
@@ -444,15 +442,6 @@ function PlanDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="plan-name">Nome do plano</Label>
-            <Input
-              id="plan-name"
-              value={planName}
-              onChange={(e) => setPlanName(e.target.value)}
-              maxLength={120}
-            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="plan-amount">Valor do CPA do afiliado (R$)</Label>
