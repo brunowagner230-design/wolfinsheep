@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BanknoteArrowUp, Coins, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { BanknoteArrowUp, Coins, Clock, CheckCircle2, XCircle, Network } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -86,6 +86,17 @@ function WalletPage() {
     },
   });
 
+  const { data: cascade = [] } = useQuery({
+    queryKey: ["cascade", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const rpc = supabase as unknown as { rpc: (fn: string, args: unknown) => any };
+      const { data, error } = await rpc.rpc("cascade_network", { _user_id: user!.id });
+      if (error) throw error;
+      return (data ?? []) as { level: number; commission: number | string }[];
+    },
+  });
+
   const { data: withdrawals = [] } = useQuery({
     queryKey: ["my-withdrawals", user?.id],
     enabled: !!user,
@@ -99,7 +110,9 @@ function WalletPage() {
     },
   });
 
-  const earned = deals.reduce((sum, d) => sum + d.eligible_cpa * Number(d.cpa_amount), 0);
+  const ownEarned = deals.reduce((sum, d) => sum + d.eligible_cpa * Number(d.cpa_amount), 0);
+  const networkEarned = cascade.reduce((sum, r) => sum + Number(r.commission), 0);
+  const earned = ownEarned + networkEarned;
   const paid = withdrawals
     .filter((w) => w.status === "aprovado")
     .reduce((s, w) => s + Number(w.amount), 0);
@@ -112,7 +125,8 @@ function WalletPage() {
     { label: "Saldo disponível", value: brl(available), icon: Coins, glow: true },
     { label: "Em análise", value: brl(pending), icon: Clock, glow: false },
     { label: "Já pago via Pix", value: brl(paid), icon: CheckCircle2, glow: false },
-    { label: "Comissões geradas", value: brl(earned), icon: BanknoteArrowUp, glow: false },
+    { label: "CPA próprio", value: brl(ownEarned), icon: BanknoteArrowUp, glow: false },
+    { label: "Comissões da rede", value: brl(networkEarned), icon: Network, glow: false },
   ];
 
   return (
@@ -120,7 +134,7 @@ function WalletPage() {
       title="Carteira"
       subtitle="Comissões de CPA liberadas, chave Pix e histórico de saques."
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((c) => (
           <Card
             key={c.label}
