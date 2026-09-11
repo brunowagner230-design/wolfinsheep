@@ -129,6 +129,7 @@ function WalletPage() {
       const { data, error } = await supabase
         .from("withdrawals")
         .select("*, betting_houses(name)")
+        .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as (WithdrawalRow & {
