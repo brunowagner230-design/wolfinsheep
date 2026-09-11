@@ -150,31 +150,32 @@ function DealsPage() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {houses.map((h) => {
                 const req = requestOf(h.id);
-                const released = req?.status === "liberado" && !!req.promo_link;
+                const deal = dealOf(h.id);
+                const link = releasedLink(h.id);
+                const cpaValue = Number(deal?.cpa_amount ?? req?.cpa_amount ?? 0);
                 return (
                   <div
                     key={h.id}
                     className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/70 p-4"
                   >
-                    <HouseBadge name={h.name} />
-                    {released ? (
+                    <HouseBadge name={h.name} logoUrl={h.logo_url} />
+                    {link ? (
                       <>
                         <div className="text-xs text-muted-foreground">
                           <p>
-                            Plano: <strong className="text-foreground">{req.cpa_plan || "CPA"}</strong>{" "}
-                            · {brl(Number(req.cpa_amount))}
+                            Plano: <strong className="text-foreground">CPA</strong> ·{" "}
+                            {brl(cpaValue)}
                           </p>
-                          {req.baseline && <p className="mt-1">Baseline: {req.baseline}</p>}
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="min-w-0 flex-1 truncate rounded bg-secondary/60 px-2 py-1.5 font-mono text-[11px]">
-                            {req.promo_link}
+                            {link}
                           </p>
                           <Button
                             size="sm"
                             variant="secondary"
                             onClick={async () => {
-                              await navigator.clipboard.writeText(req.promo_link);
+                              await navigator.clipboard.writeText(link);
                               toast.success("Link copiado!");
                             }}
                           >
@@ -185,7 +186,7 @@ function DealsPage() {
                           <Check className="size-3" /> link liberado
                         </Badge>
                       </>
-                    ) : req ? (
+                    ) : req && req.status !== "rejeitado" ? (
                       <>
                         <Badge variant="secondary" className="w-fit gap-1">
                           <Clock className="size-3" />
