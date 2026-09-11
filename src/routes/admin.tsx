@@ -585,7 +585,7 @@ function AdminPage() {
                       </TableRow>
                     ))}
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right font-bold">
+                      <TableCell colSpan={4} className="text-right font-bold">
                         TOTAL PAGO
                       </TableCell>
                       <TableCell className="text-right font-display text-lg font-bold text-success">
