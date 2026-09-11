@@ -127,10 +127,15 @@ function AwardsPage() {
             >
               <div className="rounded-[calc(1rem-1px)] bg-card/95 p-5 backdrop-blur">
                 <div
-                  className="rounded-xl border border-border/70 p-5 text-center"
-                  style={{ background: done ? `radial-gradient(120% 120% at 50% 0%, ${tier.ring}, transparent 65%)` : undefined }}
+                  className="rounded-xl border border-white/10 p-5 text-center"
+                  style={{
+                    background: `radial-gradient(120% 120% at 50% 0%, ${tier.ring}, transparent 70%), ${tier.plate}`,
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)",
+                  }}
                 >
-                  <WolfMark className={`mx-auto h-12 ${done ? "" : "opacity-45 grayscale"}`} />
+                  <Wordmark
+                    className={`mx-auto h-11 w-auto ${done ? "" : "opacity-60 grayscale"}`}
+                  />
                   <p className="mt-3 font-display text-4xl font-bold tracking-tight">
                     {tier.label}
                   </p>
