@@ -222,7 +222,7 @@ function NetworkPage() {
                   <div className="flex items-baseline justify-between">
                     <p className="font-display text-lg font-bold">Nível {level}</p>
                     <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
-                      {rateOf(level)}%
+                      {brl(perCpaOf(level))} / CPA
                     </span>
                   </div>
                   <p className="mt-2 font-display text-2xl font-bold">{brl(levelTotal(level))}</p>
