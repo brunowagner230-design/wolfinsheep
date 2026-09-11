@@ -42,7 +42,7 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown } from "lucide-react";
+import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown, Search } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
