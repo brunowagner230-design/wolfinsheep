@@ -55,7 +55,6 @@ import {
   Search,
   Pencil,
   MessageCircle,
-  Send,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
