@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   LogOut,
   Menu,
+  LifeBuoy,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,7 @@ const navItems = [
   { to: "/rede", label: "Minha rede", icon: Network },
   { to: "/premiacoes", label: "Premiações", icon: Trophy },
   { to: "/carteira", label: "Carteira", icon: Wallet },
+  { to: "/suporte", label: "Suporte", icon: LifeBuoy },
 ] as const;
 
 export function AppShell({

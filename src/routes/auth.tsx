@@ -140,7 +140,7 @@ function AuthPage() {
               Você foi convidado com o código <strong>{ref}</strong>
             </p>
           )}
-          <Tabs defaultValue="login">
+          <Tabs defaultValue={ref ? "signup" : "login"}>
             <TabsList className="w-full">
               <TabsTrigger value="login" className="flex-1">
                 Entrar

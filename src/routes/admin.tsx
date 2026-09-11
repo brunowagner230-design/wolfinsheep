@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HouseBadge } from "@/components/HouseBadge";
+import { TicketChat } from "@/components/SupportChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -41,9 +42,20 @@ import {
   type DealRow,
   type HouseRow,
   type ProfileRow,
+  type SupportTicketRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown, Search } from "lucide-react";
+import {
+  Trash2,
+  Check,
+  X,
+  FileSpreadsheet,
+  Plus,
+  ChevronDown,
+  Search,
+  Pencil,
+  MessageCircle,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -98,7 +110,7 @@ function houseTint(name: string) {
 }
 
 function AdminPage() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, user } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [houseFilter, setHouseFilter] = useState("todas");
@@ -455,6 +467,9 @@ function AdminPage() {
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
+          <TabsTrigger value="suporte" className="gap-2">
+            <MessageCircle className="size-4" /> Suporte
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="solicitacoes" className="pt-6">
@@ -640,18 +655,37 @@ function AdminPage() {
                   className="rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">{h.name}</p>
-                      <p className="text-xs text-muted-foreground">{h.country}</p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {h.logo_url ? (
+                        <img
+                          src={h.logo_url}
+                          alt={`Logo ${h.name}`}
+                          className="size-10 shrink-0 rounded-md border border-border/60 object-contain"
+                        />
+                      ) : (
+                        <span className="grid size-10 shrink-0 place-items-center rounded-md border border-border/60 bg-background/60 font-display text-sm font-bold text-primary">
+                          {h.name.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{h.name}</p>
+                        <p className="text-xs text-muted-foreground">{h.country}</p>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Excluir ${h.name}`}
-                      onClick={() => deleteHouse(h)}
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
+                    <div className="flex shrink-0 items-center">
+                      <HouseDialog
+                        house={h}
+                        onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Excluir ${h.name}`}
+                        onClick={() => deleteHouse(h)}
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -852,8 +886,103 @@ function AdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="suporte" className="pt-6">
+          <SupportInbox adminId={user!.id} />
+        </TabsContent>
       </Tabs>
     </AppShell>
+  );
+}
+
+function SupportInbox({ adminId }: { adminId: string }) {
+  const [filter, setFilter] = useState("abertos");
+  const qc = useQueryClient();
+
+  const { data: tickets = [] } = useQuery({
+    queryKey: ["support-tickets", "admin"],
+    refetchInterval: 12000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("*, profiles(full_name, email)")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as SupportTicketRow[];
+    },
+  });
+
+  const visible = tickets.filter((t) =>
+    filter === "todos" ? true : filter === "fechados" ? t.status === "fechado" : t.status !== "fechado",
+  );
+
+  const setStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("support_tickets").update({ status }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "fechado" ? "Atendimento encerrado." : "Atendimento reaberto.");
+    qc.invalidateQueries({ queryKey: ["support-tickets", "admin"] });
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+        <CardTitle className="text-base">Atendimentos de suporte ({visible.length})</CardTitle>
+        <div className="w-48">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="h-10 border-primary/40 bg-background/70">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="abertos">Em aberto</SelectItem>
+              <SelectItem value="fechados">Encerrados</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {visible.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum atendimento nesta lista.</p>
+        ) : (
+          visible.map((t) => (
+            <div
+              key={t.id}
+              className="min-w-0 rounded-xl border border-border/60 bg-secondary/30 p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{t.subject || "Sem assunto"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.name || t.profiles?.full_name} · {t.email || t.profiles?.email}
+                    {t.phone ? ` · ${t.phone}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Atualizado em {new Date(t.updated_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="rounded-full border border-primary/40 bg-primary/15 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                    {t.status}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={t.status === "fechado" ? "secondary" : "outline"}
+                    onClick={() => setStatus(t.id, t.status === "fechado" ? "aberto" : "fechado")}
+                  >
+                    {t.status === "fechado" ? "Reabrir" : "Encerrar"}
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-4">
+                <TicketChat ticketId={t.id} sender="suporte" authorId={adminId} />
+              </div>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1000,29 +1129,34 @@ function DealDialog({
   );
 }
 
-function HouseDialog({ onSaved }: { onSaved: () => void }) {
+function HouseDialog({ house, onSaved }: { house?: HouseRow; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [country, setCountry] = useState("BR");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [name, setName] = useState(house?.name ?? "");
+  const [country, setCountry] = useState(house?.country ?? "BR");
+  const [logoUrl, setLogoUrl] = useState(house?.logo_url ?? "");
 
   const save = async () => {
     if (!name.trim()) {
       toast.error("Informe o nome da casa");
       return;
     }
-    const { error } = await supabase.from("betting_houses").insert({
+    const payload = {
       name: name.trim().slice(0, 120),
       country: country.trim().slice(0, 8) || "BR",
       logo_url: logoUrl.trim() ? logoUrl.trim().slice(0, 500) : null,
-    });
+    };
+    const { error } = house
+      ? await supabase.from("betting_houses").update(payload).eq("id", house.id)
+      : await supabase.from("betting_houses").insert(payload);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Casa cadastrada!");
-    setName("");
-    setLogoUrl("");
+    toast.success(house ? "Casa atualizada!" : "Casa cadastrada!");
+    if (!house) {
+      setName("");
+      setLogoUrl("");
+    }
     setOpen(false);
     onSaved();
   };
@@ -1030,11 +1164,17 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">Nova casa</Button>
+        {house ? (
+          <Button variant="ghost" size="icon" aria-label={`Editar ${house.name}`}>
+            <Pencil className="size-4 text-primary" />
+          </Button>
+        ) : (
+          <Button size="sm">Nova casa</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova casa de aposta</DialogTitle>
+          <DialogTitle>{house ? `Editar ${house.name}` : "Nova casa de aposta"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
