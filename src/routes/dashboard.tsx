@@ -119,6 +119,19 @@ function DashboardPage() {
     },
   });
 
+  const { data: networkEarnings = 0 } = useQuery({
+    queryKey: ["network-earnings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("cascade_network", { _user_id: user!.id });
+      if (error) throw error;
+      return (data ?? []).reduce(
+        (sum: number, row: { commission: number | string }) => sum + Number(row.commission ?? 0),
+        0,
+      );
+    },
+  });
+
   const [houseId, setHouseId] = useState("todas");
   const [range, setRange] = useState("30");
 
@@ -179,7 +192,13 @@ function DashboardPage() {
     { label: "CPAs elegíveis", value: totals.cpa.toString(), icon: Handshake },
     { label: "Cliques", value: totals.clicks.toLocaleString("pt-BR"), icon: MousePointerClick },
     { label: "Registros", value: totals.regs.toLocaleString("pt-BR"), icon: UserPlus },
-    { label: "Estimativa CPA", value: brl(totals.revenue), icon: Wallet },
+    { label: "Ganhos CPA próprios", value: brl(totals.revenue), icon: Wallet },
+    { label: "Ganhos com rede", value: brl(networkEarnings), icon: Network },
+    {
+      label: "Ganhos totais",
+      value: brl(totals.revenue + networkEarnings),
+      icon: TrendingUp,
+    },
   ];
 
   return (
