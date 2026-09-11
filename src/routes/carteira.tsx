@@ -86,6 +86,17 @@ function WalletPage() {
     },
   });
 
+  const { data: cascade = [] } = useQuery({
+    queryKey: ["cascade", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const rpc = supabase as unknown as { rpc: (fn: string, args: unknown) => any };
+      const { data, error } = await rpc.rpc("cascade_network", { _user_id: user!.id });
+      if (error) throw error;
+      return (data ?? []) as { level: number; commission: number | string }[];
+    },
+  });
+
   const { data: withdrawals = [] } = useQuery({
     queryKey: ["my-withdrawals", user?.id],
     enabled: !!user,
