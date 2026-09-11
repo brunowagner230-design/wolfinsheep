@@ -68,7 +68,7 @@ export function pushLocalNotification(title: string, body: string, tag?: string)
     return;
   }
   try {
-    new Notification(title, { body, icon: "/favicon.png", tag });
+    new Notification(title, { body, icon: "/favicon.png", ...(tag ? { tag } : {}) });
   } catch {
     /* ignora navegadores sem suporte */
   }
