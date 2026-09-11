@@ -99,7 +99,9 @@ function WalletPage() {
     },
   });
 
-  const earned = deals.reduce((sum, d) => sum + d.eligible_cpa * Number(d.cpa_amount), 0);
+  const ownEarned = deals.reduce((sum, d) => sum + d.eligible_cpa * Number(d.cpa_amount), 0);
+  const networkEarned = cascade.reduce((sum, r) => sum + Number(r.commission), 0);
+  const earned = ownEarned + networkEarned;
   const paid = withdrawals
     .filter((w) => w.status === "aprovado")
     .reduce((s, w) => s + Number(w.amount), 0);
