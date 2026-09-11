@@ -543,6 +543,10 @@ function AdminPage() {
                           <Badge className="gap-1 border-transparent bg-success text-success-foreground">
                             <Check className="size-3" /> aprovado
                           </Badge>
+                        ) : p.referred_by ? (
+                          <Badge variant="secondary" className="gap-1">
+                            aguardando o gerente da rede
+                          </Badge>
                         ) : (
                           <Button
                             size="sm"
