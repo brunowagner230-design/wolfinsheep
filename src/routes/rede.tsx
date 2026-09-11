@@ -324,7 +324,7 @@ function NetworkPage() {
                               const margin = cap - Number(p.cpa_amount);
                               return (
                                 <p key={p.id}>
-                                  {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
+                                  {p.betting_houses?.name ?? "Geral"} ·{" "}
                                   {brl(Number(p.cpa_amount))}
                                   {cap > 0 && (
                                     <span className="text-xs text-success">
@@ -374,17 +374,15 @@ function PlanDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [houseId, setHouseId] = useState<string>("");
-  const [planName, setPlanName] = useState("");
   const [amount, setAmount] = useState("");
-  const [baseline, setBaseline] = useState("");
 
   const cap = caps[houseId || "geral"] ?? 0;
   const value = Number(amount) || 0;
   const margin = cap - value;
 
   const save = async () => {
-    if (!planName.trim()) {
-      toast.error("Informe o nome do plano");
+    if (!houseId) {
+      toast.error("Selecione a casa de aposta");
       return;
     }
     if (cap <= 0) {
@@ -404,9 +402,7 @@ function PlanDialog({
         upline_id: uplineId,
         downline_id: downline.id,
         house_id: houseId || null,
-        plan_name: planName.trim().slice(0, 120),
         cpa_amount: value,
-        baseline: baseline.trim().slice(0, 200),
       },
       { onConflict: "upline_id,downline_id,house_id" },
     );
@@ -448,15 +444,6 @@ function PlanDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="plan-name">Nome do plano</Label>
-            <Input
-              id="plan-name"
-              value={planName}
-              onChange={(e) => setPlanName(e.target.value)}
-              maxLength={120}
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="plan-amount">Valor do CPA do afiliado (R$)</Label>
             <Input
               id="plan-amount"
@@ -483,17 +470,6 @@ function PlanDialog({
                 Você ainda não tem acordo de CPA nesta casa, então não há teto para repassar.
               </p>
             )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="plan-baseline">Baseline</Label>
-            <Input
-              id="plan-baseline"
-              value={baseline}
-              onChange={(e) => setBaseline(e.target.value)}
-              placeholder="Ex.: depósito de R$ 30 + 1 aposta"
-              maxLength={200}
-            />
           </div>
         </div>
         <DialogFooter>
