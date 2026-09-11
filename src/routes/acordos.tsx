@@ -167,30 +167,16 @@ function DealsPage() {
                     <HouseBadge name={h.name} logoUrl={h.logo_url} />
                     {link ? (
                       <>
-                        <div className="text-xs text-muted-foreground">
-                          <p>
-                            Plano: <strong className="text-foreground">CPA</strong> ·{" "}
-                            {brl(cpaValue)}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <p className="min-w-0 flex-1 truncate rounded bg-secondary/60 px-2 py-1.5 font-mono text-[11px]">
-                            {link}
-                          </p>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={async () => {
-                              await navigator.clipboard.writeText(link);
-                              toast.success("Link copiado!");
-                            }}
-                          >
-                            <Copy className="size-3.5" />
-                          </Button>
-                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Plano: <strong className="text-foreground">CPA</strong> ·{" "}
+                          {brl(cpaValue)}
+                        </p>
                         <Badge className="w-fit gap-1 bg-success text-success-foreground">
                           <Check className="size-3" /> link liberado
                         </Badge>
+                        <p className="text-xs text-muted-foreground">
+                          Copie seu link de divulgação no Painel.
+                        </p>
                       </>
                     ) : req && req.status !== "rejeitado" ? (
                       <>
