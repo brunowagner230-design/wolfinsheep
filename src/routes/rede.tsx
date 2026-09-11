@@ -206,6 +206,67 @@ function NetworkPage() {
         </CardContent>
       </Card>
 
+      <Card className="mt-6 money-panel border-primary/40">
+        <CardHeader>
+          <CardTitle className="text-base">
+            Cascata de comissões · total {brl(networkTotal)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map((level) => {
+              const rows = cascade.filter((c) => c.level === level);
+              return (
+                <div
+                  key={level}
+                  className="rounded-xl border border-border/70 bg-card/70 p-4 backdrop-blur"
+                >
+                  <div className="flex items-baseline justify-between">
+                    <p className="font-display text-lg font-bold">Nível {level}</p>
+                    <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
+                      {rateOf(level)}%
+                    </span>
+                  </div>
+                  <p className="mt-2 font-display text-2xl font-bold">{brl(levelTotal(level))}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {rows.length} afiliado(s) ·{" "}
+                    {rows.reduce((s, r) => s + Number(r.cpas), 0)} CPA validados
+                  </p>
+                  <div className="mt-3 space-y-1.5">
+                    {rows.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        {level === 1
+                          ? "Indique afiliados com seu link para começar."
+                          : `Quando seus afiliados indicarem, o nível ${level} aparece aqui.`}
+                      </p>
+                    ) : (
+                      rows.map((r) => (
+                        <div
+                          key={r.affiliate_id}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="truncate">
+                            {r.affiliate_name || r.affiliate_email}
+                          </span>
+                          <span className="shrink-0 font-semibold text-success">
+                            {brl(Number(r.commission))}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Você ganha {rateOf(1)}% do faturamento em CPA dos seus afiliados diretos,{" "}
+            {rateOf(2)}% dos afiliados deles e {rateOf(3)}% do terceiro nível. As comissões entram
+            automaticamente no saldo da sua carteira.
+          </p>
+        </CardContent>
+      </Card>
+
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base">Afiliados indicados ({downlines.length})</CardTitle>
