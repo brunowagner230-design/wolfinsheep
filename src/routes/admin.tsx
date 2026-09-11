@@ -1328,16 +1328,7 @@ function LinkRequestCard({
             maxLength={500}
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Plano de CPA</Label>
-          <Input
-            placeholder="ex.: CPA 1.0"
-            value={form.cpa_plan}
-            onChange={(e) => setForm((f) => ({ ...f, cpa_plan: e.target.value }))}
-            maxLength={160}
-          />
-        </div>
-        <div className="space-y-1">
+        <div className="space-y-1 sm:col-span-2">
           <Label className="text-xs">Valor do CPA (R$)</Label>
           <Input
             type="number"
@@ -1345,15 +1336,6 @@ function LinkRequestCard({
             step="0.01"
             value={form.cpa_amount}
             onChange={(e) => setForm((f) => ({ ...f, cpa_amount: e.target.value }))}
-          />
-        </div>
-        <div className="space-y-1 sm:col-span-2">
-          <Label className="text-xs">Baseline</Label>
-          <Input
-            placeholder="ex.: depósito de R$ 30 + 1 aposta"
-            value={form.baseline}
-            onChange={(e) => setForm((f) => ({ ...f, baseline: e.target.value }))}
-            maxLength={240}
           />
         </div>
       </div>
