@@ -651,18 +651,37 @@ function AdminPage() {
                   className="rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold">{h.name}</p>
-                      <p className="text-xs text-muted-foreground">{h.country}</p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {h.logo_url ? (
+                        <img
+                          src={h.logo_url}
+                          alt={`Logo ${h.name}`}
+                          className="size-10 shrink-0 rounded-md border border-border/60 object-contain"
+                        />
+                      ) : (
+                        <span className="grid size-10 shrink-0 place-items-center rounded-md border border-border/60 bg-background/60 font-display text-sm font-bold text-primary">
+                          {h.name.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{h.name}</p>
+                        <p className="text-xs text-muted-foreground">{h.country}</p>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Excluir ${h.name}`}
-                      onClick={() => deleteHouse(h)}
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
+                    <div className="flex shrink-0 items-center">
+                      <HouseDialog
+                        house={h}
+                        onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Excluir ${h.name}`}
+                        onClick={() => deleteHouse(h)}
+                      >
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
