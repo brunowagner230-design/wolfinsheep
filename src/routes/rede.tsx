@@ -35,6 +35,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type HouseRow, type NetworkPlanRow, type ProfileRow } from "@/lib/panel";
 
+type CascadeRow = {
+  level: number;
+  affiliate_id: string;
+  affiliate_name: string;
+  affiliate_email: string;
+  cpas: number;
+  gross: number | string;
+  commission: number | string;
+};
+
 export const Route = createFileRoute("/rede")({
   head: () => ({
     meta: [
