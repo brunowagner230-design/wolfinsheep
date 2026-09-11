@@ -15,8 +15,25 @@ export function usePwa() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const host = window.location.hostname;
+    const inPreview =
+      window.top !== window.self ||
+      host.startsWith("id-preview--") ||
+      host.startsWith("preview--") ||
+      host.endsWith(".lovableproject.com") ||
+      host.endsWith(".lovableproject-dev.com") ||
+      host.endsWith(".beta.lovable.dev");
+
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      if (inPreview || !import.meta.env.PROD) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          regs.forEach((r) => {
+            if (r.active?.scriptURL.endsWith("/sw.js")) r.unregister();
+          });
+        });
+      } else {
+        navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      }
     }
     if ("Notification" in window) setPermission(Notification.permission);
 
