@@ -255,20 +255,61 @@ function AdminPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button className="gap-2" onClick={exportSpreadsheet}>
-          <FileSpreadsheet className="size-4" />
-          Exportar planilha (Excel)
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <AddCpaDialog
+            deals={deals}
+            onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
+          />
+          <Button variant="secondary" className="gap-2" onClick={exportSpreadsheet}>
+            <FileSpreadsheet className="size-4" />
+            Exportar planilha (Excel)
+          </Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="metricas">
+      <Tabs defaultValue="solicitacoes">
         <TabsList>
+          <TabsTrigger value="solicitacoes">
+            Solicitações de links
+            {pendingRequests.length > 0 && (
+              <span className="ml-2 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {pendingRequests.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="metricas">Métricas</TabsTrigger>
           <TabsTrigger value="afiliados">Afiliados</TabsTrigger>
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="solicitacoes" className="pt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Solicitações de link de divulgação ({filteredRequests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {filteredRequests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma solicitação encontrada.</p>
+              ) : (
+                filteredRequests.map((r) => (
+                  <LinkRequestCard
+                    key={r.id}
+                    request={r}
+                    onSaved={() => {
+                      qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
+                      qc.invalidateQueries({ queryKey: ["admin-deals"] });
+                    }}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
 
         <TabsContent value="metricas" className="pt-6">
           <Card>
