@@ -243,8 +243,13 @@ function NetworkPage() {
                           key={r.affiliate_id}
                           className="flex items-center justify-between gap-2 text-xs"
                         >
-                          <span className="truncate">
-                            {r.affiliate_name || r.affiliate_email}
+                       <span className="min-w-0 truncate">
+                            <span className="block truncate font-medium">
+                              {r.affiliate_name || "Sem nome"}
+                            </span>
+                            <span className="block truncate text-muted-foreground">
+                              {r.affiliate_email}
+                            </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-2">
                             <span className="rounded-full bg-primary/15 px-2 py-0.5 font-semibold text-primary">
