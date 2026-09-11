@@ -117,9 +117,15 @@ function DealsPage() {
   };
 
   const requestLink = async (house: HouseRow) => {
-    const { error } = await sb
-      .from("link_requests")
-      .insert({ user_id: user!.id, house_id: house.id, status: "pendente" });
+    const existing = requests.find((r) => r.house_id === house.id);
+    const { error } = existing
+      ? await sb
+          .from("link_requests")
+          .update({ status: "pendente", admin_note: null })
+          .eq("id", existing.id)
+      : await sb
+          .from("link_requests")
+          .insert({ user_id: user!.id, house_id: house.id, status: "pendente" });
     if (error) {
       toast.error(
         error.message.includes("duplicate")
