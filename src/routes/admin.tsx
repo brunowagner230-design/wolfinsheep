@@ -42,7 +42,7 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet } from "lucide-react";
+import { Trash2, Check, X, FileSpreadsheet, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -982,5 +982,254 @@ function PromoLinkCell({ profile, onSaved }: { profile: ProfileRow; onSaved: () 
         Salvar
       </Button>
     </div>
+  );
+}
+
+function LinkRequestCard({
+  request,
+  onSaved,
+}: {
+  request: AdminLinkRequest;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    promo_link: request.promo_link ?? "",
+    cpa_plan: request.cpa_plan ?? "",
+    cpa_amount: request.cpa_amount ? String(request.cpa_amount) : "",
+    baseline: request.baseline ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const sb = supabase as unknown as { from: (t: string) => any };
+
+  const release = async () => {
+    if (!form.promo_link.trim()) {
+      toast.error("Informe o link de divulgação.");
+      return;
+    }
+    setSaving(true);
+    const amount = Number(form.cpa_amount) || 0;
+    const { error } = await sb
+      .from("link_requests")
+      .update({
+        promo_link: form.promo_link.trim().slice(0, 500),
+        cpa_plan: form.cpa_plan.trim().slice(0, 160),
+        cpa_amount: amount,
+        baseline: form.baseline.trim().slice(0, 240),
+        status: "liberado",
+      })
+      .eq("id", request.id);
+
+    if (error) {
+      setSaving(false);
+      toast.error(error.message);
+      return;
+    }
+
+    const { error: dealError } = await supabase.from("affiliate_deals").insert({
+      affiliate_id: request.user_id,
+      house_id: request.house_id,
+      deal_name: request.betting_houses?.name ?? "Acordo CPA",
+      cpa_plan: form.cpa_plan.trim().slice(0, 160),
+      cpa_amount: amount,
+      baseline: form.baseline.trim().slice(0, 240),
+    });
+    setSaving(false);
+    if (dealError) {
+      toast.error(dealError.message);
+      return;
+    }
+    toast.success("Link liberado e acordo lançado! O afiliado foi notificado.");
+    onSaved();
+  };
+
+  const reject = async () => {
+    setSaving(true);
+    const { error } = await sb
+      .from("link_requests")
+      .update({ status: "rejeitado", admin_note: "Solicitação não aprovada." })
+      .eq("id", request.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Solicitação recusada.");
+    onSaved();
+  };
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold">
+            {request.profiles?.full_name || request.profiles?.email || "Afiliado"}
+          </p>
+          <p className="text-xs text-muted-foreground">{request.profiles?.email}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <HouseBadge name={request.betting_houses?.name ?? null} />
+          <Badge
+            className={
+              request.status === "liberado"
+                ? "bg-success text-success-foreground"
+                : request.status === "rejeitado"
+                  ? "bg-destructive text-destructive-foreground"
+                  : ""
+            }
+            variant={request.status === "pendente" ? "secondary" : "default"}
+          >
+            {request.status}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1 sm:col-span-2">
+          <Label className="text-xs">Link de divulgação</Label>
+          <Input
+            placeholder="https://..."
+            value={form.promo_link}
+            onChange={(e) => setForm((f) => ({ ...f, promo_link: e.target.value }))}
+            maxLength={500}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Plano de CPA</Label>
+          <Input
+            placeholder="ex.: CPA 1.0"
+            value={form.cpa_plan}
+            onChange={(e) => setForm((f) => ({ ...f, cpa_plan: e.target.value }))}
+            maxLength={160}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Valor do CPA (R$)</Label>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.cpa_amount}
+            onChange={(e) => setForm((f) => ({ ...f, cpa_amount: e.target.value }))}
+          />
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label className="text-xs">Baseline</Label>
+          <Input
+            placeholder="ex.: depósito de R$ 30 + 1 aposta"
+            value={form.baseline}
+            onChange={(e) => setForm((f) => ({ ...f, baseline: e.target.value }))}
+            maxLength={240}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button
+          className="gap-2 bg-success text-success-foreground hover:bg-success/90"
+          onClick={release}
+          disabled={saving}
+        >
+          <Check className="size-4" />
+          {request.status === "liberado" ? "Atualizar e notificar" : "Liberar link e lançar acordo"}
+        </Button>
+        {request.status !== "rejeitado" && (
+          <Button variant="destructive" className="gap-2" onClick={reject} disabled={saving}>
+            <X className="size-4" /> Recusar
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AddCpaDialog({ deals, onSaved }: { deals: DealRow[]; onSaved: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [dealId, setDealId] = useState("");
+  const [qty, setQty] = useState("1");
+  const [saving, setSaving] = useState(false);
+
+  const deal = deals.find((d) => d.id === dealId);
+  const amount = (Number(qty) || 0) * Number(deal?.cpa_amount ?? 0);
+
+  const save = async () => {
+    if (!deal) {
+      toast.error("Selecione o acordo do afiliado.");
+      return;
+    }
+    const add = Math.max(1, Math.floor(Number(qty) || 0));
+    setSaving(true);
+    const { error } = await supabase
+      .from("affiliate_deals")
+      .update({ eligible_cpa: deal.eligible_cpa + add })
+      .eq("id", deal.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`${add} CPA adicionado(s)! O afiliado recebeu a notificação.`);
+    setOpen(false);
+    setQty("1");
+    onSaved();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <Plus className="size-4" /> Adicionar CPA
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar CPA validado</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Afiliado · acordo</Label>
+            <Select value={dealId} onValueChange={setDealId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o afiliado e a casa" />
+              </SelectTrigger>
+              <SelectContent>
+                {deals.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {(d.profiles?.email || d.profiles?.full_name || "Afiliado") +
+                      " · " +
+                      (d.betting_houses?.name ?? "Geral") +
+                      " · " +
+                      brl(Number(d.cpa_amount))}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cpa-qty">Quantidade de CPA</Label>
+            <Input
+              id="cpa-qty"
+              type="number"
+              min="1"
+              step="1"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+            />
+          </div>
+          {deal && (
+            <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
+              <p>
+                Total atual: <strong>{deal.eligible_cpa}</strong> CPA validados
+              </p>
+              <p className="text-success">Comissão adicionada: {brl(amount)}</p>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={save} disabled={saving}>
+            {saving ? "Adicionando..." : "Adicionar e notificar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
