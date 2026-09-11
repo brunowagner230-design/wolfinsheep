@@ -346,6 +346,7 @@ export type Database = {
           amount: number
           created_at: string
           holder_name: string
+          house_id: string | null
           id: string
           pix_key: string
           pix_key_type: string
@@ -359,6 +360,7 @@ export type Database = {
           amount?: number
           created_at?: string
           holder_name?: string
+          house_id?: string | null
           id?: string
           pix_key?: string
           pix_key_type?: string
@@ -372,6 +374,7 @@ export type Database = {
           amount?: number
           created_at?: string
           holder_name?: string
+          house_id?: string | null
           id?: string
           pix_key?: string
           pix_key_type?: string
@@ -381,6 +384,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "withdrawals_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "betting_houses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "withdrawals_user_id_fkey"
             columns: ["user_id"]

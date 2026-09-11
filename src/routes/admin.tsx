@@ -42,7 +42,7 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet, Plus } from "lucide-react";
+import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -139,10 +139,12 @@ function AdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("withdrawals")
-        .select("*, profiles(full_name, email)")
+        .select("*, profiles(full_name, email), betting_houses(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as WithdrawalRow[];
+      return (data ?? []) as unknown as (WithdrawalRow & {
+        betting_houses?: { name: string } | null;
+      })[];
     },
   });
 
@@ -325,20 +327,25 @@ function AdminPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Cliques, registros e CPAs validados ({filteredDeals.length})
+                Afiliados · clique no e-mail para configurar o CPA ({filteredProfiles.length})
               </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Selecione o afiliado, escolha a casa de aposta e use{" "}
+                <strong className="text-foreground">+1 CPA</strong> para lançar na hora. O afiliado
+                recebe a notificação automaticamente.
+              </p>
             </CardHeader>
             <CardContent className="grid gap-3">
-              {filteredDeals.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum acordo encontrado.</p>
+              {filteredProfiles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum afiliado encontrado.</p>
               ) : (
-                filteredDeals.map((d) => (
-                  <MetricsRow
-                    key={d.id}
-                    deal={d}
-                    onSaved={() => {
-                      qc.invalidateQueries({ queryKey: ["admin-deals"] });
-                    }}
+                filteredProfiles.map((p) => (
+                  <AffiliateMetricsCard
+                    key={p.id}
+                    profile={p}
+                    deals={deals.filter((d) => d.affiliate_id === p.id)}
+                    houses={houses}
+                    onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
                   />
                 ))
               )}
@@ -547,6 +554,7 @@ function AdminPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Afiliado</TableHead>
+                      <TableHead>Casa de aposta</TableHead>
                       <TableHead>Chave Pix</TableHead>
                       <TableHead>Data do pagamento</TableHead>
                       <TableHead className="text-right">Valor pago</TableHead>
@@ -557,6 +565,11 @@ function AdminPage() {
                       <TableRow key={w.id}>
                         <TableCell className="font-medium">
                           {w.profiles?.full_name || w.profiles?.email || "—"}
+                        </TableCell>
+                        <TableCell>
+                          {w.betting_houses?.name ?? (
+                            <span className="text-xs text-muted-foreground">Rede</span>
+                          )}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {w.pix_key_type.toUpperCase()} · {w.pix_key}
@@ -572,7 +585,7 @@ function AdminPage() {
                       </TableRow>
                     ))}
                     <TableRow>
-                      <TableCell colSpan={3} className="text-right font-bold">
+                      <TableCell colSpan={4} className="text-right font-bold">
                         TOTAL PAGO
                       </TableCell>
                       <TableCell className="text-right font-display text-lg font-bold text-success">
@@ -599,6 +612,7 @@ function AdminPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Afiliado</TableHead>
+                      <TableHead>Casa de aposta</TableHead>
                       <TableHead>Chave Pix</TableHead>
                       <TableHead>Titular</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
@@ -611,6 +625,13 @@ function AdminPage() {
                       <TableRow key={w.id}>
                         <TableCell className="font-medium">
                           {w.profiles?.full_name || w.profiles?.email || "—"}
+                        </TableCell>
+                        <TableCell>
+                          {w.betting_houses?.name ? (
+                            <HouseBadge name={w.betting_houses.name} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Comissões da rede</span>
+                          )}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {w.pix_key_type.toUpperCase()} · {w.pix_key}
@@ -901,17 +922,58 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
     onSaved();
   };
 
+  const addCpa = async (qty: number) => {
+    setSaving(true);
+    const next = Math.max(0, Number(form.eligible_cpa) || 0) + qty;
+    const { error } = await supabase
+      .from("affiliate_deals")
+      .update({ eligible_cpa: next })
+      .eq("id", deal.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setForm((f) => ({ ...f, eligible_cpa: String(next) }));
+    toast.success(
+      `+${qty} CPA em ${deal.betting_houses?.name ?? "acordo"} · ${brl(qty * Number(deal.cpa_amount))} na carteira`,
+    );
+    onSaved();
+  };
+
+  const commission = Math.max(0, Number(form.eligible_cpa) || 0) * Number(deal.cpa_amount);
+
   return (
-    <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
+    <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="font-semibold">
-            {deal.profiles?.full_name || deal.profiles?.email || "Afiliado"}
-          </p>
-          <p className="text-xs text-muted-foreground">{deal.profiles?.email}</p>
-        </div>
         <HouseBadge name={deal.betting_houses?.name ?? null} />
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            CPA: <strong className="text-foreground">{brl(Number(deal.cpa_amount))}</strong>
+          </span>
+          <span>
+            Total: <strong className="text-success">{brl(commission)}</strong>
+          </span>
+        </div>
       </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {[1, 2, 5, 10].map((q) => (
+          <Button
+            key={q}
+            size="sm"
+            className="gap-1"
+            disabled={saving}
+            onClick={() => addCpa(q)}
+          >
+            <Plus className="size-3" /> {q} CPA
+          </Button>
+        ))}
+        <span className="text-xs text-muted-foreground">
+          lança na hora e notifica o afiliado
+        </span>
+      </div>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-4">
         <div className="space-y-1">
           <Label className="text-xs">Cliques</Label>
@@ -941,7 +1003,12 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
           />
         </div>
         <div className="flex items-end">
-          <Button className="w-full" onClick={save} disabled={saving}>
+          <Button
+            className="w-full"
+            variant="secondary"
+            onClick={save}
+            disabled={saving}
+          >
             {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
@@ -1231,5 +1298,68 @@ function AddCpaDialog({ deals, onSaved }: { deals: DealRow[]; onSaved: () => voi
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AffiliateMetricsCard({
+  profile,
+  deals,
+  houses,
+  onSaved,
+}: {
+  profile: ProfileRow;
+  deals: DealRow[];
+  houses: HouseRow[];
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const totalCpa = deals.reduce((s, d) => s + d.eligible_cpa, 0);
+  const totalValue = deals.reduce((s, d) => s + d.eligible_cpa * Number(d.cpa_amount), 0);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/20">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/40"
+      >
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{profile.full_name || profile.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="font-display text-lg font-bold">{totalCpa} CPA</p>
+            <p className="text-xs text-success">{brl(totalValue)}</p>
+          </div>
+          <Badge variant="secondary" className="gap-1">
+            {deals.length} casa(s)
+            <ChevronDown
+              className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
+            />
+          </Badge>
+        </div>
+      </button>
+
+      {open && (
+        <div className="grid gap-3 border-t border-border/60 bg-card/60 p-4">
+          {deals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Este afiliado ainda não tem acordo em nenhuma casa. Libere a solicitação de link ou
+              lance um acordo na aba Afiliados.
+            </p>
+          ) : (
+            deals.map((d) => (
+              <MetricsRow key={d.id} deal={d} onSaved={onSaved} />
+            ))
+          )}
+          {houses.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Casas disponíveis: {houses.map((h) => h.name).join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
