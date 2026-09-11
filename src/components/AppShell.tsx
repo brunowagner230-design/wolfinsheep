@@ -12,7 +12,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, type ReactNode } from "react";
-import { InstallAppButton } from "@/components/InstallAppButton";
+import { EnableNotificationsButton, InstallAppButton } from "@/components/InstallAppButton";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
@@ -167,8 +167,9 @@ export function AppShell({
             <h1 className="text-2xl font-bold lg:text-3xl">{title}</h1>
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-2">
-            <InstallAppButton className="hidden sm:inline-flex" />
+          <div className="flex flex-wrap items-center gap-2">
+            <InstallAppButton />
+            <EnableNotificationsButton />
             <NotificationBell />
           </div>
         </header>
