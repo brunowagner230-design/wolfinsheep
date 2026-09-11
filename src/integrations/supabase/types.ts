@@ -122,6 +122,63 @@ export type Database = {
         }
         Relationships: []
       }
+      link_requests: {
+        Row: {
+          admin_note: string | null
+          baseline: string
+          cpa_amount: number
+          cpa_plan: string
+          created_at: string
+          house_id: string
+          id: string
+          promo_link: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_note?: string | null
+          baseline?: string
+          cpa_amount?: number
+          cpa_plan?: string
+          created_at?: string
+          house_id: string
+          id?: string
+          promo_link?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_note?: string | null
+          baseline?: string
+          cpa_amount?: number
+          cpa_plan?: string
+          created_at?: string
+          house_id?: string
+          id?: string
+          promo_link?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_requests_house_id_fkey"
+            columns: ["house_id"]
+            isOneToOne: false
+            referencedRelation: "betting_houses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "link_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       network_plans: {
         Row: {
           baseline: string
