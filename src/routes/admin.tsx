@@ -1238,3 +1238,66 @@ function AddCpaDialog({ deals, onSaved }: { deals: DealRow[]; onSaved: () => voi
     </Dialog>
   );
 }
+
+function AffiliateMetricsCard({
+  profile,
+  deals,
+  houses,
+  onSaved,
+}: {
+  profile: ProfileRow;
+  deals: DealRow[];
+  houses: HouseRow[];
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const totalCpa = deals.reduce((s, d) => s + d.eligible_cpa, 0);
+  const totalValue = deals.reduce((s, d) => s + d.eligible_cpa * Number(d.cpa_amount), 0);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border/60 bg-secondary/20">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/40"
+      >
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{profile.full_name || profile.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="font-display text-lg font-bold">{totalCpa} CPA</p>
+            <p className="text-xs text-success">{brl(totalValue)}</p>
+          </div>
+          <Badge variant="secondary" className="gap-1">
+            {deals.length} casa(s)
+            <ChevronDown
+              className={`size-3 transition-transform ${open ? "rotate-180" : ""}`}
+            />
+          </Badge>
+        </div>
+      </button>
+
+      {open && (
+        <div className="grid gap-3 border-t border-border/60 bg-card/60 p-4">
+          {deals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Este afiliado ainda não tem acordo em nenhuma casa. Libere a solicitação de link ou
+              lance um acordo na aba Afiliados.
+            </p>
+          ) : (
+            deals.map((d) => (
+              <MetricsRow key={d.id} deal={d} onSaved={onSaved} />
+            ))
+          )}
+          {houses.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Casas disponíveis: {houses.map((h) => h.name).join(" · ")}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
