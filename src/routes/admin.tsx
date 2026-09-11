@@ -42,7 +42,7 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown } from "lucide-react";
+import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown, Search } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -78,10 +78,30 @@ type AdminLinkRequest = {
   profiles?: { full_name: string; email: string } | null;
 };
 
+/** Cores suaves por casa de aposta na planilha (ARGB) */
+const HOUSE_TINTS = [
+  "FFEDE9FE",
+  "FFDCFCE7",
+  "FFFFE4E6",
+  "FFDBEAFE",
+  "FFFEF3C7",
+  "FFF3E8FF",
+  "FFCCFBF1",
+  "FFFFEDD5",
+];
+
+function houseTint(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 100000;
+  return HOUSE_TINTS[hash % HOUSE_TINTS.length] ?? "FFF5F3FF";
+}
+
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
+  const [houseFilter, setHouseFilter] = useState("todas");
+  const [statusFilter, setStatusFilter] = useState("todos");
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -191,52 +211,143 @@ function AdminPage() {
   };
 
   const q = search.trim().toLowerCase();
-  const filteredProfiles = q
-    ? profiles.filter(
-        (p) =>
-          p.email.toLowerCase().includes(q) ||
-          p.full_name.toLowerCase().includes(q) ||
-          p.referral_code.toLowerCase().includes(q),
-      )
-    : profiles;
-  const filteredDeals = q
-    ? deals.filter(
-        (d) =>
-          (d.profiles?.email ?? "").toLowerCase().includes(q) ||
-          (d.profiles?.full_name ?? "").toLowerCase().includes(q) ||
-          (d.betting_houses?.name ?? "").toLowerCase().includes(q),
-      )
-    : deals;
+  const matchHouse = (id?: string | null) => houseFilter === "todas" || id === houseFilter;
+
+  const houseAffiliateIds = new Set(
+    deals.filter((d) => matchHouse(d.house_id)).map((d) => d.affiliate_id),
+  );
+
+  const filteredProfiles = profiles.filter((p) => {
+    const okText =
+      !q ||
+      p.email.toLowerCase().includes(q) ||
+      p.full_name.toLowerCase().includes(q) ||
+      (p.phone ?? "").toLowerCase().includes(q) ||
+      p.referral_code.toLowerCase().includes(q);
+    const okHouse = houseFilter === "todas" || houseAffiliateIds.has(p.id);
+    return okText && okHouse;
+  });
+
+  const filteredDeals = deals.filter((d) => {
+    const okText =
+      !q ||
+      (d.profiles?.email ?? "").toLowerCase().includes(q) ||
+      (d.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+      (d.betting_houses?.name ?? "").toLowerCase().includes(q);
+    return okText && matchHouse(d.house_id);
+  });
 
   const pendingRequests = linkRequests.filter((r) => r.status === "pendente");
-  const filteredRequests: AdminLinkRequest[] = q
-    ? linkRequests.filter(
-        (r) =>
-          (r.profiles?.email ?? "").toLowerCase().includes(q) ||
-          (r.profiles?.full_name ?? "").toLowerCase().includes(q) ||
-          (r.betting_houses?.name ?? "").toLowerCase().includes(q),
-      )
-    : linkRequests;
+  const filteredRequests: AdminLinkRequest[] = linkRequests.filter((r) => {
+    const okText =
+      !q ||
+      (r.profiles?.email ?? "").toLowerCase().includes(q) ||
+      (r.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+      (r.betting_houses?.name ?? "").toLowerCase().includes(q);
+    const okStatus = statusFilter === "todos" || r.status === statusFilter;
+    return okText && okStatus && matchHouse(r.house_id);
+  });
 
   const exportSpreadsheet = async () => {
     if (filteredProfiles.length === 0) {
       toast.error("Nenhum afiliado para exportar.");
       return;
     }
-    const XLSX = await import("xlsx");
-    const rows = filteredProfiles.map((p) => ({
-      Nome: p.full_name || "",
-      "E-mail": p.email || "",
-      Celular: p.phone || "",
-      "Link de divulgação": p.promo_link || "",
-      CPA: "",
-    }));
-    const sheet = XLSX.utils.json_to_sheet(rows);
-    sheet["!cols"] = [{ wch: 28 }, { wch: 32 }, { wch: 18 }, { wch: 45 }, { wch: 12 }];
-    const book = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(book, sheet, "Afiliados");
-    XLSX.writeFile(book, `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast.success("Planilha gerada!");
+    const ExcelJS = (await import("exceljs")).default;
+    const book = new ExcelJS.Workbook();
+    const sheet = book.addWorksheet("Afiliados CPA", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+    sheet.columns = [
+      { header: "Casa de aposta", key: "casa", width: 22 },
+      { header: "Nome", key: "nome", width: 28 },
+      { header: "E-mail", key: "email", width: 32 },
+      { header: "Celular", key: "celular", width: 18 },
+      { header: "Link de divulgação", key: "link", width: 48 },
+      { header: "Plano CPA", key: "plano", width: 18 },
+      { header: "Valor CPA", key: "valor", width: 14 },
+      { header: "CPA (preencher)", key: "cpa", width: 18 },
+    ];
+
+    const header = sheet.getRow(1);
+    header.height = 24;
+    header.eachCell((cell) => {
+      cell.font = { name: "Arial", bold: true, size: 11, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4C1D95" } };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF2E1065" } },
+        bottom: { style: "thin", color: { argb: "FF2E1065" } },
+        left: { style: "thin", color: { argb: "FF2E1065" } },
+        right: { style: "thin", color: { argb: "FF2E1065" } },
+      };
+    });
+
+    type ExportRow = {
+      casa: string;
+      nome: string;
+      email: string;
+      celular: string;
+      link: string;
+      plano: string;
+      valor: number | string;
+    };
+    const rows: ExportRow[] = [];
+    filteredProfiles.forEach((p) => {
+      const myDeals = deals.filter((d) => d.affiliate_id === p.id);
+      const base = {
+        nome: p.full_name || "",
+        email: p.email || "",
+        celular: p.phone || "",
+        link: p.promo_link || "",
+      };
+      if (myDeals.length === 0) {
+        rows.push({ ...base, casa: "Sem casa vinculada", plano: "", valor: "" });
+      } else {
+        myDeals.forEach((d) =>
+          rows.push({
+            ...base,
+            casa: d.betting_houses?.name ?? "Casa",
+            plano: d.cpa_plan || d.deal_name || "",
+            valor: Number(d.cpa_amount) || 0,
+          }),
+        );
+      }
+    });
+
+    rows.sort((a, b) => a.casa.localeCompare(b.casa) || a.nome.localeCompare(b.nome));
+    rows.forEach((r) => {
+      const row = sheet.addRow({ ...r, cpa: "" });
+      const tint = houseTint(r.casa);
+      row.eachCell((cell) => {
+        cell.font = { name: "Arial", size: 11 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: tint } };
+        cell.border = {
+          bottom: { style: "hair", color: { argb: "FFBFBFBF" } },
+          right: { style: "hair", color: { argb: "FFBFBFBF" } },
+        };
+      });
+      row.getCell("casa").font = { name: "Arial", size: 11, bold: true };
+      row.getCell("valor").numFmt = '"R$"#,##0.00;("R$"#,##0.00);-';
+      const cpaCell = row.getCell("cpa");
+      cpaCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF2CC" } };
+      cpaCell.alignment = { horizontal: "center" };
+    });
+
+    sheet.autoFilter = { from: "A1", to: { row: 1, column: 8 } };
+
+    const buffer = await book.xlsx.writeBuffer();
+    const url = URL.createObjectURL(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Planilha colorida gerada!");
   };
 
   if (!loading && !isAdmin) {
@@ -254,29 +365,78 @@ function AdminPage() {
       title="Administração"
       subtitle="Afiliados cadastrados, casas de aposta e acordos de CPA."
     >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div className="w-full max-w-md">
-          <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
-            Pesquisar e-mail, nome, código ou casa
-          </Label>
-          <Input
-            id="admin-search"
-            className="mt-2"
-            placeholder="ex.: afiliado@email.com"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="mb-6 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/15 to-transparent p-5">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[280px] flex-1">
+            <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
+              Pesquisar afiliado (e-mail, nome, celular, código ou casa)
+            </Label>
+            <div className="relative mt-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary" />
+              <Input
+                id="admin-search"
+                className="h-11 pl-9 pr-9 border-primary/40 bg-background/70"
+                placeholder="ex.: afiliado@email.com"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Limpar pesquisa"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="w-56">
+            <Label className="text-xs text-muted-foreground">Casa de aposta</Label>
+            <Select value={houseFilter} onValueChange={setHouseFilter}>
+              <SelectTrigger className="mt-2 h-11 border-primary/40 bg-background/70">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as casas</SelectItem>
+                {houses.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-48">
+            <Label className="text-xs text-muted-foreground">Status das solicitações</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="mt-2 h-11 border-primary/40 bg-background/70">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="pendente">Pendentes</SelectItem>
+                <SelectItem value="liberado">Liberados</SelectItem>
+                <SelectItem value="recusado">Recusados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <AddCpaDialog
+              deals={deals}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
+            />
+            <Button className="h-11 gap-2" onClick={exportSpreadsheet}>
+              <FileSpreadsheet className="size-4" />
+              Exportar planilha (Excel)
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <AddCpaDialog
-            deals={deals}
-            onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
-          />
-          <Button variant="secondary" className="gap-2" onClick={exportSpreadsheet}>
-            <FileSpreadsheet className="size-4" />
-            Exportar planilha (Excel)
-          </Button>
-        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          {filteredProfiles.length} afiliados · {filteredDeals.length} acordos ·{" "}
+          {filteredRequests.length} solicitações
+        </p>
       </div>
 
       <Tabs defaultValue="solicitacoes">

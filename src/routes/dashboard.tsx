@@ -1,8 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Handshake, MousePointerClick, UserPlus, Wallet, Network, Copy } from "lucide-react";
+import {
+  Handshake,
+  MousePointerClick,
+  UserPlus,
+  Wallet,
+  Network,
+  Copy,
+  TrendingUp,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import {
   Select,
   SelectContent,
@@ -38,6 +55,13 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
+const CARD_STYLES = [
+  "from-[oklch(0.55_0.24_300/0.28)] to-transparent border-[oklch(0.7_0.2_300/0.4)]",
+  "from-[oklch(0.7_0.16_230/0.24)] to-transparent border-[oklch(0.7_0.16_230/0.4)]",
+  "from-[oklch(0.75_0.15_60/0.24)] to-transparent border-[oklch(0.8_0.15_70/0.4)]",
+  "from-[oklch(0.7_0.17_150/0.24)] to-transparent border-[oklch(0.75_0.17_150/0.4)]",
+];
+
 function DashboardPage() {
   const { user } = useAuth();
 
@@ -51,6 +75,20 @@ function DashboardPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as DealRow[];
+    },
+  });
+
+  const { data: payouts = [] } = useQuery({
+    queryKey: ["my-payouts", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("withdrawals")
+        .select("amount, status, created_at")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as { amount: number | string; status: string; created_at: string }[];
     },
   });
 
@@ -81,8 +119,8 @@ function DashboardPage() {
     },
   });
 
-
   const [houseId, setHouseId] = useState("todas");
+  const [range, setRange] = useState("30");
 
   const houses = useMemo(() => {
     const map = new Map<string, string>();
@@ -107,7 +145,35 @@ function DashboardPage() {
     { cpa: 0, clicks: 0, regs: 0, revenue: 0 },
   );
 
-  const betano = filtered.map((d) => houseLogo(d.betting_houses?.name)).find(Boolean) ?? null;
+  const selectedHouse = houses.find((h) => h.id === houseId);
+  const activeHouseName =
+    selectedHouse?.name ?? filtered.map((d) => d.betting_houses?.name).find(Boolean) ?? null;
+  const activeLogo = houseLogo(activeHouseName);
+
+  const chart = useMemo(() => {
+    const days = Number(range);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() - (days - 1));
+    const buckets = new Map<string, number>();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      buckets.set(d.toISOString().slice(0, 10), 0);
+    }
+    payouts
+      .filter((p) => p.status === "aprovado")
+      .forEach((p) => {
+        const key = p.created_at.slice(0, 10);
+        if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + Number(p.amount));
+      });
+    return [...buckets].map(([key, value]) => ({
+      dia: key.slice(8, 10) + "/" + key.slice(5, 7),
+      valor: value,
+    }));
+  }, [payouts, range]);
+
+  const chartTotal = chart.reduce((s, p) => s + p.valor, 0);
 
   const cards = [
     { label: "CPAs elegíveis", value: totals.cpa.toString(), icon: Handshake },
@@ -123,7 +189,7 @@ function DashboardPage() {
           Casa de aposta
         </span>
         <Select value={houseId} onValueChange={setHouseId}>
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="w-64 border-primary/40 bg-secondary/50">
             <SelectValue placeholder="Todas as casas" />
           </SelectTrigger>
           <SelectContent>
@@ -138,7 +204,7 @@ function DashboardPage() {
       </div>
 
       {promoLink && (
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 bg-secondary/40 px-5 py-4">
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/20 to-transparent px-5 py-4">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Seu link de divulgação
@@ -157,23 +223,30 @@ function DashboardPage() {
         </div>
       )}
 
-
-
-      {betano && (
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-[oklch(0.78_0.17_150/0.35)] bg-[oklch(0.78_0.17_150/0.1)] px-5 py-4">
-          <img src={betano} alt="Logo Betano" className="size-12 object-contain" />
+      {activeHouseName && (
+        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/15 to-transparent px-5 py-4">
+          {activeLogo && (
+            <img
+              src={activeLogo}
+              alt={`Logo ${activeHouseName}`}
+              className="size-12 object-contain"
+            />
+          )}
           <div>
-            <p className="font-display text-lg font-bold">Parceiro Betano ativo</p>
+            <p className="font-display text-lg font-bold">Parceiro {activeHouseName} ativo</p>
             <p className="text-xs text-muted-foreground">
-              Você possui acordo de CPA configurado na Betano.
+              Você possui acordo de CPA configurado na {activeHouseName}.
             </p>
           </div>
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((c) => (
-          <Card key={c.label} className="glow-panel border-border/60">
+        {cards.map((c, i) => (
+          <Card
+            key={c.label}
+            className={`glow-panel border bg-gradient-to-br ${CARD_STYLES[i % CARD_STYLES.length]}`}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {c.label}
@@ -187,8 +260,66 @@ function DashboardPage() {
         ))}
       </div>
 
+      <Card className="mt-8 border-primary/30 bg-gradient-to-b from-primary/10 to-transparent">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="size-4 text-primary" /> Comissões recebidas
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Total no período: <span className="font-semibold text-foreground">{brl(chartTotal)}</span>
+            </p>
+          </div>
+          <Select value={range} onValueChange={setRange}>
+            <SelectTrigger className="w-44 border-primary/40 bg-secondary/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+              <SelectItem value="90">Últimos 90 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardHeader>
+        <CardContent className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chart}>
+              <defs>
+                <linearGradient id="cpaFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.65 0.24 300)" stopOpacity={0.7} />
+                  <stop offset="100%" stopColor="oklch(0.65 0.24 300)" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.7 0.02 300 / 0.15)" />
+              <XAxis dataKey="dia" tick={{ fontSize: 11 }} stroke="oklch(0.75 0.02 300 / 0.6)" />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                stroke="oklch(0.75 0.02 300 / 0.6)"
+                tickFormatter={(v: number) => `R$${v}`}
+              />
+              <Tooltip
+                formatter={(v: number) => brl(Number(v))}
+                contentStyle={{
+                  background: "oklch(0.18 0.03 300)",
+                  border: "1px solid oklch(0.65 0.2 300 / 0.4)",
+                  borderRadius: 12,
+                  color: "white",
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="valor"
+                stroke="oklch(0.75 0.22 300)"
+                strokeWidth={2}
+                fill="url(#cpaFill)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-border/60">
           <CardHeader>
             <CardTitle className="text-base">Seus acordos ativos</CardTitle>
           </CardHeader>
@@ -201,7 +332,7 @@ function DashboardPage() {
             {filtered.slice(0, 5).map((d) => (
               <div
                 key={d.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/40 px-4 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-gradient-to-r from-secondary/60 to-secondary/20 px-4 py-3"
               >
                 <div>
                   <p className="font-semibold">
@@ -224,7 +355,7 @@ function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/20 to-transparent">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Network className="size-4 text-primary" /> Minha rede
