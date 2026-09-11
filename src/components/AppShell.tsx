@@ -153,7 +153,7 @@ export function AppShell({
       )}
 
       <main className="flex-1 px-5 py-6 lg:px-10 lg:py-8">
-        <header className="mb-8 flex items-start gap-4">
+        <header className="mb-8 flex flex-wrap items-start gap-4">
           <Button
             variant="secondary"
             size="icon"
@@ -163,9 +163,13 @@ export function AppShell({
           >
             <Menu className="size-4" />
           </Button>
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold lg:text-3xl">{title}</h1>
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+          </div>
+          <div className="flex items-center gap-2">
+            <InstallAppButton className="hidden sm:inline-flex" />
+            <NotificationBell />
           </div>
         </header>
         {children}
