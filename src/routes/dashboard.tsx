@@ -72,6 +72,7 @@ function DashboardPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*, betting_houses(name)")
+        .eq("affiliate_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as DealRow[];
