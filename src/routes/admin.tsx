@@ -365,29 +365,78 @@ function AdminPage() {
       title="Administração"
       subtitle="Afiliados cadastrados, casas de aposta e acordos de CPA."
     >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div className="w-full max-w-md">
-          <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
-            Pesquisar e-mail, nome, código ou casa
-          </Label>
-          <Input
-            id="admin-search"
-            className="mt-2"
-            placeholder="ex.: afiliado@email.com"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="mb-6 rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/15 to-transparent p-5">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="min-w-[280px] flex-1">
+            <Label htmlFor="admin-search" className="text-xs text-muted-foreground">
+              Pesquisar afiliado (e-mail, nome, celular, código ou casa)
+            </Label>
+            <div className="relative mt-2">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-primary" />
+              <Input
+                id="admin-search"
+                className="h-11 pl-9 pr-9 border-primary/40 bg-background/70"
+                placeholder="ex.: afiliado@email.com"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Limpar pesquisa"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="w-56">
+            <Label className="text-xs text-muted-foreground">Casa de aposta</Label>
+            <Select value={houseFilter} onValueChange={setHouseFilter}>
+              <SelectTrigger className="mt-2 h-11 border-primary/40 bg-background/70">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as casas</SelectItem>
+                {houses.map((h) => (
+                  <SelectItem key={h.id} value={h.id}>
+                    {h.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-48">
+            <Label className="text-xs text-muted-foreground">Status das solicitações</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="mt-2 h-11 border-primary/40 bg-background/70">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="pendente">Pendentes</SelectItem>
+                <SelectItem value="liberado">Liberados</SelectItem>
+                <SelectItem value="recusado">Recusados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <AddCpaDialog
+              deals={deals}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
+            />
+            <Button className="h-11 gap-2" onClick={exportSpreadsheet}>
+              <FileSpreadsheet className="size-4" />
+              Exportar planilha (Excel)
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <AddCpaDialog
-            deals={deals}
-            onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
-          />
-          <Button variant="secondary" className="gap-2" onClick={exportSpreadsheet}>
-            <FileSpreadsheet className="size-4" />
-            Exportar planilha (Excel)
-          </Button>
-        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          {filteredProfiles.length} afiliados · {filteredDeals.length} acordos ·{" "}
+          {filteredRequests.length} solicitações
+        </p>
       </div>
 
       <Tabs defaultValue="solicitacoes">
