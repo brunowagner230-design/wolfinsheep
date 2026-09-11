@@ -885,8 +885,103 @@ function AdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="suporte" className="pt-6">
+          <SupportInbox adminId={user!.id} />
+        </TabsContent>
       </Tabs>
     </AppShell>
+  );
+}
+
+function SupportInbox({ adminId }: { adminId: string }) {
+  const [filter, setFilter] = useState("abertos");
+  const qc = useQueryClient();
+
+  const { data: tickets = [] } = useQuery({
+    queryKey: ["support-tickets", "admin"],
+    refetchInterval: 12000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("support_tickets")
+        .select("*, profiles(full_name, email)")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as SupportTicketRow[];
+    },
+  });
+
+  const visible = tickets.filter((t) =>
+    filter === "todos" ? true : filter === "fechados" ? t.status === "fechado" : t.status !== "fechado",
+  );
+
+  const setStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("support_tickets").update({ status }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(status === "fechado" ? "Atendimento encerrado." : "Atendimento reaberto.");
+    qc.invalidateQueries({ queryKey: ["support-tickets", "admin"] });
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-3">
+        <CardTitle className="text-base">Atendimentos de suporte ({visible.length})</CardTitle>
+        <div className="w-48">
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="h-10 border-primary/40 bg-background/70">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="abertos">Em aberto</SelectItem>
+              <SelectItem value="fechados">Encerrados</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {visible.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum atendimento nesta lista.</p>
+        ) : (
+          visible.map((t) => (
+            <div
+              key={t.id}
+              className="min-w-0 rounded-xl border border-border/60 bg-secondary/30 p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{t.subject || "Sem assunto"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.name || t.profiles?.full_name} · {t.email || t.profiles?.email}
+                    {t.phone ? ` · ${t.phone}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Atualizado em {new Date(t.updated_at).toLocaleString("pt-BR")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="rounded-full border border-primary/40 bg-primary/15 px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                    {t.status}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={t.status === "fechado" ? "secondary" : "outline"}
+                    onClick={() => setStatus(t.id, t.status === "fechado" ? "aberto" : "fechado")}
+                  >
+                    {t.status === "fechado" ? "Reabrir" : "Encerrar"}
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-4">
+                <TicketChat ticketId={t.id} sender="suporte" authorId={adminId} />
+              </div>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
