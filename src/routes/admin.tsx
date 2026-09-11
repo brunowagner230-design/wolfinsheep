@@ -101,7 +101,7 @@ function AdminPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [houseFilter, setHouseFilter] = useState("todas");
-  const [statusFilter, setStatusFilter] = useState("todos");
+  const [statusFilter, setStatusFilter] = useState("pendente");
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
