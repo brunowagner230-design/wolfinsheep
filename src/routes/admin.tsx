@@ -93,7 +93,7 @@ const HOUSE_TINTS = [
 function houseTint(name: string) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 100000;
-  return HOUSE_TINTS[hash % HOUSE_TINTS.length];
+  return HOUSE_TINTS[hash % HOUSE_TINTS.length] ?? "FFF5F3FF";
 }
 
 function AdminPage() {
