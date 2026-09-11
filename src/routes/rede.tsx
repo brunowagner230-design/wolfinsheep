@@ -324,7 +324,7 @@ function NetworkPage() {
                               const margin = cap - Number(p.cpa_amount);
                               return (
                                 <p key={p.id}>
-                                  {p.betting_houses?.name ?? "Geral"} · {p.plan_name} ·{" "}
+                                  {p.betting_houses?.name ?? "Geral"} ·{" "}
                                   {brl(Number(p.cpa_amount))}
                                   {cap > 0 && (
                                     <span className="text-xs text-success">
@@ -374,17 +374,15 @@ function PlanDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [houseId, setHouseId] = useState<string>("");
-  const [planName, setPlanName] = useState("");
   const [amount, setAmount] = useState("");
-  const [baseline, setBaseline] = useState("");
 
   const cap = caps[houseId || "geral"] ?? 0;
   const value = Number(amount) || 0;
   const margin = cap - value;
 
   const save = async () => {
-    if (!planName.trim()) {
-      toast.error("Informe o nome do plano");
+    if (!houseId) {
+      toast.error("Selecione a casa de aposta");
       return;
     }
     if (cap <= 0) {
