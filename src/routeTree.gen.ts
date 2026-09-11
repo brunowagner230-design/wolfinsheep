@@ -17,6 +17,7 @@ import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as PremiacoesRouteImport } from './routes/premiacoes'
 import { Route as RedeRouteImport } from './routes/rede'
+import { Route as SuporteRouteImport } from './routes/suporte'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const RedeRoute = RedeRouteImport.update({
   path: '/rede',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuporteRoute = SuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/premiacoes': typeof PremiacoesRoute
   '/rede': typeof RedeRoute
+  '/suporte': typeof SuporteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/premiacoes': typeof PremiacoesRoute
   '/rede': typeof RedeRoute
+  '/suporte': typeof SuporteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/premiacoes': typeof PremiacoesRoute
   '/rede': typeof RedeRoute
+  '/suporte': typeof SuporteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/premiacoes'
     | '/rede'
+    | '/suporte'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/premiacoes'
     | '/rede'
+    | '/suporte'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/premiacoes'
     | '/rede'
+    | '/suporte'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   PremiacoesRoute: typeof PremiacoesRoute
   RedeRoute: typeof RedeRoute
+  SuporteRoute: typeof SuporteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RedeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/suporte': {
+      id: '/suporte'
+      path: '/suporte'
+      fullPath: '/suporte'
+      preLoaderRoute: typeof SuporteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   PremiacoesRoute: PremiacoesRoute,
   RedeRoute: RedeRoute,
+  SuporteRoute: SuporteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
