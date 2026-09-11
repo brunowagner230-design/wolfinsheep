@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BanknoteArrowUp, Coins, Clock, CheckCircle2, XCircle, Network } from "lucide-react";
-import { useState } from "react";
+import {
+  BanknoteArrowUp,
+  Coins,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Network,
+  Wallet,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -32,9 +40,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { HouseBadge } from "@/components/HouseBadge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type DealRow, type WithdrawalRow } from "@/lib/panel";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/carteira")({
   head: () => ({
@@ -43,12 +53,12 @@ export const Route = createFileRoute("/carteira")({
       {
         name: "description",
         content:
-          "Saldo disponível de comissões de CPA, cadastro da chave Pix e histórico de saques do afiliado.",
+          "Saldo separado por casa de aposta, cadastro da chave Pix e histórico de saques do afiliado.",
       },
       { property: "og:title", content: "Carteira | Wolf in Sheep Affiliates" },
       {
         property: "og:description",
-        content: "Saldo de comissões, chave Pix e saques do afiliado.",
+        content: "Saldo por casa de aposta, chave Pix e saques do afiliado.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -56,6 +66,20 @@ export const Route = createFileRoute("/carteira")({
   }),
   component: WalletPage,
 });
+
+const MIN_WITHDRAW = 100;
+const NETWORK_KEY = "rede";
+
+type WalletBucket = {
+  key: string;
+  houseId: string | null;
+  name: string;
+  earned: number;
+  paid: number;
+  pending: number;
+  available: number;
+  cpas: number;
+};
 
 const statusBadge = (status: string) => {
   if (status === "aprovado")
@@ -72,6 +96,7 @@ const statusBadge = (status: string) => {
 function WalletPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const [selected, setSelected] = useState<string>("");
 
   const { data: deals = [] } = useQuery({
     queryKey: ["wallet-deals", user?.id],
@@ -103,79 +128,183 @@ function WalletPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("withdrawals")
-        .select("*")
+        .select("*, betting_houses(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as WithdrawalRow[];
+      return (data ?? []) as unknown as (WithdrawalRow & {
+        house_id: string | null;
+        betting_houses?: { name: string } | null;
+      })[];
     },
   });
 
-  const ownEarned = deals.reduce((sum, d) => sum + d.eligible_cpa * Number(d.cpa_amount), 0);
   const networkEarned = cascade.reduce((sum, r) => sum + Number(r.commission), 0);
-  const earned = ownEarned + networkEarned;
-  const paid = withdrawals
-    .filter((w) => w.status === "aprovado")
-    .reduce((s, w) => s + Number(w.amount), 0);
-  const pending = withdrawals
-    .filter((w) => w.status === "pendente")
-    .reduce((s, w) => s + Number(w.amount), 0);
-  const available = Math.max(earned - paid - pending, 0);
 
-  const cards = [
-    { label: "Saldo disponível", value: brl(available), icon: Coins, glow: true },
-    { label: "Em análise", value: brl(pending), icon: Clock, glow: false },
-    { label: "Já pago via Pix", value: brl(paid), icon: CheckCircle2, glow: false },
-    { label: "CPA próprio", value: brl(ownEarned), icon: BanknoteArrowUp, glow: false },
-    { label: "Comissões da rede", value: brl(networkEarned), icon: Network, glow: false },
-  ];
+  const buckets = useMemo<WalletBucket[]>(() => {
+    const map = new Map<string, WalletBucket>();
+    const ensure = (key: string, houseId: string | null, name: string) => {
+      if (!map.has(key))
+        map.set(key, {
+          key,
+          houseId,
+          name,
+          earned: 0,
+          paid: 0,
+          pending: 0,
+          available: 0,
+          cpas: 0,
+        });
+      return map.get(key)!;
+    };
+
+    for (const d of deals) {
+      const key = d.house_id ?? NETWORK_KEY;
+      const bucket = ensure(key, d.house_id, d.betting_houses?.name ?? "Comissões da rede");
+      bucket.earned += d.eligible_cpa * Number(d.cpa_amount);
+      bucket.cpas += d.eligible_cpa;
+    }
+
+    if (networkEarned > 0) {
+      ensure(NETWORK_KEY, null, "Comissões da rede").earned += networkEarned;
+    }
+
+    for (const w of withdrawals) {
+      const key = w.house_id ?? NETWORK_KEY;
+      const bucket = ensure(key, w.house_id, w.betting_houses?.name ?? "Comissões da rede");
+      if (w.status === "aprovado") bucket.paid += Number(w.amount);
+      if (w.status === "pendente") bucket.pending += Number(w.amount);
+    }
+
+    const list = [...map.values()];
+    for (const b of list) b.available = Math.max(b.earned - b.paid - b.pending, 0);
+    return list.sort((a, b) => {
+      if (a.key === NETWORK_KEY) return 1;
+      if (b.key === NETWORK_KEY) return -1;
+      return b.available - a.available;
+    });
+  }, [deals, withdrawals, networkEarned]);
+
+  const activeKey = selected || buckets[0]?.key || "";
+  const active = buckets.find((b) => b.key === activeKey);
+
+  const activeWithdrawals = withdrawals.filter(
+    (w) => (w.house_id ?? NETWORK_KEY) === activeKey,
+  );
+
+  const totalAvailable = buckets.reduce((s, b) => s + b.available, 0);
 
   return (
     <AppShell
       title="Carteira"
-      subtitle="Comissões de CPA liberadas, chave Pix e histórico de saques."
+      subtitle="Cada casa de aposta tem seu próprio saldo — os valores nunca se misturam."
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {cards.map((c) => (
-          <Card
-            key={c.label}
-            className={c.glow ? "money-panel border-primary/40" : "glow-panel border-border/60"}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {c.label}
-              </CardTitle>
-              <c.icon className="size-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="font-display text-3xl font-bold">{c.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-primary/30 money-panel px-5 py-4">
-        <div className="flex-1">
-          <p className="font-display text-lg font-bold">Sacar comissões via Pix</p>
-          <p className="text-sm text-muted-foreground">
-            Saque mínimo de R$ 100,00 · pagamento após aprovação da administração.
+      <Card className="money-panel border-primary/40">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Saldo total disponível (todas as casas)
+          </CardTitle>
+          <Wallet className="size-4 text-primary" />
+        </CardHeader>
+        <CardContent>
+          <p className="font-display text-4xl font-bold">{brl(totalAvailable)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Saque mínimo de {brl(MIN_WITHDRAW)} por casa de aposta.
           </p>
-        </div>
-        <WithdrawDialog
-          available={available}
-          userId={user?.id ?? ""}
-          onSaved={() => qc.invalidateQueries({ queryKey: ["my-withdrawals"] })}
-        />
-      </div>
+        </CardContent>
+      </Card>
+
+      {buckets.length === 0 ? (
+        <Card className="mt-6">
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            Você ainda não tem saldo. Assim que seus CPAs forem validados, cada casa de aposta
+            aparece aqui com o saldo dela.
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {buckets.map((b) => {
+              const isActive = b.key === activeKey;
+              return (
+                <button
+                  key={b.key}
+                  type="button"
+                  onClick={() => setSelected(b.key)}
+                  className={cn(
+                    "rounded-2xl border p-5 text-left transition-all",
+                    isActive
+                      ? "money-panel border-primary/60 shadow-lg"
+                      : "glow-panel border-border/60 hover:border-primary/40",
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    {b.key === NETWORK_KEY ? (
+                      <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                        <Network className="size-4 text-primary" /> Comissões da rede
+                      </span>
+                    ) : (
+                      <HouseBadge name={b.name} />
+                    )}
+                    {isActive && (
+                      <Badge className="border-transparent bg-primary text-primary-foreground">
+                        selecionada
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="mt-4 font-display text-3xl font-bold">{brl(b.available)}</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    disponível
+                  </p>
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-[0.7rem] text-muted-foreground">
+                    <span>
+                      Em análise
+                      <br />
+                      <strong className="text-foreground">{brl(b.pending)}</strong>
+                    </span>
+                    <span>
+                      Já pago
+                      <br />
+                      <strong className="text-success">{brl(b.paid)}</strong>
+                    </span>
+                    <span>
+                      CPAs
+                      <br />
+                      <strong className="text-foreground">{b.cpas}</strong>
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-primary/30 money-panel px-5 py-4">
+            <div className="flex-1">
+              <p className="font-display text-lg font-bold">
+                Sacar de {active?.name ?? "—"} · {brl(active?.available ?? 0)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Saque mínimo de {brl(MIN_WITHDRAW)} · o saldo desta casa é independente das outras.
+              </p>
+            </div>
+            <WithdrawDialog
+              bucket={active}
+              userId={user?.id ?? ""}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["my-withdrawals"] })}
+            />
+          </div>
+        </>
+      )}
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-base">Meus saques ({withdrawals.length})</CardTitle>
+          <CardTitle className="text-base">
+            Saques de {active?.name ?? "—"} ({activeWithdrawals.length})
+          </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          {withdrawals.length === 0 ? (
+          {activeWithdrawals.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhum saque solicitado ainda. Quando seus CPAs forem lançados, o valor aparece no
-              saldo disponível.
+              Nenhum saque solicitado nesta casa de aposta ainda.
             </p>
           ) : (
             <Table>
@@ -189,7 +318,7 @@ function WalletPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {withdrawals.map((w) => {
+                {activeWithdrawals.map((w) => {
                   const s = statusBadge(w.status);
                   return (
                     <TableRow key={w.id}>
@@ -222,11 +351,11 @@ function WalletPage() {
 }
 
 function WithdrawDialog({
-  available,
+  bucket,
   userId,
   onSaved,
 }: {
-  available: number;
+  bucket: WalletBucket | undefined;
   userId: string;
   onSaved: () => void;
 }) {
@@ -235,15 +364,20 @@ function WithdrawDialog({
   const [pixType, setPixType] = useState("cpf");
   const [pixKey, setPixKey] = useState("");
   const [holder, setHolder] = useState("");
+  const available = bucket?.available ?? 0;
 
   const save = async () => {
+    if (!bucket) {
+      toast.error("Selecione a casa de aposta");
+      return;
+    }
     const value = Number(amount);
-    if (!Number.isFinite(value) || value < 100) {
-      toast.error("O valor mínimo de saque é R$ 100,00");
+    if (!Number.isFinite(value) || value < MIN_WITHDRAW) {
+      toast.error(`O valor mínimo de saque é ${brl(MIN_WITHDRAW)}`);
       return;
     }
     if (value > available) {
-      toast.error("Valor acima do saldo disponível");
+      toast.error("Valor acima do saldo disponível nesta casa de aposta");
       return;
     }
     if (!pixKey.trim()) {
@@ -252,12 +386,13 @@ function WithdrawDialog({
     }
     const { error } = await supabase.from("withdrawals").insert({
       user_id: userId,
+      house_id: bucket.houseId,
       amount: value,
       pix_key: pixKey.trim().slice(0, 160),
       pix_key_type: pixType,
       holder_name: holder.trim().slice(0, 160),
       status: "pendente",
-    });
+    } as never);
     if (error) {
       toast.error(error.message);
       return;
@@ -271,14 +406,16 @@ function WithdrawDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2" disabled={!bucket}>
           <BanknoteArrowUp className="size-4" />
           Solicitar saque
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Saque via Pix · disponível {brl(available)}</DialogTitle>
+          <DialogTitle>
+            Saque via Pix · {bucket?.name ?? "—"} · disponível {brl(available)}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
@@ -289,7 +426,7 @@ function WithdrawDialog({
                 <Input
                   id="w-amount"
                   type="number"
-                  min="100"
+                  min={MIN_WITHDRAW}
                   step="0.01"
                   placeholder="0,00"
                   value={amount}
