@@ -471,17 +471,6 @@ function PlanDialog({
               </p>
             )}
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="plan-baseline">Baseline</Label>
-            <Input
-              id="plan-baseline"
-              value={baseline}
-              onChange={(e) => setBaseline(e.target.value)}
-              placeholder="Ex.: depósito de R$ 30 + 1 aposta"
-              maxLength={200}
-            />
-          </div>
         </div>
         <DialogFooter>
           <Button onClick={save}>Salvar plano</Button>
