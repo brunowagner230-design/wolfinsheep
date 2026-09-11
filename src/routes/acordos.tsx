@@ -90,12 +90,42 @@ function DealsPage() {
     },
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ["my-profile-link", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("promo_link")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { promo_link: string } | null;
+    },
+  });
+
   const requestOf = (houseId: string) => requests.find((r) => r.house_id === houseId);
+  const dealOf = (houseId: string) => deals.find((d) => d.house_id === houseId);
+
+  /** Link já liberado: da solicitação, ou do acordo existente + link do perfil. */
+  const releasedLink = (houseId: string) => {
+    const req = requestOf(houseId);
+    if (req?.status === "liberado" && req.promo_link) return req.promo_link;
+    const deal = dealOf(houseId);
+    if (deal && profile?.promo_link) return profile.promo_link;
+    return null;
+  };
 
   const requestLink = async (house: HouseRow) => {
-    const { error } = await sb
-      .from("link_requests")
-      .insert({ user_id: user!.id, house_id: house.id, status: "pendente" });
+    const existing = requests.find((r) => r.house_id === house.id);
+    const { error } = existing
+      ? await sb
+          .from("link_requests")
+          .update({ status: "pendente", admin_note: null })
+          .eq("id", existing.id)
+      : await sb
+          .from("link_requests")
+          .insert({ user_id: user!.id, house_id: house.id, status: "pendente" });
     if (error) {
       toast.error(
         error.message.includes("duplicate")
@@ -126,31 +156,32 @@ function DealsPage() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {houses.map((h) => {
                 const req = requestOf(h.id);
-                const released = req?.status === "liberado" && !!req.promo_link;
+                const deal = dealOf(h.id);
+                const link = releasedLink(h.id);
+                const cpaValue = Number(deal?.cpa_amount ?? req?.cpa_amount ?? 0);
                 return (
                   <div
                     key={h.id}
                     className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/70 p-4"
                   >
-                    <HouseBadge name={h.name} />
-                    {released ? (
+                    <HouseBadge name={h.name} logoUrl={h.logo_url} />
+                    {link ? (
                       <>
                         <div className="text-xs text-muted-foreground">
                           <p>
-                            Plano: <strong className="text-foreground">{req.cpa_plan || "CPA"}</strong>{" "}
-                            · {brl(Number(req.cpa_amount))}
+                            Plano: <strong className="text-foreground">CPA</strong> ·{" "}
+                            {brl(cpaValue)}
                           </p>
-                          {req.baseline && <p className="mt-1">Baseline: {req.baseline}</p>}
                         </div>
                         <div className="flex items-center gap-2">
                           <p className="min-w-0 flex-1 truncate rounded bg-secondary/60 px-2 py-1.5 font-mono text-[11px]">
-                            {req.promo_link}
+                            {link}
                           </p>
                           <Button
                             size="sm"
                             variant="secondary"
                             onClick={async () => {
-                              await navigator.clipboard.writeText(req.promo_link);
+                              await navigator.clipboard.writeText(link);
                               toast.success("Link copiado!");
                             }}
                           >
@@ -161,7 +192,7 @@ function DealsPage() {
                           <Check className="size-3" /> link liberado
                         </Badge>
                       </>
-                    ) : req ? (
+                    ) : req && req.status !== "rejeitado" ? (
                       <>
                         <Badge variant="secondary" className="w-fit gap-1">
                           <Clock className="size-3" />

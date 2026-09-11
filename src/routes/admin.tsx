@@ -999,21 +999,25 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [country, setCountry] = useState("BR");
+  const [logoUrl, setLogoUrl] = useState("");
 
   const save = async () => {
     if (!name.trim()) {
       toast.error("Informe o nome da casa");
       return;
     }
-    const { error } = await supabase
-      .from("betting_houses")
-      .insert({ name: name.trim().slice(0, 120), country: country.trim().slice(0, 8) || "BR" });
+    const { error } = await supabase.from("betting_houses").insert({
+      name: name.trim().slice(0, 120),
+      country: country.trim().slice(0, 8) || "BR",
+      logo_url: logoUrl.trim() ? logoUrl.trim().slice(0, 500) : null,
+    });
     if (error) {
       toast.error(error.message);
       return;
     }
     toast.success("Casa cadastrada!");
     setName("");
+    setLogoUrl("");
     setOpen(false);
     onSaved();
   };
@@ -1045,6 +1049,23 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
               onChange={(e) => setCountry(e.target.value)}
               maxLength={8}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="h-logo">Logo da casa (URL da imagem)</Label>
+            <Input
+              id="h-logo"
+              placeholder="https://.../logo.png"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              maxLength={500}
+            />
+            {logoUrl.trim() && (
+              <img
+                src={logoUrl.trim()}
+                alt="Prévia da logo"
+                className="size-12 rounded-md border border-border/60 object-contain"
+              />
+            )}
           </div>
         </div>
         <DialogFooter>
