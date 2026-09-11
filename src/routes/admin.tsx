@@ -78,6 +78,24 @@ type AdminLinkRequest = {
   profiles?: { full_name: string; email: string } | null;
 };
 
+/** Cores suaves por casa de aposta na planilha (ARGB) */
+const HOUSE_TINTS = [
+  "FFEDE9FE",
+  "FFDCFCE7",
+  "FFFFE4E6",
+  "FFDBEAFE",
+  "FFFEF3C7",
+  "FFF3E8FF",
+  "FFCCFBF1",
+  "FFFFEDD5",
+];
+
+function houseTint(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 100000;
+  return HOUSE_TINTS[hash % HOUSE_TINTS.length];
+}
+
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
