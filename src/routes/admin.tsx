@@ -63,6 +63,21 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
+type AdminLinkRequest = {
+  id: string;
+  user_id: string;
+  house_id: string;
+  status: string;
+  promo_link: string;
+  cpa_plan: string;
+  cpa_amount: number | string;
+  baseline: string;
+  admin_note: string | null;
+  created_at: string;
+  betting_houses?: { name: string } | null;
+  profiles?: { full_name: string; email: string } | null;
+};
+
 function AdminPage() {
   const { isAdmin, loading } = useAuth();
   const qc = useQueryClient();
