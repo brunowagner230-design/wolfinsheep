@@ -152,7 +152,7 @@ export function AppShell({
         />
       )}
 
-      <main className="flex-1 px-5 py-6 lg:px-10 lg:py-8">
+      <main className="min-w-0 flex-1 px-5 py-6 lg:px-10 lg:py-8">
         <header className="mb-8 flex flex-wrap items-start gap-4">
           <Button
             variant="secondary"
