@@ -906,17 +906,58 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
     onSaved();
   };
 
+  const addCpa = async (qty: number) => {
+    setSaving(true);
+    const next = Math.max(0, Number(form.eligible_cpa) || 0) + qty;
+    const { error } = await supabase
+      .from("affiliate_deals")
+      .update({ eligible_cpa: next })
+      .eq("id", deal.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setForm((f) => ({ ...f, eligible_cpa: String(next) }));
+    toast.success(
+      `+${qty} CPA em ${deal.betting_houses?.name ?? "acordo"} · ${brl(qty * Number(deal.cpa_amount))} na carteira`,
+    );
+    onSaved();
+  };
+
+  const commission = Math.max(0, Number(form.eligible_cpa) || 0) * Number(deal.cpa_amount);
+
   return (
-    <div className="rounded-lg border border-border/60 bg-secondary/30 p-4">
+    <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="font-semibold">
-            {deal.profiles?.full_name || deal.profiles?.email || "Afiliado"}
-          </p>
-          <p className="text-xs text-muted-foreground">{deal.profiles?.email}</p>
-        </div>
         <HouseBadge name={deal.betting_houses?.name ?? null} />
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>
+            CPA: <strong className="text-foreground">{brl(Number(deal.cpa_amount))}</strong>
+          </span>
+          <span>
+            Total: <strong className="text-success">{brl(commission)}</strong>
+          </span>
+        </div>
       </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {[1, 2, 5, 10].map((q) => (
+          <Button
+            key={q}
+            size="sm"
+            className="gap-1"
+            disabled={saving}
+            onClick={() => addCpa(q)}
+          >
+            <Plus className="size-3" /> {q} CPA
+          </Button>
+        ))}
+        <span className="text-xs text-muted-foreground">
+          lança na hora e notifica o afiliado
+        </span>
+      </div>
+
       <div className="mt-4 grid gap-3 sm:grid-cols-4">
         <div className="space-y-1">
           <Label className="text-xs">Cliques</Label>
@@ -946,7 +987,12 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
           />
         </div>
         <div className="flex items-end">
-          <Button className="w-full" onClick={save} disabled={saving}>
+          <Button
+            className="w-full"
+            variant="secondary"
+            onClick={save}
+            disabled={saving}
+          >
             {saving ? "Salvando..." : "Salvar"}
           </Button>
         </div>
