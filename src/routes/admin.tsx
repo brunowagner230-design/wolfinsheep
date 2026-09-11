@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { flushPush } from "@/lib/push.functions";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1120,6 +1121,9 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
       return;
     }
     setForm((f) => ({ ...f, eligible_cpa: String(next) }));
+    window.setTimeout(() => {
+      flushPush({}).catch(() => undefined);
+    }, 1200);
     toast.success(
       `+${qty} CPA em ${deal.betting_houses?.name ?? "acordo"} · ${brl(qty * Number(deal.cpa_amount))} na carteira`,
     );
