@@ -223,20 +223,101 @@ function AdminPage() {
       toast.error("Nenhum afiliado para exportar.");
       return;
     }
-    const XLSX = await import("xlsx");
-    const rows = filteredProfiles.map((p) => ({
-      Nome: p.full_name || "",
-      "E-mail": p.email || "",
-      Celular: p.phone || "",
-      "Link de divulgação": p.promo_link || "",
-      CPA: "",
-    }));
-    const sheet = XLSX.utils.json_to_sheet(rows);
-    sheet["!cols"] = [{ wch: 28 }, { wch: 32 }, { wch: 18 }, { wch: 45 }, { wch: 12 }];
-    const book = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(book, sheet, "Afiliados");
-    XLSX.writeFile(book, `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    toast.success("Planilha gerada!");
+    const ExcelJS = (await import("exceljs")).default;
+    const book = new ExcelJS.Workbook();
+    const sheet = book.addWorksheet("Afiliados CPA", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+    sheet.columns = [
+      { header: "Casa de aposta", key: "casa", width: 22 },
+      { header: "Nome", key: "nome", width: 28 },
+      { header: "E-mail", key: "email", width: 32 },
+      { header: "Celular", key: "celular", width: 18 },
+      { header: "Link de divulgação", key: "link", width: 48 },
+      { header: "Plano CPA", key: "plano", width: 18 },
+      { header: "Valor CPA", key: "valor", width: 14 },
+      { header: "CPA (preencher)", key: "cpa", width: 18 },
+    ];
+
+    const header = sheet.getRow(1);
+    header.height = 24;
+    header.eachCell((cell) => {
+      cell.font = { name: "Arial", bold: true, size: 11, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4C1D95" } };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FF2E1065" } },
+        bottom: { style: "thin", color: { argb: "FF2E1065" } },
+        left: { style: "thin", color: { argb: "FF2E1065" } },
+        right: { style: "thin", color: { argb: "FF2E1065" } },
+      };
+    });
+
+    type ExportRow = {
+      casa: string;
+      nome: string;
+      email: string;
+      celular: string;
+      link: string;
+      plano: string;
+      valor: number | string;
+    };
+    const rows: ExportRow[] = [];
+    filteredProfiles.forEach((p) => {
+      const myDeals = deals.filter((d) => d.affiliate_id === p.id);
+      const base = {
+        nome: p.full_name || "",
+        email: p.email || "",
+        celular: p.phone || "",
+        link: p.promo_link || "",
+      };
+      if (myDeals.length === 0) {
+        rows.push({ ...base, casa: "Sem casa vinculada", plano: "", valor: "" });
+      } else {
+        myDeals.forEach((d) =>
+          rows.push({
+            ...base,
+            casa: d.betting_houses?.name ?? "Casa",
+            plano: d.cpa_plan || d.deal_name || "",
+            valor: Number(d.cpa_amount) || 0,
+          }),
+        );
+      }
+    });
+
+    rows.sort((a, b) => a.casa.localeCompare(b.casa) || a.nome.localeCompare(b.nome));
+    rows.forEach((r) => {
+      const row = sheet.addRow({ ...r, cpa: "" });
+      const tint = houseTint(r.casa);
+      row.eachCell((cell) => {
+        cell.font = { name: "Arial", size: 11 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: tint } };
+        cell.border = {
+          bottom: { style: "hair", color: { argb: "FFBFBFBF" } },
+          right: { style: "hair", color: { argb: "FFBFBFBF" } },
+        };
+      });
+      row.getCell("casa").font = { name: "Arial", size: 11, bold: true };
+      row.getCell("valor").numFmt = '"R$"#,##0.00;("R$"#,##0.00);-';
+      const cpaCell = row.getCell("cpa");
+      cpaCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF2CC" } };
+      cpaCell.alignment = { horizontal: "center" };
+    });
+
+    sheet.autoFilter = { from: "A1", to: { row: 1, column: 8 } };
+
+    const buffer = await book.xlsx.writeBuffer();
+    const url = URL.createObjectURL(
+      new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Planilha colorida gerada!");
   };
 
   if (!loading && !isAdmin) {
