@@ -1000,29 +1000,34 @@ function DealDialog({
   );
 }
 
-function HouseDialog({ onSaved }: { onSaved: () => void }) {
+function HouseDialog({ house, onSaved }: { house?: HouseRow; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [country, setCountry] = useState("BR");
-  const [logoUrl, setLogoUrl] = useState("");
+  const [name, setName] = useState(house?.name ?? "");
+  const [country, setCountry] = useState(house?.country ?? "BR");
+  const [logoUrl, setLogoUrl] = useState(house?.logo_url ?? "");
 
   const save = async () => {
     if (!name.trim()) {
       toast.error("Informe o nome da casa");
       return;
     }
-    const { error } = await supabase.from("betting_houses").insert({
+    const payload = {
       name: name.trim().slice(0, 120),
       country: country.trim().slice(0, 8) || "BR",
       logo_url: logoUrl.trim() ? logoUrl.trim().slice(0, 500) : null,
-    });
+    };
+    const { error } = house
+      ? await supabase.from("betting_houses").update(payload).eq("id", house.id)
+      : await supabase.from("betting_houses").insert(payload);
     if (error) {
       toast.error(error.message);
       return;
     }
-    toast.success("Casa cadastrada!");
-    setName("");
-    setLogoUrl("");
+    toast.success(house ? "Casa atualizada!" : "Casa cadastrada!");
+    if (!house) {
+      setName("");
+      setLogoUrl("");
+    }
     setOpen(false);
     onSaved();
   };
@@ -1030,11 +1035,17 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">Nova casa</Button>
+        {house ? (
+          <Button variant="ghost" size="icon" aria-label={`Editar ${house.name}`}>
+            <Pencil className="size-4 text-primary" />
+          </Button>
+        ) : (
+          <Button size="sm">Nova casa</Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nova casa de aposta</DialogTitle>
+          <DialogTitle>{house ? `Editar ${house.name}` : "Nova casa de aposta"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
