@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CarteiraRouteImport } from './routes/carteira'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as PremiacoesRouteImport } from './routes/premiacoes'
 import { Route as RedeRouteImport } from './routes/rede'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PremiacoesRoute = PremiacoesRouteImport.update({
+  id: '/premiacoes',
+  path: '/premiacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RedeRoute = RedeRouteImport.update({
   id: '/rede',
   path: '/rede',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/carteira': typeof CarteiraRoute
   '/dashboard': typeof DashboardRoute
+  '/premiacoes': typeof PremiacoesRoute
   '/rede': typeof RedeRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/carteira': typeof CarteiraRoute
   '/dashboard': typeof DashboardRoute
+  '/premiacoes': typeof PremiacoesRoute
   '/rede': typeof RedeRoute
 }
 export interface FileRoutesById {
@@ -79,15 +87,30 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/carteira': typeof CarteiraRoute
   '/dashboard': typeof DashboardRoute
+  '/premiacoes': typeof PremiacoesRoute
   '/rede': typeof RedeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/acordos' | '/admin' | '/auth' | '/carteira' | '/dashboard' | '/rede'
+    | '/'
+    | '/acordos'
+    | '/admin'
+    | '/auth'
+    | '/carteira'
+    | '/dashboard'
+    | '/premiacoes'
+    | '/rede'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/acordos' | '/admin' | '/auth' | '/carteira' | '/dashboard' | '/rede'
+    | '/'
+    | '/acordos'
+    | '/admin'
+    | '/auth'
+    | '/carteira'
+    | '/dashboard'
+    | '/premiacoes'
+    | '/rede'
   id:
     | '__root__'
     | '/'
@@ -96,6 +119,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/carteira'
     | '/dashboard'
+    | '/premiacoes'
     | '/rede'
   fileRoutesById: FileRoutesById
 }
@@ -106,6 +130,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CarteiraRoute: typeof CarteiraRoute
   DashboardRoute: typeof DashboardRoute
+  PremiacoesRoute: typeof PremiacoesRoute
   RedeRoute: typeof RedeRoute
 }
 
@@ -153,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/premiacoes': {
+      id: '/premiacoes'
+      path: '/premiacoes'
+      fullPath: '/premiacoes'
+      preLoaderRoute: typeof PremiacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rede': {
       id: '/rede'
       path: '/rede'
@@ -170,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CarteiraRoute: CarteiraRoute,
   DashboardRoute: DashboardRoute,
+  PremiacoesRoute: PremiacoesRoute,
   RedeRoute: RedeRoute,
 }
 export const routeTree = rootRouteImport
