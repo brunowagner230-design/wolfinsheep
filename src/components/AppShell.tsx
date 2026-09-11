@@ -4,6 +4,7 @@ import {
   Handshake,
   Network,
   Wallet,
+  Trophy,
   ShieldCheck,
   LogOut,
   Menu,
@@ -11,6 +12,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, type ReactNode } from "react";
+import { InstallAppButton } from "@/components/InstallAppButton";
+import { NotificationBell } from "@/components/NotificationBell";
 import { Wordmark } from "@/components/Wordmark";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,6 +23,7 @@ const navItems = [
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
   { to: "/acordos", label: "Acordos CPA", icon: Handshake },
   { to: "/rede", label: "Minha rede", icon: Network },
+  { to: "/premiacoes", label: "Premiações", icon: Trophy },
   { to: "/carteira", label: "Carteira", icon: Wallet },
 ] as const;
 
