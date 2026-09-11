@@ -1120,6 +1120,9 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
       return;
     }
     setForm((f) => ({ ...f, eligible_cpa: String(next) }));
+    window.setTimeout(() => {
+      flushPush({}).catch(() => undefined);
+    }, 1200);
     toast.success(
       `+${qty} CPA em ${deal.betting_houses?.name ?? "acordo"} · ${brl(qty * Number(deal.cpa_amount))} na carteira`,
     );
