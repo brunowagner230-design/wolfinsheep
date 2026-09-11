@@ -554,6 +554,7 @@ function AdminPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Afiliado</TableHead>
+                      <TableHead>Casa de aposta</TableHead>
                       <TableHead>Chave Pix</TableHead>
                       <TableHead>Data do pagamento</TableHead>
                       <TableHead className="text-right">Valor pago</TableHead>
@@ -564,6 +565,11 @@ function AdminPage() {
                       <TableRow key={w.id}>
                         <TableCell className="font-medium">
                           {w.profiles?.full_name || w.profiles?.email || "—"}
+                        </TableCell>
+                        <TableCell>
+                          {w.betting_houses?.name ?? (
+                            <span className="text-xs text-muted-foreground">Rede</span>
+                          )}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {w.pix_key_type.toUpperCase()} · {w.pix_key}
@@ -606,6 +612,7 @@ function AdminPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Afiliado</TableHead>
+                      <TableHead>Casa de aposta</TableHead>
                       <TableHead>Chave Pix</TableHead>
                       <TableHead>Titular</TableHead>
                       <TableHead className="text-right">Valor</TableHead>
@@ -618,6 +625,13 @@ function AdminPage() {
                       <TableRow key={w.id}>
                         <TableCell className="font-medium">
                           {w.profiles?.full_name || w.profiles?.email || "—"}
+                        </TableCell>
+                        <TableCell>
+                          {w.betting_houses?.name ? (
+                            <HouseBadge name={w.betting_houses.name} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Comissões da rede</span>
+                          )}
                         </TableCell>
                         <TableCell className="font-mono text-xs">
                           {w.pix_key_type.toUpperCase()} · {w.pix_key}
