@@ -168,15 +168,42 @@ function WalletPage() {
       ensure(NETWORK_KEY, null, "Comissões da rede").earned += networkEarned;
     }
 
+    // Saques antigos podem não ter casa vinculada: eles viram um "pool" que
+    // é descontado dos saldos para o valor pago nunca ficar de fora da conta.
+    let poolPaid = 0;
+    let poolPending = 0;
+
     for (const w of withdrawals) {
-      const key = w.house_id ?? NETWORK_KEY;
-      const bucket = ensure(key, w.house_id, w.betting_houses?.name ?? "Comissões da rede");
+      if (!w.house_id) {
+        if (w.status === "aprovado") poolPaid += Number(w.amount);
+        if (w.status === "pendente") poolPending += Number(w.amount);
+        continue;
+      }
+      const bucket = ensure(w.house_id, w.house_id, w.betting_houses?.name ?? "Comissões da rede");
       if (w.status === "aprovado") bucket.paid += Number(w.amount);
       if (w.status === "pendente") bucket.pending += Number(w.amount);
     }
 
     const list = [...map.values()];
     for (const b of list) b.available = Math.max(b.earned - b.paid - b.pending, 0);
+
+    // Desconta o pool: primeiro do saldo de rede, depois das casas.
+    const order = [
+      ...list.filter((b) => b.key === NETWORK_KEY),
+      ...list.filter((b) => b.key !== NETWORK_KEY),
+    ];
+    for (const b of order) {
+      if (poolPaid <= 0 && poolPending <= 0) break;
+      const takePaid = Math.min(poolPaid, b.available);
+      b.paid += takePaid;
+      b.available -= takePaid;
+      poolPaid -= takePaid;
+      const takePending = Math.min(poolPending, b.available);
+      b.pending += takePending;
+      b.available -= takePending;
+      poolPending -= takePending;
+    }
+
     return list.sort((a, b) => {
       if (a.key === NETWORK_KEY) return 1;
       if (b.key === NETWORK_KEY) return -1;
