@@ -1050,6 +1050,23 @@ function HouseDialog({ onSaved }: { onSaved: () => void }) {
               maxLength={8}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="h-logo">Logo da casa (URL da imagem)</Label>
+            <Input
+              id="h-logo"
+              placeholder="https://.../logo.png"
+              value={logoUrl}
+              onChange={(e) => setLogoUrl(e.target.value)}
+              maxLength={500}
+            />
+            {logoUrl.trim() && (
+              <img
+                src={logoUrl.trim()}
+                alt="Prévia da logo"
+                className="size-12 rounded-md border border-border/60 object-contain"
+              />
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button onClick={save}>Salvar</Button>
