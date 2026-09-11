@@ -1221,9 +1221,7 @@ function LinkRequestCard({
 }) {
   const [form, setForm] = useState({
     promo_link: request.promo_link ?? "",
-    cpa_plan: request.cpa_plan ?? "",
     cpa_amount: request.cpa_amount ? String(request.cpa_amount) : "",
-    baseline: request.baseline ?? "",
   });
   const [saving, setSaving] = useState(false);
   const sb = supabase as unknown as { from: (t: string) => any };
@@ -1235,15 +1233,12 @@ function LinkRequestCard({
     }
     setSaving(true);
     const amount = Number(form.cpa_amount) || 0;
+    const link = form.promo_link.trim().slice(0, 500);
+    const houseName = request.betting_houses?.name ?? "Acordo CPA";
+
     const { error } = await sb
       .from("link_requests")
-      .update({
-        promo_link: form.promo_link.trim().slice(0, 500),
-        cpa_plan: form.cpa_plan.trim().slice(0, 160),
-        cpa_amount: amount,
-        baseline: form.baseline.trim().slice(0, 240),
-        status: "liberado",
-      })
+      .update({ promo_link: link, cpa_amount: amount, status: "liberado" })
       .eq("id", request.id);
 
     if (error) {
@@ -1252,20 +1247,33 @@ function LinkRequestCard({
       return;
     }
 
-    const { error: dealError } = await supabase.from("affiliate_deals").insert({
-      affiliate_id: request.user_id,
-      house_id: request.house_id,
-      deal_name: request.betting_houses?.name ?? "Acordo CPA",
-      cpa_plan: form.cpa_plan.trim().slice(0, 160),
-      cpa_amount: amount,
-      baseline: form.baseline.trim().slice(0, 240),
-    });
+    await supabase.from("profiles").update({ promo_link: link }).eq("id", request.user_id);
+
+    const { data: existing } = await supabase
+      .from("affiliate_deals")
+      .select("id")
+      .eq("affiliate_id", request.user_id)
+      .eq("house_id", request.house_id)
+      .limit(1);
+
+    const dealResult = existing?.[0]?.id
+      ? await supabase
+          .from("affiliate_deals")
+          .update({ cpa_amount: amount, deal_name: houseName })
+          .eq("id", existing[0].id)
+      : await supabase.from("affiliate_deals").insert({
+          affiliate_id: request.user_id,
+          house_id: request.house_id,
+          deal_name: houseName,
+          cpa_amount: amount,
+        });
+
     setSaving(false);
-    if (dealError) {
-      toast.error(dealError.message);
+    if (dealResult.error) {
+      toast.error(dealResult.error.message);
       return;
     }
-    toast.success("Link liberado e acordo lançado! O afiliado foi notificado.");
+    toast.success("Link liberado e acordo atualizado! O afiliado foi notificado.");
     onSaved();
   };
 
