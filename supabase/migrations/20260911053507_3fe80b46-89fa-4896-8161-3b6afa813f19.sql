@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_deal_from_plan() FROM anon, authenticated, PUBLIC;
