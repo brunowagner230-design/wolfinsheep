@@ -1375,13 +1375,22 @@ function LinkRequestCard({
         </div>
         <div className="space-y-1 sm:col-span-2">
           <Label className="text-xs">Valor do CPA (R$)</Label>
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            value={form.cpa_amount}
-            onChange={(e) => setForm((f) => ({ ...f, cpa_amount: e.target.value }))}
-          />
+          {autoAmount !== null ? (
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm">
+              <strong className="text-foreground">{brl(autoAmount)}</strong>
+              <Badge variant="secondary" className="text-[10px]">
+                definido pelo gerente da rede
+              </Badge>
+            </div>
+          ) : (
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.cpa_amount}
+              onChange={(e) => setForm((f) => ({ ...f, cpa_amount: e.target.value }))}
+            />
+          )}
         </div>
       </div>
 
