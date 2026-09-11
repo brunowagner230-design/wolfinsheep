@@ -64,3 +64,25 @@ export type WithdrawalRow = {
   created_at: string;
   profiles?: { full_name: string; email: string } | null;
 };
+
+export type SupportTicketRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  profiles?: { full_name: string; email: string } | null;
+};
+
+export type SupportMessageRow = {
+  id: string;
+  ticket_id: string;
+  sender: string;
+  author_id: string | null;
+  body: string;
+  created_at: string;
+};
