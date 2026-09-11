@@ -258,8 +258,13 @@ function NetworkPage() {
                           <span className="truncate">
                             {r.affiliate_name || r.affiliate_email}
                           </span>
-                          <span className="shrink-0 font-semibold text-success">
-                            {brl(Number(r.commission))}
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className="rounded-full bg-primary/15 px-2 py-0.5 font-semibold text-primary">
+                              {Number(r.cpas)} CPA
+                            </span>
+                            <span className="font-semibold text-success">
+                              {brl(Number(r.commission))}
+                            </span>
                           </span>
                         </div>
                       ))
