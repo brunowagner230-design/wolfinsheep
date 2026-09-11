@@ -1269,7 +1269,7 @@ function LinkRequestCard({
   });
 
   const autoAmount = plan && plan > 0 ? plan : null;
-  const effectiveAmount = autoAmount ?? (Number(form.cpa_amount) || 0);
+
 
   const release = async () => {
     if (!form.promo_link.trim()) {
