@@ -167,8 +167,9 @@ export function AppShell({
             <h1 className="text-2xl font-bold lg:text-3xl">{title}</h1>
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex items-center gap-2">
-            <InstallAppButton className="hidden sm:inline-flex" />
+          <div className="flex flex-wrap items-center gap-2">
+            <InstallAppButton />
+            <EnableNotificationsButton />
             <NotificationBell />
           </div>
         </header>
