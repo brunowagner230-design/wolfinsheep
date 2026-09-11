@@ -42,7 +42,7 @@ import {
   type ProfileRow,
   type WithdrawalRow,
 } from "@/lib/panel";
-import { Trash2, Check, X, FileSpreadsheet, Plus } from "lucide-react";
+import { Trash2, Check, X, FileSpreadsheet, Plus, ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -139,10 +139,12 @@ function AdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("withdrawals")
-        .select("*, profiles(full_name, email)")
+        .select("*, profiles(full_name, email), betting_houses(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as WithdrawalRow[];
+      return (data ?? []) as unknown as (WithdrawalRow & {
+        betting_houses?: { name: string } | null;
+      })[];
     },
   });
 
