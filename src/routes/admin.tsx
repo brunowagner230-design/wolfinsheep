@@ -206,6 +206,16 @@ function AdminPage() {
       )
     : deals;
 
+  const pendingRequests = linkRequests.filter((r) => r.status === "pendente");
+  const filteredRequests: AdminLinkRequest[] = q
+    ? linkRequests.filter(
+        (r) =>
+          (r.profiles?.email ?? "").toLowerCase().includes(q) ||
+          (r.profiles?.full_name ?? "").toLowerCase().includes(q) ||
+          (r.betting_houses?.name ?? "").toLowerCase().includes(q),
+      )
+    : linkRequests;
+
   const exportSpreadsheet = async () => {
     if (filteredProfiles.length === 0) {
       toast.error("Nenhum afiliado para exportar.");
