@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HouseBadge } from "@/components/HouseBadge";
+import { TicketChat } from "@/components/SupportChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -41,6 +42,7 @@ import {
   type DealRow,
   type HouseRow,
   type ProfileRow,
+  type SupportTicketRow,
   type WithdrawalRow,
 } from "@/lib/panel";
 import {
@@ -109,7 +111,7 @@ function houseTint(name: string) {
 }
 
 function AdminPage() {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, user } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [houseFilter, setHouseFilter] = useState("todas");
