@@ -119,6 +119,19 @@ function DashboardPage() {
     },
   });
 
+  const { data: networkEarnings = 0 } = useQuery({
+    queryKey: ["network-earnings", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("cascade_network", { _user_id: user!.id });
+      if (error) throw error;
+      return (data ?? []).reduce(
+        (sum: number, row: { commission: number | string }) => sum + Number(row.commission ?? 0),
+        0,
+      );
+    },
+  });
+
   const [houseId, setHouseId] = useState("todas");
   const [range, setRange] = useState("30");
 
