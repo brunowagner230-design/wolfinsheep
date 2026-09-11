@@ -1143,10 +1143,19 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {[1, 2, 5, 10].map((q) => (
+        <Button
+          size="lg"
+          className="gap-2 bg-success font-bold text-success-foreground shadow-lg hover:bg-success/90"
+          disabled={saving}
+          onClick={() => addCpa(1)}
+        >
+          <Plus className="size-4" /> Adicionar CPA
+        </Button>
+        {[2, 5, 10].map((q) => (
           <Button
             key={q}
             size="sm"
+            variant="secondary"
             className="gap-1"
             disabled={saving}
             onClick={() => addCpa(q)}
@@ -1155,9 +1164,10 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
           </Button>
         ))}
         <span className="text-xs text-muted-foreground">
-          lança na hora e notifica o afiliado
+          lança na hora, sem salvar · notifica o afiliado e libera a comissão de rede do gerente
         </span>
       </div>
+
 
       <div className="mt-4 grid gap-3 sm:grid-cols-4">
         <div className="space-y-1">
