@@ -465,6 +465,7 @@ function AdminPage() {
           <TabsTrigger value="metricas">Métricas</TabsTrigger>
           <TabsTrigger value="afiliados">Afiliados</TabsTrigger>
           <TabsTrigger value="acordos">Acordos CPA</TabsTrigger>
+          <TabsTrigger value="links">Links por afiliado</TabsTrigger>
           <TabsTrigger value="casas">Casas</TabsTrigger>
           <TabsTrigger value="saques">Saques</TabsTrigger>
           <TabsTrigger value="suporte" className="gap-2">
@@ -522,6 +523,36 @@ function AdminPage() {
                     deals={deals.filter((d) => d.affiliate_id === p.id)}
                     houses={houses}
                     onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
+                  />
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="links" className="pt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Links por afiliado ({filteredProfiles.length})
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Clique no nome do afiliado para ver as casas em que ele trabalha e editar cada link.
+              </p>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {filteredProfiles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum afiliado encontrado.</p>
+              ) : (
+                filteredProfiles.map((p) => (
+                  <AffiliateLinksCard
+                    key={p.id}
+                    profile={p}
+                    requests={linkRequests.filter((r) => r.user_id === p.id)}
+                    onSaved={() => {
+                      qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
+                      qc.invalidateQueries({ queryKey: ["admin-profiles"] });
+                    }}
                   />
                 ))
               )}
