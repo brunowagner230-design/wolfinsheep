@@ -158,7 +158,10 @@ function DealsPage() {
                 const req = requestOf(h.id);
                 const deal = dealOf(h.id);
                 const link = releasedLink(h.id);
-                const cpaValue = Number(deal?.cpa_amount ?? req?.cpa_amount ?? 0);
+                const cpaValue =
+                  Number(deal?.cpa_amount ?? 0) ||
+                  Number(req?.cpa_amount ?? 0) ||
+                  Number(h.default_cpa ?? 0);
                 return (
                   <div
                     key={h.id}
