@@ -10,7 +10,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -138,7 +138,7 @@ function DashboardPage() {
     },
   });
 
-  const [houseId, setHouseId] = useState("todas");
+  const [houseId, setHouseId] = useState("");
   const [range, setRange] = useState("30");
 
   const houses = useMemo(() => {
@@ -152,16 +152,38 @@ function DashboardPage() {
     return [...map].map(([id, name]) => ({ id, name }));
   }, [deals, houseLinks]);
 
+  useEffect(() => {
+    if (houses.length > 0 && !houses.some((h) => h.id === houseId)) {
+      setHouseId(houses[0]!.id);
+    }
+  }, [houses, houseId]);
+
   const filtered = useMemo(
-    () => (houseId === "todas" ? deals : deals.filter((d) => d.house_id === houseId)),
+    () => deals.filter((d) => d.house_id === houseId),
     [deals, houseId],
   );
 
   const visibleLinks = useMemo(
-    () =>
-      houseId === "todas" ? houseLinks : houseLinks.filter((l) => l.house_id === houseId),
+    () => houseLinks.filter((l) => l.house_id === houseId),
     [houseLinks, houseId],
   );
+
+  const copyLink = async (link: string, houseName: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = link;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    toast.success(`Link da ${houseName} copiado!`);
+  };
+
 
   const totals = filtered.reduce(
     (acc, d) => ({
@@ -224,10 +246,9 @@ function DashboardPage() {
         </span>
         <Select value={houseId} onValueChange={setHouseId}>
           <SelectTrigger className="w-64 border-primary/40 bg-secondary/50">
-            <SelectValue placeholder="Todas as casas" />
+            <SelectValue placeholder="Selecione a casa" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="todas">Todas as casas</SelectItem>
             {houses.map((h) => (
               <SelectItem key={h.id} value={h.id}>
                 {h.name}
@@ -237,7 +258,7 @@ function DashboardPage() {
         </Select>
       </div>
 
-      {visibleLinks.length > 0 && (
+      {visibleLinks.length > 0 ? (
         <div className="mb-6 space-y-3">
           {visibleLinks.map((l) => (
             <div
@@ -248,21 +269,26 @@ function DashboardPage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Link de divulgação — {l.betting_houses?.name ?? "Casa"}
                 </p>
-                <p className="truncate font-mono text-sm">{l.promo_link}</p>
+                <p className="break-all font-mono text-sm">{l.promo_link}</p>
               </div>
               <Button
                 className="gap-2"
-                onClick={() => {
-                  navigator.clipboard.writeText(l.promo_link);
-                  toast.success(`Link da ${l.betting_houses?.name ?? "casa"} copiado!`);
-                }}
+                onClick={() => copyLink(l.promo_link, l.betting_houses?.name ?? "casa")}
               >
                 <Copy className="size-4" /> Copiar link
               </Button>
             </div>
           ))}
         </div>
+      ) : (
+        houseId && (
+          <div className="mb-6 rounded-xl border border-border/60 bg-secondary/30 px-5 py-4 text-sm text-muted-foreground">
+            Link de divulgação desta casa ainda não liberado. Solicite em Acordos CPA ou fale com o
+            suporte.
+          </div>
+        )
       )}
+
 
       {activeHouseName && (
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/15 to-transparent px-5 py-4">
