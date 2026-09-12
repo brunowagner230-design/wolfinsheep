@@ -154,7 +154,7 @@ function DashboardPage() {
 
   useEffect(() => {
     if (houses.length > 0 && !houses.some((h) => h.id === houseId)) {
-      setHouseId(houses[0].id);
+      setHouseId(houses[0]!.id);
     }
   }, [houses, houseId]);
 
