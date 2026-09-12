@@ -1555,7 +1555,7 @@ function LinkRequestCard({
             <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm">
               <strong className="text-foreground">{brl(autoAmount)}</strong>
               <Badge variant="secondary" className="text-[10px]">
-                definido pelo gerente da rede
+                {fromHouse ? "CPA automático da casa" : "definido pelo gerente da rede"}
               </Badge>
             </div>
           ) : (
