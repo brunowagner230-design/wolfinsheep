@@ -1772,3 +1772,90 @@ function AffiliateMetricsCard({
     </div>
   );
 }
+
+function AffiliateLinksCard({
+  profile,
+  requests,
+  onSaved,
+}: {
+  profile: ProfileRow;
+  requests: AdminLinkRequest[];
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const save = async (r: AdminLinkRequest) => {
+    const link = (drafts[r.id] ?? r.promo_link).trim();
+    setSaving(r.id);
+    const sb = supabase as unknown as { from: (t: string) => any };
+    const { error } = await sb
+      .from("link_requests")
+      .update({ promo_link: link, status: link ? "liberado" : r.status })
+      .eq("id", r.id);
+    setSaving(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Link da ${r.betting_houses?.name ?? "casa"} atualizado!`);
+    onSaved();
+  };
+
+  const liberados = requests.filter((r) => r.status === "liberado").length;
+
+  return (
+    <div className="rounded-xl border border-border/60 bg-secondary/20">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <div className="min-w-0">
+          <p className="truncate font-semibold">{profile.full_name || profile.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{profile.email}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Badge variant="secondary">
+            {requests.length} casa{requests.length === 1 ? "" : "s"} · {liberados} liberado
+            {liberados === 1 ? "" : "s"}
+          </Badge>
+          <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </div>
+      </button>
+
+      {open && (
+        <div className="grid gap-3 border-t border-border/60 px-4 py-4">
+          {requests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Este afiliado ainda não possui casas com link solicitado.
+            </p>
+          ) : (
+            requests.map((r) => (
+              <div key={r.id} className="grid gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <HouseBadge name={r.betting_houses?.name ?? "Casa"} />
+                  <Badge variant={r.status === "liberado" ? "default" : "secondary"}>
+                    {r.status}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    className="min-w-0 flex-1 font-mono text-xs"
+                    placeholder="https://..."
+                    value={drafts[r.id] ?? r.promo_link}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [r.id]: e.target.value }))}
+                  />
+                  <Button size="sm" disabled={saving === r.id} onClick={() => save(r)}>
+                    {saving === r.id ? "Salvando..." : "Salvar link"}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
