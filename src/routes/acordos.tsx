@@ -33,6 +33,8 @@ export const Route = createFileRoute("/acordos")({
         property: "og:description",
         content: "Solicite o link das casas disponíveis e acompanhe seus acordos de CPA.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: DealsPage,
@@ -48,6 +50,15 @@ type LinkRequestRow = {
   baseline: string;
   admin_note: string | null;
 };
+
+function minimumQualifications(name: string) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("superbet") && normalized.includes("mensal")) return 10;
+  if (normalized.includes("aposta") && normalized.includes("ganha")) return 10;
+  if (normalized.includes("superbet") && normalized.includes("diaria")) return 2;
+  if (normalized.includes("betano") && normalized.includes("diaria")) return 2;
+  return null;
+}
 
 function DealsPage() {
   const { user } = useAuth();
@@ -158,6 +169,7 @@ function DealsPage() {
                 const req = requestOf(h.id);
                 const deal = dealOf(h.id);
                 const link = releasedLink(h.id);
+                const minimum = minimumQualifications(h.name);
                 const cpaValue =
                   Number(deal?.cpa_amount ?? 0) ||
                   Number(req?.cpa_amount ?? 0) ||
@@ -195,8 +207,19 @@ function DealsPage() {
                         </p>
                       </>
                     ) : (
-                      <Button className="mt-auto gap-2" onClick={() => requestLink(h)}>
-                        <Link2 className="size-4" /> Solicitar link
+                      <Button
+                        className="mt-auto h-auto min-h-16 w-full whitespace-normal bg-primary px-4 py-3 text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary"
+                        onClick={() => requestLink(h)}
+                      >
+                        <Link2 className="size-5" />
+                        <span className="flex min-w-0 flex-col items-start text-left leading-tight">
+                          <span className="font-display text-sm font-bold uppercase">{h.name}</span>
+                          <span className="mt-1 text-[0.7rem] font-bold uppercase opacity-90">
+                            {minimum
+                              ? `Saque mínimo ${minimum} QFTDs`
+                              : "Solicitar link"}
+                          </span>
+                        </span>
                       </Button>
                     )}
                   </div>
