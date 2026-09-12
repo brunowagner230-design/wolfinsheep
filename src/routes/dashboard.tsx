@@ -106,17 +106,22 @@ function DashboardPage() {
     },
   });
 
-  const { data: promoLink = "" } = useQuery({
-    queryKey: ["promo-link", user?.id],
+  const { data: houseLinks = [] } = useQuery({
+    queryKey: ["my-house-links", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("promo_link")
-        .eq("id", user!.id)
-        .maybeSingle();
+        .from("link_requests")
+        .select("house_id, promo_link, betting_houses(name)")
+        .eq("user_id", user!.id)
+        .eq("status", "liberado")
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data?.promo_link ?? "";
+      return (data ?? []).filter((r) => !!r.promo_link) as unknown as {
+        house_id: string;
+        promo_link: string;
+        betting_houses?: { name: string } | null;
+      }[];
     },
   });
 
@@ -141,12 +146,21 @@ function DashboardPage() {
     deals.forEach((d) => {
       if (d.house_id) map.set(d.house_id, d.betting_houses?.name ?? "Casa");
     });
+    houseLinks.forEach((l) => {
+      if (l.house_id) map.set(l.house_id, l.betting_houses?.name ?? "Casa");
+    });
     return [...map].map(([id, name]) => ({ id, name }));
-  }, [deals]);
+  }, [deals, houseLinks]);
 
   const filtered = useMemo(
     () => (houseId === "todas" ? deals : deals.filter((d) => d.house_id === houseId)),
     [deals, houseId],
+  );
+
+  const visibleLinks = useMemo(
+    () =>
+      houseId === "todas" ? houseLinks : houseLinks.filter((l) => l.house_id === houseId),
+    [houseLinks, houseId],
   );
 
   const totals = filtered.reduce(
@@ -223,23 +237,30 @@ function DashboardPage() {
         </Select>
       </div>
 
-      {promoLink && (
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/20 to-transparent px-5 py-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Seu link de divulgação
-            </p>
-            <p className="truncate font-mono text-sm">{promoLink}</p>
-          </div>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              navigator.clipboard.writeText(promoLink);
-              toast.success("Link copiado!");
-            }}
-          >
-            <Copy className="size-4" /> Copiar link
-          </Button>
+      {visibleLinks.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {visibleLinks.map((l) => (
+            <div
+              key={l.house_id}
+              className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/20 to-transparent px-5 py-4"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Link de divulgação — {l.betting_houses?.name ?? "Casa"}
+                </p>
+                <p className="truncate font-mono text-sm">{l.promo_link}</p>
+              </div>
+              <Button
+                className="gap-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(l.promo_link);
+                  toast.success(`Link da ${l.betting_houses?.name ?? "casa"} copiado!`);
+                }}
+              >
+                <Copy className="size-4" /> Copiar link
+              </Button>
+            </div>
+          ))}
         </div>
       )}
 
