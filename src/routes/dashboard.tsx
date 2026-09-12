@@ -154,6 +154,12 @@ function DashboardPage() {
     [deals, houseId],
   );
 
+  const visibleLinks = useMemo(
+    () =>
+      houseId === "todas" ? houseLinks : houseLinks.filter((l) => l.house_id === houseId),
+    [houseLinks, houseId],
+  );
+
   const totals = filtered.reduce(
     (acc, d) => ({
       cpa: acc.cpa + d.eligible_cpa,
