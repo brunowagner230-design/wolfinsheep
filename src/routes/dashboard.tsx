@@ -106,17 +106,22 @@ function DashboardPage() {
     },
   });
 
-  const { data: promoLink = "" } = useQuery({
-    queryKey: ["promo-link", user?.id],
+  const { data: houseLinks = [] } = useQuery({
+    queryKey: ["my-house-links", user?.id],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("promo_link")
-        .eq("id", user!.id)
-        .maybeSingle();
+        .from("link_requests")
+        .select("house_id, promo_link, betting_houses(name)")
+        .eq("user_id", user!.id)
+        .eq("status", "liberado")
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data?.promo_link ?? "";
+      return (data ?? []).filter((r) => !!r.promo_link) as unknown as {
+        house_id: string;
+        promo_link: string;
+        betting_houses?: { name: string } | null;
+      }[];
     },
   });
 
