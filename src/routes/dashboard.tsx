@@ -146,7 +146,6 @@ function DashboardPage() {
     deals.forEach((d) => {
       if (d.house_id) map.set(d.house_id, d.betting_houses?.name ?? "Casa");
     });
-    return [...map].map(([id, name]) => ({ id, name }));
     houseLinks.forEach((l) => {
       if (l.house_id) map.set(l.house_id, l.betting_houses?.name ?? "Casa");
     });
