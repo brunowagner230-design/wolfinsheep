@@ -1422,7 +1422,21 @@ function LinkRequestCard({
     },
   });
 
-  const autoAmount = plan && plan > 0 ? plan : null;
+  const { data: houseDefault } = useQuery({
+    queryKey: ["house-default-cpa", request.house_id],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("betting_houses")
+        .select("default_cpa")
+        .eq("id", request.house_id)
+        .maybeSingle();
+      return Number(data?.default_cpa ?? 0);
+    },
+  });
+
+  const autoAmount =
+    plan && plan > 0 ? plan : houseDefault && houseDefault > 0 ? houseDefault : null;
+  const fromHouse = !(plan && plan > 0) && !!autoAmount;
 
 
   const release = async () => {
