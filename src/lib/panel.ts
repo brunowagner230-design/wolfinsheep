@@ -33,6 +33,7 @@ export type HouseRow = {
   name: string;
   country: string;
   logo_url: string | null;
+  default_cpa?: number | string | null;
 };
 
 export type NetworkPlanRow = {

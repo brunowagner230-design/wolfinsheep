@@ -1422,7 +1422,21 @@ function LinkRequestCard({
     },
   });
 
-  const autoAmount = plan && plan > 0 ? plan : null;
+  const { data: houseDefault } = useQuery({
+    queryKey: ["house-default-cpa", request.house_id],
+    queryFn: async () => {
+      const { data } = await sb
+        .from("betting_houses")
+        .select("default_cpa")
+        .eq("id", request.house_id)
+        .maybeSingle();
+      return Number(data?.default_cpa ?? 0);
+    },
+  });
+
+  const autoAmount =
+    plan && plan > 0 ? plan : houseDefault && houseDefault > 0 ? houseDefault : null;
+  const fromHouse = !(plan && plan > 0) && !!autoAmount;
 
 
   const release = async () => {
@@ -1541,7 +1555,7 @@ function LinkRequestCard({
             <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm">
               <strong className="text-foreground">{brl(autoAmount)}</strong>
               <Badge variant="secondary" className="text-[10px]">
-                definido pelo gerente da rede
+                {fromHouse ? "CPA automático da casa" : "definido pelo gerente da rede"}
               </Badge>
             </div>
           ) : (
