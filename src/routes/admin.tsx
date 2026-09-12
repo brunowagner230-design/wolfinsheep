@@ -55,6 +55,8 @@ import {
   Search,
   Pencil,
   MessageCircle,
+  Building2,
+  Users,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -91,22 +93,23 @@ type AdminLinkRequest = {
   profiles?: { full_name: string; email: string } | null;
 };
 
-/** Cores suaves por casa de aposta na planilha (ARGB) */
-const HOUSE_TINTS = [
-  "FFEDE9FE",
-  "FFDCFCE7",
-  "FFFFE4E6",
-  "FFDBEAFE",
-  "FFFEF3C7",
-  "FFF3E8FF",
-  "FFCCFBF1",
-  "FFFFEDD5",
-];
+const EXCEL_PURPLE = "FF4C1D95";
+const EXCEL_PURPLE_DARK = "FF2E1065";
+const EXCEL_PURPLE_LIGHT = "FFF3E8FF";
+const EXCEL_GREEN = "FFDCFCE7";
+const EXCEL_YELLOW = "FFFFF2CC";
 
-function houseTint(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 100000;
-  return HOUSE_TINTS[hash % HOUSE_TINTS.length] ?? "FFF5F3FF";
+function safeSheetName(name: string, used: Set<string>) {
+  const base = name.replace(/[\\/*?:[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, 31) || "Casa";
+  let candidate = base;
+  let suffix = 2;
+  while (used.has(candidate.toLocaleLowerCase("pt-BR"))) {
+    const ending = ` (${suffix})`;
+    candidate = `${base.slice(0, 31 - ending.length)}${ending}`;
+    suffix += 1;
+  }
+  used.add(candidate.toLocaleLowerCase("pt-BR"));
+  return candidate;
 }
 
 function AdminPage() {
@@ -268,86 +271,298 @@ function AdminPage() {
     }
     const ExcelJS = (await import("exceljs")).default;
     const book = new ExcelJS.Workbook();
-    const sheet = book.addWorksheet("Afiliados CPA", {
-      views: [{ state: "frozen", ySplit: 1 }],
-    });
-    sheet.columns = [
-      { header: "Casa de aposta", key: "casa", width: 22 },
-      { header: "Nome", key: "nome", width: 28 },
-      { header: "E-mail", key: "email", width: 32 },
-      { header: "Celular", key: "celular", width: 18 },
-      { header: "Link de divulgação", key: "link", width: 48 },
-      { header: "Plano CPA", key: "plano", width: 18 },
-      { header: "Valor CPA", key: "valor", width: 14 },
-      { header: "CPA (preencher)", key: "cpa", width: 18 },
-    ];
-
-    const header = sheet.getRow(1);
-    header.height = 24;
-    header.eachCell((cell) => {
-      cell.font = { name: "Arial", bold: true, size: 11, color: { argb: "FFFFFFFF" } };
-      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4C1D95" } };
-      cell.alignment = { vertical: "middle", horizontal: "center" };
-      cell.border = {
-        top: { style: "thin", color: { argb: "FF2E1065" } },
-        bottom: { style: "thin", color: { argb: "FF2E1065" } },
-        left: { style: "thin", color: { argb: "FF2E1065" } },
-        right: { style: "thin", color: { argb: "FF2E1065" } },
-      };
-    });
+    book.creator = "Wolf in Sheep Affiliates";
+    book.created = new Date();
+    book.calcProperties.fullCalcOnLoad = true;
 
     type ExportRow = {
+      affiliateId: string;
+      houseId: string | null;
       casa: string;
       nome: string;
       email: string;
       celular: string;
       link: string;
-      plano: string;
       valor: number | string;
+      validados: number;
+      cliques: number;
+      registros: number;
     };
-    const rows: ExportRow[] = [];
-    filteredProfiles.forEach((p) => {
-      const myDeals = deals.filter((d) => d.affiliate_id === p.id);
-      const base = {
-        nome: p.full_name || "",
-        email: p.email || "",
-        celular: p.phone || "",
-        link: p.promo_link || "",
-      };
-      if (myDeals.length === 0) {
-        rows.push({ ...base, casa: "Sem casa vinculada", plano: "", valor: "" });
-      } else {
-        myDeals.forEach((d) =>
-          rows.push({
-            ...base,
-            casa: d.betting_houses?.name ?? "Casa",
-            plano: d.cpa_plan || d.deal_name || "",
-            valor: Number(d.cpa_amount) || 0,
-          }),
-        );
+
+    const visibleProfileIds = new Set(filteredProfiles.map((profile) => profile.id));
+    const visibleDeals = deals.filter(
+      (deal) => visibleProfileIds.has(deal.affiliate_id) && matchHouse(deal.house_id),
+    );
+    const visibleLinks = linkRequests.filter(
+      (request) =>
+        request.status === "liberado" &&
+        visibleProfileIds.has(request.user_id) &&
+        matchHouse(request.house_id),
+    );
+    const rowsByKey = new Map<string, ExportRow>();
+
+    const getProfile = (id: string) => profiles.find((profile) => profile.id === id);
+    const getHouseName = (houseId: string | null, fallback?: string | null) =>
+      houses.find((house) => house.id === houseId)?.name ?? fallback ?? "Casa não identificada";
+    const getLink = (affiliateId: string, houseId: string | null) =>
+      visibleLinks.find(
+        (request) => request.user_id === affiliateId && request.house_id === houseId,
+      )?.promo_link ?? "";
+
+    visibleDeals.forEach((deal) => {
+      const profile = getProfile(deal.affiliate_id);
+      if (!profile) return;
+      const key = `${deal.affiliate_id}:${deal.house_id ?? "sem-casa"}`;
+      const current = rowsByKey.get(key);
+      if (current) {
+        current.validados += Number(deal.eligible_cpa) || 0;
+        current.cliques += Number(deal.clicks) || 0;
+        current.registros += Number(deal.registrations) || 0;
+        current.valor = Math.max(Number(current.valor) || 0, Number(deal.cpa_amount) || 0);
+        return;
       }
+      rowsByKey.set(key, {
+        affiliateId: profile.id,
+        houseId: deal.house_id,
+        casa: getHouseName(deal.house_id, deal.betting_houses?.name),
+        nome: profile.full_name || "Sem nome",
+        email: profile.email || "",
+        celular: profile.phone || "",
+        link: getLink(profile.id, deal.house_id),
+        valor: Number(deal.cpa_amount) || 0,
+        validados: Number(deal.eligible_cpa) || 0,
+        cliques: Number(deal.clicks) || 0,
+        registros: Number(deal.registrations) || 0,
+      });
     });
 
-    rows.sort((a, b) => a.casa.localeCompare(b.casa) || a.nome.localeCompare(b.nome));
-    rows.forEach((r) => {
-      const row = sheet.addRow({ ...r, cpa: "" });
-      const tint = houseTint(r.casa);
-      row.eachCell((cell) => {
-        cell.font = { name: "Arial", size: 11 };
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: tint } };
-        cell.border = {
-          bottom: { style: "hair", color: { argb: "FFBFBFBF" } },
-          right: { style: "hair", color: { argb: "FFBFBFBF" } },
+    visibleLinks.forEach((request) => {
+      const key = `${request.user_id}:${request.house_id}`;
+      const current = rowsByKey.get(key);
+      if (current) {
+        current.link = request.promo_link;
+        return;
+      }
+      const profile = getProfile(request.user_id);
+      if (!profile) return;
+      rowsByKey.set(key, {
+        affiliateId: profile.id,
+        houseId: request.house_id,
+        casa: getHouseName(request.house_id, request.betting_houses?.name),
+        nome: profile.full_name || "Sem nome",
+        email: profile.email || "",
+        celular: profile.phone || "",
+        link: request.promo_link,
+        valor: Number(request.cpa_amount) || 0,
+        validados: 0,
+        cliques: 0,
+        registros: 0,
+      });
+    });
+
+    if (houseFilter === "todas") {
+      filteredProfiles.forEach((profile) => {
+        const hasHouse = [...rowsByKey.values()].some((row) => row.affiliateId === profile.id);
+        if (!hasHouse) {
+          rowsByKey.set(`${profile.id}:sem-casa`, {
+            affiliateId: profile.id,
+            houseId: null,
+            casa: "Sem casa vinculada",
+            nome: profile.full_name || "Sem nome",
+            email: profile.email || "",
+            celular: profile.phone || "",
+            link: "",
+            valor: "",
+            validados: 0,
+            cliques: 0,
+            registros: 0,
+          });
+        }
+      });
+    }
+
+    const exportRows = [...rowsByKey.values()].sort(
+      (a, b) =>
+        a.casa.localeCompare(b.casa, "pt-BR") ||
+        a.nome.localeCompare(b.nome, "pt-BR") ||
+        a.email.localeCompare(b.email, "pt-BR"),
+    );
+    if (exportRows.length === 0) {
+      toast.error("Nenhum acordo ou link encontrado para os filtros selecionados.");
+      return;
+    }
+
+    const groups = new Map<string, ExportRow[]>();
+    exportRows.forEach((row) => groups.set(row.casa, [...(groups.get(row.casa) ?? []), row]));
+    const usedNames = new Set<string>(["resumo geral"]);
+    const sheetNames = new Map<string, string>();
+    groups.forEach((_rows, houseName) => sheetNames.set(houseName, safeSheetName(houseName, usedNames)));
+
+    const summary = book.addWorksheet("Resumo geral", {
+      views: [{ state: "frozen", ySplit: 4 }],
+      properties: { tabColor: { argb: EXCEL_PURPLE } },
+    });
+    summary.mergeCells("A1:G1");
+    summary.getCell("A1").value = "WOLF IN SHEEP AFFILIATES · RESUMO POR CASA";
+    summary.getCell("A1").font = { name: "Arial", bold: true, size: 16, color: { argb: "FFFFFFFF" } };
+    summary.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_PURPLE_DARK } };
+    summary.getCell("A1").alignment = { vertical: "middle", horizontal: "left" };
+    summary.getRow(1).height = 32;
+    summary.mergeCells("A2:G2");
+    summary.getCell("A2").value = `Exportado em ${new Date().toLocaleString("pt-BR")} · ${exportRows.length} vínculo(s)`;
+    summary.getCell("A2").font = { name: "Arial", italic: true, size: 10, color: { argb: "FF5B5266" } };
+    summary.addRow([]);
+    summary.addRow(["Casa de aposta", "Afiliados", "CPAs validados", "Cliques", "Registros", "Valor CPA total", "Aba"]);
+    summary.columns = [
+      { width: 30 }, { width: 14 }, { width: 18 }, { width: 14 }, { width: 14 }, { width: 20 }, { width: 25 },
+    ];
+    const summaryHeader = summary.getRow(4);
+    summaryHeader.height = 24;
+    summaryHeader.eachCell((cell) => {
+      cell.font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_PURPLE } };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
+    });
+
+    groups.forEach((houseRows, houseName) => {
+      const sheetName = sheetNames.get(houseName);
+      if (!sheetName) return;
+      const sheet = book.addWorksheet(sheetName, {
+        views: [{ state: "frozen", ySplit: 5 }],
+        properties: { tabColor: { argb: EXCEL_PURPLE } },
+      });
+      sheet.mergeCells("A1:K1");
+      sheet.getCell("A1").value = houseName.toLocaleUpperCase("pt-BR");
+      sheet.getCell("A1").font = { name: "Arial", bold: true, size: 16, color: { argb: "FFFFFFFF" } };
+      sheet.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_PURPLE_DARK } };
+      sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "left" };
+      sheet.getRow(1).height = 32;
+      sheet.mergeCells("A2:K2");
+      sheet.getCell("A2").value = `${houseRows.length} afiliado(s) · preencha somente a coluna amarela “CPA a adicionar”`;
+      sheet.getCell("A2").font = { name: "Arial", italic: true, size: 10, color: { argb: "FF5B5266" } };
+      sheet.addRow([]);
+      sheet.addRow([]);
+      sheet.columns = [
+        { key: "casa", width: 24 },
+        { key: "nome", width: 28 },
+        { key: "email", width: 34 },
+        { key: "celular", width: 18 },
+        { key: "link", width: 52 },
+        { key: "valor", width: 15 },
+        { key: "validados", width: 17 },
+        { key: "cliques", width: 13 },
+        { key: "registros", width: 14 },
+        { key: "estimado", width: 20 },
+        { key: "adicionar", width: 18 },
+      ];
+      const headings = [
+        "Casa de aposta", "Afiliado", "E-mail", "Celular", "Link correto da casa", "Valor CPA", "CPAs validados", "Cliques", "Registros", "Total CPA", "CPA a adicionar",
+      ];
+      sheet.getRow(5).values = headings;
+      const header = sheet.getRow(5);
+      header.height = 30;
+      header.eachCell((cell) => {
+        cell.font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_PURPLE } };
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+        cell.border = { bottom: { style: "medium", color: { argb: EXCEL_PURPLE_DARK } } };
+      });
+
+      houseRows.forEach((item, index) => {
+        const excelRow = 6 + index;
+        const row = sheet.addRow({
+          casa: item.casa,
+          nome: item.nome,
+          email: item.email,
+          celular: item.celular,
+          link: item.link,
+          valor: item.valor,
+          validados: item.validados,
+          cliques: item.cliques,
+          registros: item.registros,
+          estimado: { formula: `IFERROR(F${excelRow}*G${excelRow},0)` },
+          adicionar: "",
+        });
+        row.height = 24;
+        row.eachCell({ includeEmpty: true }, (cell) => {
+          cell.font = { name: "Arial", size: 10, color: { argb: "FF17131C" } };
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: index % 2 === 0 ? "FFFFFFFF" : EXCEL_PURPLE_LIGHT },
+          };
+          cell.alignment = { vertical: "middle" };
+          cell.border = { bottom: { style: "hair", color: { argb: "FFD8D0E2" } } };
+        });
+        row.getCell("nome").font = { name: "Arial", bold: true, size: 10, color: { argb: EXCEL_PURPLE_DARK } };
+        row.getCell("link").font = { name: "Arial", size: 9, color: { argb: "FF2563EB" }, underline: item.link ? true : false };
+        row.getCell("valor").numFmt = '"R$" #,##0.00;[Red]("R$" #,##0.00);-';
+        row.getCell("estimado").numFmt = '"R$" #,##0.00;[Red]("R$" #,##0.00);-';
+        const input = row.getCell("adicionar");
+        input.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_YELLOW } };
+        input.font = { name: "Arial", bold: true, size: 10, color: { argb: "FF713F12" } };
+        input.alignment = { vertical: "middle", horizontal: "center" };
+        input.dataValidation = {
+          type: "whole",
+          operator: "greaterThanOrEqual",
+          allowBlank: true,
+          formulae: [0],
+          showErrorMessage: true,
+          errorTitle: "Valor inválido",
+          error: "Informe uma quantidade inteira igual ou maior que zero.",
         };
       });
-      row.getCell("casa").font = { name: "Arial", size: 11, bold: true };
-      row.getCell("valor").numFmt = '"R$"#,##0.00;("R$"#,##0.00);-';
-      const cpaCell = row.getCell("cpa");
-      cpaCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFFF2CC" } };
-      cpaCell.alignment = { horizontal: "center" };
+
+      const totalRowNumber = 6 + houseRows.length;
+      const total = sheet.getRow(totalRowNumber);
+      total.getCell(1).value = "TOTAL DA CASA";
+      total.getCell(1).font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+      total.getCell(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_PURPLE_DARK } };
+      [7, 8, 9, 10, 11].forEach((column) => {
+        const cell = total.getCell(column);
+        cell.value = { formula: `SUM(${sheet.getColumn(column).letter}6:${sheet.getColumn(column).letter}${totalRowNumber - 1})` };
+        cell.font = { name: "Arial", bold: true, size: 10 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: column === 11 ? EXCEL_YELLOW : EXCEL_GREEN } };
+      });
+      total.getCell(10).numFmt = '"R$" #,##0.00;[Red]("R$" #,##0.00);-';
+      sheet.autoFilter = { from: "A5", to: `K${Math.max(6, totalRowNumber - 1)}` };
+      sheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+
+      const summaryRow = summary.addRow([
+        houseName,
+        houseRows.length,
+        houseRows.reduce((sum, item) => sum + item.validados, 0),
+        houseRows.reduce((sum, item) => sum + item.cliques, 0),
+        houseRows.reduce((sum, item) => sum + item.registros, 0),
+        houseRows.reduce((sum, item) => sum + (Number(item.valor) || 0) * item.validados, 0),
+        { text: `Abrir ${sheetName}`, hyperlink: `#'${sheetName.replace(/'/g, "''")}'!A1` },
+      ]);
+      summaryRow.eachCell((cell) => {
+        cell.font = { name: "Arial", size: 10 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: summaryRow.number % 2 === 0 ? "FFFFFFFF" : EXCEL_PURPLE_LIGHT } };
+        cell.border = { bottom: { style: "hair", color: { argb: "FFD8D0E2" } } };
+      });
+      summaryRow.getCell(1).font = { name: "Arial", bold: true, size: 10, color: { argb: EXCEL_PURPLE_DARK } };
+      summaryRow.getCell(6).numFmt = '"R$" #,##0.00;[Red]("R$" #,##0.00);-';
+      summaryRow.getCell(7).font = { name: "Arial", underline: true, color: { argb: "FF2563EB" } };
     });
 
-    sheet.autoFilter = { from: "A1", to: { row: 1, column: 8 } };
+    const summaryTotal = summary.addRow([
+      "TOTAL GERAL",
+      exportRows.length,
+      exportRows.reduce((sum, item) => sum + item.validados, 0),
+      exportRows.reduce((sum, item) => sum + item.cliques, 0),
+      exportRows.reduce((sum, item) => sum + item.registros, 0),
+      exportRows.reduce((sum, item) => sum + (Number(item.valor) || 0) * item.validados, 0),
+      "",
+    ]);
+    summaryTotal.eachCell((cell) => {
+      cell.font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: EXCEL_PURPLE_DARK } };
+    });
+    summaryTotal.getCell(6).numFmt = '"R$" #,##0.00;[Red]("R$" #,##0.00);-';
+    summary.autoFilter = { from: "A4", to: `G${Math.max(5, summaryTotal.number - 1)}` };
+    summary.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
 
     const buffer = await book.xlsx.writeBuffer();
     const url = URL.createObjectURL(
@@ -360,7 +575,7 @@ function AdminPage() {
     a.download = `afiliados-cpa-${new Date().toISOString().slice(0, 10)}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Planilha colorida gerada!");
+    toast.success(`Planilha gerada com ${groups.size} aba(s) de casas.`);
   };
 
   if (!loading && !isAdmin) {
@@ -440,16 +655,26 @@ function AdminPage() {
               deals={deals}
               onSaved={() => qc.invalidateQueries({ queryKey: ["admin-deals"] })}
             />
-            <Button className="h-11 gap-2" onClick={exportSpreadsheet}>
+            <Button className="h-11 gap-2 shadow-lg shadow-primary/20" onClick={exportSpreadsheet}>
               <FileSpreadsheet className="size-4" />
-              Exportar planilha (Excel)
+              Exportar por casa
             </Button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          {filteredProfiles.length} afiliados · {filteredDeals.length} acordos ·{" "}
-          {filteredRequests.length} solicitações
-        </p>
+        <div className="mt-4 grid gap-2 border-t border-primary/20 pt-4 sm:grid-cols-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Users className="size-4 text-primary" />
+            <span><strong className="text-foreground">{filteredProfiles.length}</strong> afiliados no arquivo</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Building2 className="size-4 text-primary" />
+            <span><strong className="text-foreground">{houseFilter === "todas" ? houses.length : 1}</strong> casa(s), cada uma em sua aba</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <FileSpreadsheet className="size-4 text-primary" />
+            <span>Resumo geral + afiliados em ordem alfabética</span>
+          </div>
+        </div>
       </div>
 
       <Tabs defaultValue="solicitacoes">
