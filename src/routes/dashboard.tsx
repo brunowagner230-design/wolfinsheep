@@ -228,23 +228,30 @@ function DashboardPage() {
         </Select>
       </div>
 
-      {promoLink && (
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/20 to-transparent px-5 py-4">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Seu link de divulgação
-            </p>
-            <p className="truncate font-mono text-sm">{promoLink}</p>
-          </div>
-          <Button
-            className="gap-2"
-            onClick={() => {
-              navigator.clipboard.writeText(promoLink);
-              toast.success("Link copiado!");
-            }}
-          >
-            <Copy className="size-4" /> Copiar link
-          </Button>
+      {visibleLinks.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {visibleLinks.map((l) => (
+            <div
+              key={l.house_id}
+              className="flex flex-wrap items-center gap-3 rounded-xl border border-primary/40 bg-gradient-to-r from-primary/20 to-transparent px-5 py-4"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Link de divulgação — {l.betting_houses?.name ?? "Casa"}
+                </p>
+                <p className="truncate font-mono text-sm">{l.promo_link}</p>
+              </div>
+              <Button
+                className="gap-2"
+                onClick={() => {
+                  navigator.clipboard.writeText(l.promo_link);
+                  toast.success(`Link da ${l.betting_houses?.name ?? "casa"} copiado!`);
+                }}
+              >
+                <Copy className="size-4" /> Copiar link
+              </Button>
+            </div>
+          ))}
         </div>
       )}
 
