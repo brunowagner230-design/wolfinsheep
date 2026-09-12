@@ -138,7 +138,7 @@ function DashboardPage() {
     },
   });
 
-  const [houseId, setHouseId] = useState("todas");
+  const [houseId, setHouseId] = useState("");
   const [range, setRange] = useState("30");
 
   const houses = useMemo(() => {
@@ -152,16 +152,38 @@ function DashboardPage() {
     return [...map].map(([id, name]) => ({ id, name }));
   }, [deals, houseLinks]);
 
+  useEffect(() => {
+    if (houses.length > 0 && !houses.some((h) => h.id === houseId)) {
+      setHouseId(houses[0].id);
+    }
+  }, [houses, houseId]);
+
   const filtered = useMemo(
-    () => (houseId === "todas" ? deals : deals.filter((d) => d.house_id === houseId)),
+    () => deals.filter((d) => d.house_id === houseId),
     [deals, houseId],
   );
 
   const visibleLinks = useMemo(
-    () =>
-      houseId === "todas" ? houseLinks : houseLinks.filter((l) => l.house_id === houseId),
+    () => houseLinks.filter((l) => l.house_id === houseId),
     [houseLinks, houseId],
   );
+
+  const copyLink = async (link: string, houseName: string) => {
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = link;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    toast.success(`Link da ${houseName} copiado!`);
+  };
+
 
   const totals = filtered.reduce(
     (acc, d) => ({
