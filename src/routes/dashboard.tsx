@@ -147,7 +147,11 @@ function DashboardPage() {
       if (d.house_id) map.set(d.house_id, d.betting_houses?.name ?? "Casa");
     });
     return [...map].map(([id, name]) => ({ id, name }));
-  }, [deals]);
+    houseLinks.forEach((l) => {
+      if (l.house_id) map.set(l.house_id, l.betting_houses?.name ?? "Casa");
+    });
+    return [...map].map(([id, name]) => ({ id, name }));
+  }, [deals, houseLinks]);
 
   const filtered = useMemo(
     () => (houseId === "todas" ? deals : deals.filter((d) => d.house_id === houseId)),
