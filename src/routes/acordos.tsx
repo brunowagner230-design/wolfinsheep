@@ -168,12 +168,14 @@ function DealsPage() {
                     className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/70 p-4"
                   >
                     <HouseBadge name={h.name} logoUrl={h.logo_url} />
+                    {cpaValue > 0 && (
+                      <p className="text-sm">
+                        <span className="text-xs text-muted-foreground">CPA por qualificação: </span>
+                        <strong className="text-primary">{brl(cpaValue)}</strong>
+                      </p>
+                    )}
                     {link ? (
                       <>
-                        <p className="text-xs text-muted-foreground">
-                          Plano: <strong className="text-foreground">CPA</strong> ·{" "}
-                          {brl(cpaValue)}
-                        </p>
                         <Badge className="w-fit gap-1 bg-success text-success-foreground">
                           <Check className="size-3" /> link liberado
                         </Badge>
