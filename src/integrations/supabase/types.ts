@@ -87,6 +87,7 @@ export type Database = {
         Row: {
           country: string
           created_at: string
+          default_cpa: number
           id: string
           logo_url: string | null
           name: string
@@ -94,6 +95,7 @@ export type Database = {
         Insert: {
           country?: string
           created_at?: string
+          default_cpa?: number
           id?: string
           logo_url?: string | null
           name: string
@@ -101,6 +103,7 @@ export type Database = {
         Update: {
           country?: string
           created_at?: string
+          default_cpa?: number
           id?: string
           logo_url?: string | null
           name?: string
