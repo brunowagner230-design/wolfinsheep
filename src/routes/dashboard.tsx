@@ -8,6 +8,8 @@ import {
   Network,
   Copy,
   TrendingUp,
+  TriangleAlert,
+  PartyPopper,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
@@ -240,6 +242,27 @@ function DashboardPage() {
 
   return (
     <AppShell title="Painel" subtitle="Resumo dos seus acordos de CPA nas casas de aposta.">
+      <div className="mb-6 overflow-hidden rounded-xl border-2 border-[oklch(0.8_0.15_85/0.6)] bg-gradient-to-r from-[oklch(0.45_0.12_85/0.35)] via-[oklch(0.4_0.1_85/0.2)] to-transparent shadow-[0_18px_50px_-24px_oklch(0.8_0.15_85/0.5)]">
+        <div className="flex flex-wrap items-center gap-4 px-5 py-4">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[oklch(0.8_0.15_85)] text-[oklch(0.25_0.08_85)]">
+            <TriangleAlert className="size-6" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-sm font-bold uppercase tracking-wide text-[oklch(0.85_0.14_85)]">
+              🚨 Aviso 🚨
+            </p>
+            <p className="mt-1 text-sm font-semibold leading-snug">
+              A divulgação da Betano Diária foi suspensa devido à meta que já foi atingida ✅
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              As operações irão retornar dia 01/10.
+            </p>
+          </div>
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[oklch(0.7_0.16_155/0.25)] text-[oklch(0.7_0.16_155)]">
+            <PartyPopper className="size-5" />
+          </div>
+        </div>
+      </div>
       <div className="mb-6 flex flex-wrap items-center gap-3">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Casa de aposta
