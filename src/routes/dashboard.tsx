@@ -8,6 +8,8 @@ import {
   Network,
   Copy,
   TrendingUp,
+  TriangleAlert,
+  PartyPopper,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
