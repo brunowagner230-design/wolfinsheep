@@ -162,8 +162,10 @@ function DealsPage() {
       subtitle="Casas disponíveis para divulgação — solicite o link e acompanhe o plano de CPA liberado para você."
     >
       <Card className="product-card rounded-3xl overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-base">Casas de aposta disponíveis</CardTitle>
+        <CardHeader className="border-b border-border/60 bg-muted/10 pb-5">
+          <div className="section-kicker">Operações</div>
+          <CardTitle className="section-title">Casas de aposta disponíveis</CardTitle>
+          <p className="section-description">Solicite o acesso à operação ativa e acompanhe o status do seu link.</p>
         </CardHeader>
         <CardContent>
           {houses.length === 0 ? (
@@ -241,8 +243,10 @@ function DealsPage() {
       </Card>
 
       <Card className="product-card rounded-3xl mt-6 overflow-hidden">
-        <CardHeader>
-          <CardTitle className="text-base">Meus acordos e CPAs ({deals.length})</CardTitle>
+        <CardHeader className="border-b border-border/60 bg-muted/10 pb-5">
+          <div className="section-kicker">Acompanhamento</div>
+          <CardTitle className="section-title">Meus acordos e CPAs ({deals.length})</CardTitle>
+          <p className="section-description">Consulte seus planos, métricas e status em uma única visão.</p>
         </CardHeader>
         <CardContent>
           {isLoading ? (
