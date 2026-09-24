@@ -136,8 +136,8 @@ function DashboardPage() {
 
   return (
     <AppShell title="Visão geral" subtitle="Acompanhe sua operação, seus ganhos e o desempenho da sua rede.">
-      <div className="space-y-6">
-        <section className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-6 shadow-sm">
+      <div className="panel-page">
+        <section className="page-hero">
           <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
           <div className="relative flex flex-wrap items-end justify-between gap-5">
             <div>
@@ -153,7 +153,7 @@ function DashboardPage() {
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {cards.map(c => (
-            <Card key={c.label} className="product-card overflow-hidden rounded-2xl">
+            <Card key={c.label} className="metric-card">
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><c.icon className="size-4" /></div>
@@ -167,8 +167,8 @@ function DashboardPage() {
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
-          <Card className="product-card rounded-2xl">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,0.9fr)]">
+          <Card className="product-card rounded-2xl shadow-sm">
             <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-3 pb-3">
               <div><CardTitle className="text-base">Comissões recebidas</CardTitle><p className="mt-1 text-xs text-muted-foreground">Total aprovado no período: <strong className="text-foreground">{brl(chartTotal)}</strong></p></div>
               <Select value={range} onValueChange={setRange}><SelectTrigger className="h-9 w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem></SelectContent></Select>
@@ -208,9 +208,9 @@ function DashboardPage() {
           </section>
         )}
 
-        {visibleLinks.length > 0 && <section className="space-y-2">
+        {visibleLinks.length > 0 && <section className="space-y-3">
           <div className="flex items-center justify-between"><h3 className="text-base font-semibold">Links de divulgação</h3><Badge variant="secondary">{visibleLinks.length} ativo{visibleLinks.length===1?"":"s"}</Badge></div>
-          {visibleLinks.map(l => <div key={l.house_id} className="product-card flex flex-wrap items-center gap-3 rounded-xl p-4">
+          {visibleLinks.map(l => <div key={l.house_id} className="action-row">
             <div className="min-w-0 flex-1"><p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{l.betting_houses?.name ?? "Casa"}</p><p className="mt-1 break-all font-mono text-xs">{l.promo_link}</p></div>
             <Button size="sm" className="gap-2" onClick={()=>copyLink(l.promo_link,l.betting_houses?.name ?? "casa")}><Copy className="size-3.5"/>Copiar</Button>
           </div>)}
