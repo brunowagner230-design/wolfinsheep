@@ -1772,29 +1772,17 @@ function LinkRequestCard({
     },
   });
 
-  const { data: houseDefault } = useQuery({
-    queryKey: ["house-default-cpa", request.house_id],
-    queryFn: async () => {
-      const { data } = await sb
-        .from("betting_houses")
-        .select("default_cpa")
-        .eq("id", request.house_id)
-        .maybeSingle();
-      return Number(data?.default_cpa ?? 0);
-    },
-  });
-
   const isDirectSignup = !requestedProfile?.referred_by;
   const isExistingManager = requestedProfile?.is_manager === true;
   const managerSelected = form.is_manager || isExistingManager;
   const directDefaultAmount = managerSelected ? 210 : 200;
-  const autoAmount =
-    plan && plan > 0
+  const autoAmount = isDirectSignup
+    ? Number(form.cpa_amount) > 0
+      ? Number(form.cpa_amount)
+      : directDefaultAmount
+    : plan && plan > 0
       ? plan
-      : isDirectSignup
-        ? directDefaultAmount
-        : null;
-  const fromManagerPlan = !!(plan && plan > 0);
+      : null;
 
 
   const release = async () => {
