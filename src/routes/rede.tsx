@@ -1,7 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import {
+  Check,
+  Copy,
+  Layers3,
+  Network,
+  TrendingUp,
+  Users,
+  UserPlus,
+  ChevronRight,
+  CircleDollarSign,
+  Settings2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -23,14 +34,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type HouseRow, type NetworkPlanRow, type ProfileRow } from "@/lib/panel";
@@ -52,17 +55,33 @@ export const Route = createFileRoute("/rede")({
       {
         name: "description",
         content:
-          "Compartilhe seu link de indicação, acompanhe os afiliados cadastrados por você e defina o plano de CPA de cada um.",
-      },
-      { property: "og:title", content: "Minha rede de afiliados | Wolf in Sheep Affiliates" },
-      {
-        property: "og:description",
-        content: "Link de indicação, sub-afiliados e planos de CPA da sua rede.",
+          "Gerencie sua rede de afiliados em até três níveis e acompanhe sua margem real por CPA.",
       },
     ],
   }),
   component: NetworkPage,
 });
+
+const levelConfig = {
+  1: {
+    label: "Nível 1",
+    title: "Afiliados diretos",
+    description: "Quem entrou diretamente pelo seu link.",
+    icon: UserPlus,
+  },
+  2: {
+    label: "Nível 2",
+    title: "Rede dos seus afiliados",
+    description: "Indicados pelos seus afiliados de nível 1.",
+    icon: Users,
+  },
+  3: {
+    label: "Nível 3",
+    title: "Terceiro nível",
+    description: "Indicados pela sua rede de nível 2.",
+    icon: Layers3,
+  },
+} as const;
 
 function NetworkPage() {
   const { user } = useAuth();
@@ -118,7 +137,6 @@ function NetworkPage() {
     },
   });
 
-  // Teto de comissão: o maior CPA que o próprio usuário recebe em cada casa
   const { data: myDeals = [] } = useQuery({
     queryKey: ["my-deals-caps", user?.id],
     enabled: !!user,
@@ -132,26 +150,14 @@ function NetworkPage() {
     },
   });
 
-  const caps: Record<string, number> = {};
-  for (const d of myDeals) {
-    const key = d.house_id ?? "geral";
-    caps[key] = Math.max(caps[key] ?? 0, Number(d.cpa_amount) || 0);
-  }
-
-  const approve = async (id: string) => {
-    const { error } = await supabase.from("profiles").update({ approved: true }).eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      return;
+  const caps = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const d of myDeals) {
+      const key = d.house_id ?? "geral";
+      result[key] = Math.max(result[key] ?? 0, Number(d.cpa_amount) || 0);
     }
-    toast.success("Cadastro aprovado!");
-    qc.invalidateQueries({ queryKey: ["downlines"] });
-  };
-
-  const link =
-    typeof window !== "undefined" && me
-      ? `${window.location.origin}/auth?ref=${me.referral_code}`
-      : "";
+    return result;
+  }, [myDeals]);
 
   const { data: cascade = [] } = useQuery({
     queryKey: ["cascade", user?.id],
@@ -164,255 +170,414 @@ function NetworkPage() {
     },
   });
 
-  const levelTotal = (level: number) =>
-    cascade.filter((c) => c.level === level).reduce((s, c) => s + Number(c.commission), 0);
-  const networkTotal = cascade.reduce((s, c) => s + Number(c.commission), 0);
+  const byLevel = (level: number) => cascade.filter((row) => row.level === level);
+  const totalCpas = cascade.reduce((sum, row) => sum + Number(row.cpas), 0);
+  const totalCommission = cascade.reduce((sum, row) => sum + Number(row.commission), 0);
+  const link =
+    typeof window !== "undefined" && me
+      ? `${window.location.origin}/auth?ref=${me.referral_code}`
+      : "";
 
+  const approve = async (id: string) => {
+    const { error } = await supabase.from("profiles").update({ approved: true }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Cadastro aprovado!");
+    qc.invalidateQueries({ queryKey: ["downlines"] });
+  };
 
   return (
     <AppShell
       title="Minha rede"
-      subtitle="Indique afiliados com seu link e defina o plano de CPA de cada um."
+      subtitle="Controle sua estrutura, seus repasses e a margem gerada por cada nível."
     >
-      <Card className="glow-panel">
-        <CardHeader>
-          <CardTitle className="text-base">Seu link de indicação</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center gap-3">
-          <Input readOnly value={link} className="max-w-xl font-mono text-xs" />
-          <Button
-            variant="secondary"
-            onClick={async () => {
-              await navigator.clipboard.writeText(link);
-              toast.success("Link copiado!");
-            }}
-          >
-            <Copy className="mr-2 size-4" /> Copiar
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            Código: <strong>{me?.referral_code ?? "—"}</strong>
-          </span>
-        </CardContent>
-      </Card>
-
-      <Card className="mt-6 money-panel border-primary/40">
-        <CardHeader>
-          <CardTitle className="text-base">
-            Cascata de comissões · total {brl(networkTotal)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {[1, 2, 3].map((level) => {
-              const rows = cascade.filter((c) => c.level === level);
-              return (
-                <div
-                  key={level}
-                  className="rounded-xl border border-border/70 bg-card/70 p-4 backdrop-blur"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <p className="font-display text-lg font-bold">Nível {level}</p>
+      <div className="space-y-6">
+        <Card className="overflow-hidden border-primary/30 bg-card shadow-xl shadow-primary/5">
+          <CardContent className="p-0">
+            <div className="grid lg:grid-cols-[1fr_auto]">
+              <div className="p-6 lg:p-7">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Network className="size-5" />
                   </div>
-                  <p className="mt-2 font-display text-2xl font-bold">{brl(levelTotal(level))}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                        CPAs do nível {level}
-                      </p>
-                      <p className="font-display text-xl font-bold text-primary">
-                        {rows.reduce((s, r) => s + Number(r.cpas), 0)}
-                      </p>
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-background/50 px-3 py-2">
-                      <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Afiliados
-                      </p>
-                      <p className="font-display text-xl font-bold">{rows.length}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 space-y-1.5">
-                    {rows.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        {level === 1
-                          ? "Indique afiliados com seu link para começar."
-                          : `Quando seus afiliados indicarem, o nível ${level} aparece aqui.`}
-                      </p>
-                    ) : (
-                      rows.map((r) => (
-                        <div
-                          key={r.affiliate_id}
-                          className="flex items-center justify-between gap-2 text-xs"
-                        >
-                       <span className="min-w-0 truncate">
-                            <span className="block truncate font-medium">
-                              {r.affiliate_name || "Sem nome"}
-                            </span>
-                            <span className="block truncate text-muted-foreground">
-                              {r.affiliate_email}
-                            </span>
-                          </span>
-                          <span className="flex shrink-0 items-center gap-2">
-                            <span className="rounded-full bg-primary/15 px-2 py-0.5 font-semibold text-primary">
-                              {Number(r.cpas)} CPA
-                            </span>
-                            <span className="font-semibold text-success">
-                              {brl(Number(r.commission))}
-                            </span>
-                          </span>
-                        </div>
-                      ))
-                    )}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
+                      Sua estrutura
+                    </p>
+                    <h2 className="mt-1 text-xl font-bold">Rede em até 3 níveis</h2>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Seu ganho é o valor fixo da diferença: se o seu CPA é R$ 100 e você repassa R$ 80 ao
-            seu afiliado direto, você ganha R$ 20 por CPA validado — e continua ganhando esses R$ 20
-            em cada CPA dos níveis 2 e 3 daquela linha, mesmo que eles repassem valores menores
-            entre si. As comissões entram automaticamente no saldo da sua carteira.
-          </p>
-        </CardContent>
-      </Card>
+                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  Sua margem não é fixa. Ela é calculada pela diferença entre o CPA que você recebe
+                  e o CPA que cada afiliado repassa. A mesma lógica acompanha os níveis 1, 2 e 3.
+                </p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <StatPill icon={Users} label="Afiliados" value={String(cascade.length)} />
+                  <StatPill icon={TrendingUp} label="CPAs da rede" value={String(totalCpas)} />
+                  <StatPill
+                    icon={CircleDollarSign}
+                    label="Sua comissão de rede"
+                    value={brl(totalCommission)}
+                  />
+                </div>
+              </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="text-base">Afiliados indicados ({downlines.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {downlines.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Ninguém se cadastrou pelo seu link ainda.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Afiliado</TableHead>
-                    <TableHead>Contato</TableHead>
-                    <TableHead>Cadastro</TableHead>
-                    <TableHead>Planos definidos</TableHead>
-                    <TableHead className="text-right">Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {downlines.map((d) => {
-                    const own = plans.filter((p) => p.downline_id === d.id);
-                    return (
-                      <TableRow key={d.id}>
-                        <TableCell>
-                          <p className="font-medium">{d.full_name || "Sem nome"}</p>
-                          <p className="text-xs text-muted-foreground">{d.referral_code}</p>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          <p>{d.email}</p>
-                          <p className="text-xs text-muted-foreground">{d.phone}</p>
-                        </TableCell>
-                        <TableCell>
-                          {d.approved ? (
-                            <span className="inline-flex items-center gap-1 rounded bg-success/15 px-2 py-1 text-xs font-semibold text-success">
-                              <Check className="size-3" /> aprovado
+              <div className="border-t border-border bg-primary/5 p-6 lg:w-[360px] lg:border-l lg:border-t-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  Seu link de indicação
+                </p>
+                <p className="mt-2 text-sm font-semibold">Código {me?.referral_code ?? "—"}</p>
+                <div className="mt-3 flex gap-2">
+                  <Input readOnly value={link} className="min-w-0 font-mono text-xs" />
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    aria-label="Copiar link"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(link);
+                      toast.success("Link copiado!");
+                    }}
+                  >
+                    <Copy className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((level) => {
+            const rows = byLevel(level);
+            const commission = rows.reduce((sum, row) => sum + Number(row.commission), 0);
+            const cpas = rows.reduce((sum, row) => sum + Number(row.cpas), 0);
+            const Icon = levelConfig[level as 1 | 2 | 3].icon;
+
+            return (
+              <Card
+                key={level}
+                className="relative overflow-hidden border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/40"
+              >
+                <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
+                <CardHeader className="relative pb-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                        {levelConfig[level as 1 | 2 | 3].label}
+                      </p>
+                      <CardTitle className="mt-1 text-lg">
+                        {levelConfig[level as 1 | 2 | 3].title}
+                      </CardTitle>
+                    </div>
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-muted text-primary">
+                      <Icon className="size-5" />
+                    </div>
+                  </div>
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    {levelConfig[level as 1 | 2 | 3].description}
+                  </p>
+                </CardHeader>
+                <CardContent className="relative">
+                  <div className="grid grid-cols-2 gap-2">
+                    <MiniMetric label="Afiliados" value={String(rows.length)} />
+                    <MiniMetric label="CPAs" value={String(cpas)} />
+                  </div>
+                  <div className="mt-3 rounded-xl border border-success/20 bg-success/5 p-3">
+                    <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      Sua margem gerada
+                    </p>
+                    <p className="mt-1 text-xl font-bold text-success">{brl(commission)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        <Card className="border-primary/20">
+          <CardHeader className="border-b border-border/70 pb-5">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                  Estrutura visual
+                </p>
+                <CardTitle className="mt-1 text-xl">Nível 1 → Nível 2 → Nível 3</CardTitle>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Cada nível mostra os CPAs e a margem que chega para você.
+                </p>
+              </div>
+              <div className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary">
+                Margem dinâmica por CPA
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 lg:p-6">
+            <div className="grid gap-4 lg:grid-cols-3">
+              {[1, 2, 3].map((level, index) => {
+                const rows = byLevel(level);
+                return (
+                  <div key={level} className="relative">
+                    {index < 2 && (
+                      <ChevronRight className="absolute -right-3 top-1/2 z-10 hidden size-6 -translate-y-1/2 rounded-full border border-border bg-background p-1 text-primary lg:block" />
+                    )}
+                    <LevelPanel level={level} rows={rows} />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
+                Gestão direta
+              </p>
+              <CardTitle className="mt-1 text-lg">Seus afiliados de nível 1</CardTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Aprove cadastros e defina quanto cada afiliado direto recebe.
+              </p>
+            </div>
+            <div className="hidden rounded-xl bg-muted p-3 sm:block">
+              <Settings2 className="size-5 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {downlines.length === 0 ? (
+              <EmptyState text="Ninguém se cadastrou pelo seu link ainda." />
+            ) : (
+              <div className="space-y-3">
+                {downlines.map((downline) => {
+                  const ownPlans = plans.filter((plan) => plan.downline_id === downline.id);
+                  return (
+                    <div
+                      key={downline.id}
+                      className="rounded-2xl border border-border/70 bg-muted/15 p-4 transition-colors hover:border-primary/30"
+                    >
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-bold text-primary">
+                            {(downline.full_name || downline.email || "?").slice(0, 1).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">
+                              {downline.full_name || "Sem nome"}
+                            </p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {downline.email}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          {downline.approved ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-3 py-1.5 text-xs font-semibold text-success">
+                              <Check className="size-3" /> Aprovado
                             </span>
                           ) : (
                             <Button
                               size="sm"
                               className="gap-1 bg-success text-success-foreground hover:bg-success/90"
-                              onClick={() => approve(d.id)}
+                              onClick={() => approve(downline.id)}
                             >
                               <Check className="size-3" /> Aprovar
                             </Button>
                           )}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {own.length === 0 ? (
-                            <span className="text-muted-foreground">—</span>
-                          ) : (
-                            own.map((p) => {
-                              const cap = caps[p.house_id ?? "geral"] ?? 0;
-                              const margin = cap - Number(p.cpa_amount);
-                              return (
-                                <p key={p.id}>
-                                  {p.betting_houses?.name ?? "Geral"} ·{" "}
-                                  {brl(Number(p.cpa_amount))}
-                                  {cap > 0 && (
-                                    <span className="text-xs text-success">
-                                      {" "}
-                                      (seu lucro: {brl(margin)})
-                                    </span>
-                                  )}
-                                </p>
-                              );
-                            })
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
                           <PlanDialog
-                            downline={d}
+                            downline={downline}
                             houses={houses}
                             caps={caps}
                             uplineId={user!.id}
-                            onSaved={() => qc.invalidateQueries({ queryKey: ["network-plans"] })}
+                            onSaved={() => {
+                              qc.invalidateQueries({ queryKey: ["network-plans"] });
+                              qc.invalidateQueries({ queryKey: ["cascade"] });
+                            }}
                           />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        </div>
+                      </div>
 
-      {[2, 3].map((level) => {
-        const rows = cascade.filter((c) => c.level === level);
-        return (
-          <Card key={level} className="mt-6">
-            <CardHeader>
-              <CardTitle className="text-base">
-                Afiliados do nível {level} ({rows.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {rows.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Quando seus afiliados indicarem, o nível {level} aparece aqui.
+                      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {ownPlans.length === 0 ? (
+                          <div className="rounded-xl border border-dashed border-border px-3 py-2 text-xs text-muted-foreground">
+                            Nenhum CPA definido
+                          </div>
+                        ) : (
+                          ownPlans.map((plan) => {
+                            const cap = caps[plan.house_id ?? "geral"] ?? 0;
+                            const amount = Number(plan.cpa_amount);
+                            const margin = Math.max(cap - amount, 0);
+                            return (
+                              <div
+                                key={plan.id}
+                                className="rounded-xl border border-border/60 bg-background/50 px-3 py-2.5"
+                              >
+                                <p className="truncate text-xs font-semibold">
+                                  {plan.betting_houses?.name ?? "Geral"}
+                                </p>
+                                <div className="mt-1 flex items-center justify-between gap-2">
+                                  <span className="text-sm font-bold">{brl(amount)}</span>
+                                  <span className="text-xs font-semibold text-success">
+                                    margem {brl(margin)}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-5">
+            <div className="flex gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <CircleDollarSign className="size-4" />
+              </div>
+              <div>
+                <p className="font-semibold">Como sua margem funciona</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Exemplo: se você recebe R$ 100 e repassa R$ 90 ao nível 1, sua margem é R$ 10.
+                  Se o nível 1 repassa R$ 80 ao nível 2, o nível 1 fica com R$ 10 e você continua
+                  com seus R$ 10. No nível 3, a mesma regra se repete. O sistema calcula a margem
+                  por nível, sem usar um valor fixo de R$ 20.
                 </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Afiliado</TableHead>
-                        <TableHead>E-mail</TableHead>
-                        <TableHead className="text-right">CPAs</TableHead>
-                        <TableHead className="text-right">Sua comissão</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rows.map((r) => (
-                        <TableRow key={r.affiliate_id}>
-                          <TableCell className="font-medium">
-                            {r.affiliate_name || "Sem nome"}
-                          </TableCell>
-                          <TableCell className="text-sm">{r.affiliate_email}</TableCell>
-                          <TableCell className="text-right">{Number(r.cpas)}</TableCell>
-                          <TableCell className="text-right font-semibold text-success">
-                            {brl(Number(r.commission))}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </AppShell>
+  );
+}
+
+function LevelPanel({ level, rows }: { level: number; rows: CascadeRow[] }) {
+  const totalCpas = rows.reduce((sum, row) => sum + Number(row.cpas), 0);
+  const totalCommission = rows.reduce((sum, row) => sum + Number(row.commission), 0);
+
+  return (
+    <div className="h-full rounded-2xl border border-border/70 bg-muted/10 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            Nível {level}
+          </p>
+          <p className="mt-1 text-sm font-semibold">
+            {rows.length} {rows.length === 1 ? "afiliado" : "afiliados"}
+          </p>
+        </div>
+        <div className="rounded-lg bg-success/10 px-2.5 py-1 text-xs font-bold text-success">
+          {brl(totalCommission)}
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <MiniMetric label="CPAs" value={String(totalCpas)} />
+        <MiniMetric label="Sua comissão" value={brl(totalCommission)} />
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {rows.length === 0 ? (
+          <EmptyState
+            compact
+            text={
+              level === 1
+                ? "Ainda sem afiliados diretos."
+                : "Ainda não há afiliados neste nível."
+            }
+          />
+        ) : (
+          rows.map((row) => {
+            const cpas = Number(row.cpas);
+            const commission = Number(row.commission);
+            const marginPerCpa = cpas > 0 ? commission / cpas : 0;
+            return (
+              <div
+                key={row.affiliate_id}
+                className="rounded-xl border border-border/60 bg-background/60 p-3"
+              >
+                <div className="flex items-start gap-2">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                    {(row.affiliate_name || row.affiliate_email || "?")
+                      .slice(0, 1)
+                      .toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">
+                      {row.affiliate_name || "Sem nome"}
+                    </p>
+                    <p className="truncate text-[0.7rem] text-muted-foreground">
+                      {row.affiliate_email}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-end justify-between gap-2">
+                  <div>
+                    <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                      CPAs
+                    </p>
+                    <p className="font-bold">{cpas}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[0.65rem] uppercase tracking-wide text-muted-foreground">
+                      Margem por CPA
+                    </p>
+                    <p className="font-bold text-success">{brl(marginPerCpa)}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function StatPill({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-border/70 bg-background/60 px-3 py-2">
+      <Icon className="size-4 text-primary" />
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs font-bold">{value}</span>
+    </div>
+  );
+}
+
+function MiniMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border/60 bg-background/50 px-3 py-2">
+      <p className="text-[0.62rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 truncate text-sm font-bold">{value}</p>
+    </div>
+  );
+}
+
+function EmptyState({ text, compact = false }: { text: string; compact?: boolean }) {
+  return (
+    <div
+      className={`rounded-xl border border-dashed border-border text-center text-xs text-muted-foreground ${compact ? "px-3 py-4" : "px-4 py-8"}`}
+    >
+      {text}
+    </div>
   );
 }
 
@@ -430,7 +595,7 @@ function PlanDialog({
   onSaved: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [houseId, setHouseId] = useState<string>("");
+  const [houseId, setHouseId] = useState("");
   const [amount, setAmount] = useState("");
 
   const cap = caps[houseId || "geral"] ?? 0;
@@ -443,22 +608,23 @@ function PlanDialog({
       return;
     }
     if (cap <= 0) {
-      toast.error("Você não tem acordo de CPA nesta casa, então não pode repassar comissão.");
+      toast.error("Você não tem acordo de CPA nesta casa.");
       return;
     }
     if (value <= 0) {
-      toast.error("Informe o valor do CPA do afiliado");
+      toast.error("Informe o valor do CPA");
       return;
     }
     if (value > cap) {
-      toast.error(`O valor não pode passar do seu teto de ${brl(cap)}`);
+      toast.error(`O valor não pode passar do seu CPA de ${brl(cap)}`);
       return;
     }
+
     const { error } = await supabase.from("network_plans").upsert(
       {
         upline_id: uplineId,
         downline_id: downline.id,
-        house_id: houseId || null,
+        house_id: houseId,
         cpa_amount: value,
       },
       { onConflict: "upline_id,downline_id,house_id" },
@@ -468,22 +634,27 @@ function PlanDialog({
       toast.error(error.message);
       return;
     }
-    toast.success("Plano de CPA definido!");
+
+    toast.success(`CPA de ${brl(value)} definido. Sua margem é ${brl(margin)} por CPA.`);
     setOpen(false);
+    setHouseId("");
+    setAmount("");
     onSaved();
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
+        <Button size="sm" variant="secondary" className="gap-2">
+          <Settings2 className="size-3.5" />
           Definir CPA
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Plano de CPA · {downline.full_name || downline.email}</DialogTitle>
+          <DialogTitle>CPA · {downline.full_name || downline.email}</DialogTitle>
         </DialogHeader>
+
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Casa de aposta</Label>
@@ -492,45 +663,57 @@ function PlanDialog({
                 <SelectValue placeholder="Selecione a casa" />
               </SelectTrigger>
               <SelectContent>
-                {houses.map((h) => (
-                  <SelectItem key={h.id} value={h.id}>
-                    {h.name}
+                {houses.map((house) => (
+                  <SelectItem key={house.id} value={house.id}>
+                    {house.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="plan-amount">Valor do CPA do afiliado (R$)</Label>
+            <Label htmlFor="network-cpa">CPA repassado (R$)</Label>
             <Input
-              id="plan-amount"
+              id="network-cpa"
               type="number"
               min="0"
               max={cap || undefined}
               step="0.01"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(event) => setAmount(event.target.value)}
+              placeholder="Ex.: 90"
             />
-            {cap > 0 ? (
-              <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
-                <p>
-                  Seu teto nesta casa: <strong>{brl(cap)}</strong>
-                </p>
-                <p className={margin < 0 ? "text-destructive" : "text-success"}>
-                  {margin < 0
-                    ? "Valor acima do seu teto — reduza a comissão."
-                    : `Seu lucro por CPA validado: ${brl(margin)}`}
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Você ainda não tem acordo de CPA nesta casa, então não há teto para repassar.
-              </p>
-            )}
           </div>
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">Seu CPA</span>
+              <strong>{brl(cap)}</strong>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <span className="text-muted-foreground">CPA repassado</span>
+              <strong>{brl(value)}</strong>
+            </div>
+            <div className="mt-2 border-t border-border/60 pt-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">Sua margem por CPA</span>
+                <strong className={margin >= 0 ? "text-success" : "text-destructive"}>
+                  {brl(Math.max(margin, 0))}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          {cap <= 0 && (
+            <p className="text-xs text-destructive">
+              Você ainda não possui um acordo de CPA nesta casa.
+            </p>
+          )}
         </div>
+
         <DialogFooter>
-          <Button onClick={save}>Salvar plano</Button>
+          <Button onClick={save}>Salvar CPA</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
