@@ -71,8 +71,8 @@ function AwardsPage() {
       title="Premiações"
       subtitle="Placas de faturamento em CPA — conquistadas automaticamente conforme seu volume cresce."
     >
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="product-card rounded-2xl money-panel border-primary/40">
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="metric-card money-panel border-primary/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Faturado com CPA
@@ -82,7 +82,7 @@ function AwardsPage() {
             <p className="font-display text-3xl font-bold">{brl(revenue)}</p>
           </CardContent>
         </Card>
-        <Card className="product-card rounded-2xl glow-panel border-border/60">
+        <Card className="metric-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Placas conquistadas
@@ -110,7 +110,7 @@ function AwardsPage() {
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {AWARD_TIERS.map((tier) => {
           const pct = tierProgress(revenue, tier.goal);
           const done = pct >= 100;
