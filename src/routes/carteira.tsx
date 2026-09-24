@@ -67,7 +67,7 @@ export const Route = createFileRoute("/carteira")({
   component: WalletPage,
 });
 
-const MIN_WITHDRAW = 100;
+const MIN_WITHDRAW = 10000;
 const SUPERBET_MIN_LABEL = "10KFTB";
 const NETWORK_KEY = "rede";
 
@@ -478,7 +478,7 @@ function WithdrawDialog({
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                 <span>Disponível: {brl(available)}</span>
                 <div className="flex gap-1">
-                  {[100, 500, 1000].map((v) => (
+                  {[1000, 5000, 10000].map((v) => (
                     <button
                       key={v}
                       type="button"
