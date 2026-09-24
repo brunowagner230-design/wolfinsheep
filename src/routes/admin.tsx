@@ -220,7 +220,8 @@ function AdminPage() {
 
   const toggleHouseOperation = async (h: HouseRow) => {
     const nextActive = h.is_active === false;
-    const { error } = await supabase
+    const adminDb = supabase as unknown as { from: (table: string) => any };
+    const { error } = await adminDb
       .from("betting_houses")
       .update({
         is_active: nextActive,
@@ -252,7 +253,8 @@ function AdminPage() {
 
   const toggleSuperbetWithdrawals = async (h: HouseRow) => {
     const enabled = h.withdrawals_enabled !== true;
-    const { error } = await supabase
+    const adminDb = supabase as unknown as { from: (table: string) => any };
+    const { error } = await adminDb
       .from("betting_houses")
       .update({ withdrawals_enabled: enabled })
       .eq("id", h.id);
@@ -1823,7 +1825,7 @@ function LinkRequestCard({
       return;
     }
 
-    await supabase
+    await sb
       .from("profiles")
       .update({ promo_link: link, is_manager: managerSelected })
       .eq("id", request.user_id);
