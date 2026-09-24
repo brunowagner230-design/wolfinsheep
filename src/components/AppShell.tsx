@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { flushPush } from "@/lib/push.functions";
 import {
@@ -11,6 +11,8 @@ import {
   LogOut,
   Menu,
   LifeBuoy,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +33,8 @@ const navItems = [
   { to: "/suporte", label: "Suporte", icon: LifeBuoy },
 ] as const;
 
+const ADMIN_THEME_KEY = "wolf-admin-theme";
+
 export function AppShell({
   title,
   subtitle,
@@ -42,7 +46,25 @@ export function AppShell({
 }) {
   const { user, loading, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const [adminTheme, setAdminTheme] = useState<"dark" | "light">("dark");
+
+  const isAdminRoute = pathname.startsWith("/admin");
+
+  useEffect(() => {
+    if (!isAdminRoute) return;
+    const savedTheme = window.localStorage.getItem(ADMIN_THEME_KEY);
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setAdminTheme(savedTheme);
+    }
+  }, [isAdminRoute]);
+
+  const toggleAdminTheme = () => {
+    const nextTheme = adminTheme === "dark" ? "light" : "dark";
+    setAdminTheme(nextTheme);
+    window.localStorage.setItem(ADMIN_THEME_KEY, nextTheme);
+  };
 
   const { data: profile } = useQuery({
     queryKey: ["shell-profile", user?.id],
@@ -97,7 +119,12 @@ export function AppShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div
+      className={cn(
+        "flex min-h-screen bg-background",
+        isAdminRoute && (adminTheme === "light" ? "admin-theme-light" : "admin-theme-dark"),
+      )}
+    >
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-sidebar-border bg-sidebar px-4 py-5 transition-transform lg:static lg:translate-x-0",
@@ -183,6 +210,28 @@ export function AppShell({
             {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {isAdminRoute && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-2"
+                onClick={toggleAdminTheme}
+                aria-label={adminTheme === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+                aria-pressed={adminTheme === "light"}
+              >
+                {adminTheme === "dark" ? (
+                  <>
+                    <Sun className="size-4" />
+                    Modo claro
+                  </>
+                ) : (
+                  <>
+                    <Moon className="size-4" />
+                    Modo escuro
+                  </>
+                )}
+              </Button>
+            )}
             <InstallAppButton />
             <EnableNotificationsButton />
             <NotificationBell />
