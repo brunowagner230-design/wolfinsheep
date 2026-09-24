@@ -57,6 +57,8 @@ import {
   MessageCircle,
   Building2,
   Users,
+  PauseCircle,
+  PlayCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
@@ -214,6 +216,23 @@ function AdminPage() {
     }
     toast.success("Cadastro aprovado!");
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
+  };
+
+  const toggleHouseOperation = async (h: HouseRow) => {
+    const nextActive = h.is_active === false;
+    const { error } = await supabase
+      .from("betting_houses")
+      .update({
+        is_active: nextActive,
+        pause_message: nextActive ? null : (h.pause_message || "Esta operação está temporariamente pausada pela administração."),
+      })
+      .eq("id", h.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(nextActive ? `Operação da ${h.name} reativada.` : `Operação da ${h.name} pausada.`);
+    qc.invalidateQueries({ queryKey: ["houses"] });
   };
 
   const deleteHouse = async (h: HouseRow) => {
@@ -908,7 +927,7 @@ function AdminPage() {
         <TabsContent value="casas" className="pt-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Casas de aposta ({houses.length})</CardTitle>
+              <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle><p className="mt-1 text-xs text-muted-foreground">Pause uma operação e o status será refletido para os afiliados em todas as telas.</p></div>
               <HouseDialog onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })} />
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -931,11 +950,20 @@ function AdminPage() {
                         </span>
                       )}
                       <div className="min-w-0">
-                        <p className="truncate font-semibold">{h.name}</p>
-                        <p className="text-xs text-muted-foreground">{h.country}</p>
+                        <div className="flex items-center gap-2"><p className="truncate font-semibold">{h.name}</p><Badge variant={h.is_active === false ? "secondary" : "default"}>{h.is_active === false ? "Pausada" : "Ativa"}</Badge></div>
+                        <p className="text-xs text-muted-foreground">{h.is_active === false ? (h.pause_message || "Operação temporariamente pausada.") : "Operação disponível para gestão."}</p>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center">
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        variant={h.is_active === false ? "secondary" : "outline"}
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => toggleHouseOperation(h)}
+                      >
+                        {h.is_active === false ? <PlayCircle className="size-4 text-success" /> : <PauseCircle className="size-4 text-amber-500" />}
+                        {h.is_active === false ? "Reativar" : "Pausar"}
+                      </Button>
                       <HouseDialog
                         house={h}
                         onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })}
