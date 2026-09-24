@@ -131,6 +131,10 @@ function DealsPage() {
   };
 
   const requestLink = async (house: HouseRow) => {
+    if (house.is_active === false) {
+      toast.error("Esta operação está pausada no momento.");
+      return;
+    }
     const existing = requests.find((r) => r.house_id === house.id);
     const { error } = existing
       ? await sb
