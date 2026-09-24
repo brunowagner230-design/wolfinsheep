@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, Check, Link2 } from "lucide-react";
+import { Clock, Check, Link2, Sparkles, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -115,6 +115,8 @@ function DealsPage() {
     },
   });
 
+  const activeHouses = houses.filter((house) => house.name.toLowerCase().includes("superbet"));
+
   const requestOf = (houseId: string) => requests.find((r) => r.house_id === houseId);
   const dealOf = (houseId: string) => deals.find((d) => d.house_id === houseId);
 
@@ -165,7 +167,7 @@ function DealsPage() {
             </p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {houses.map((h) => {
+              {activeHouses.map((h) => {
                 const req = requestOf(h.id);
                 const deal = dealOf(h.id);
                 const link = releasedLink(h.id);
@@ -177,7 +179,7 @@ function DealsPage() {
                 return (
                   <div
                     key={h.id}
-                    className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/70 p-4"
+                    className="group flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
                   >
                     <HouseBadge name={h.name} logoUrl={h.logo_url} />
                     {cpaValue > 0 && (
