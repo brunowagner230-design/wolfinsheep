@@ -39,7 +39,20 @@ export const flushPush = createServerFn({ method: "POST" })
       .order("created_at", { ascending: true })
       .limit(50);
 
-    const rows = (pending ?? []) as Row[];
+    const candidates = (pending ?? []) as Row[];
+    if (candidates.length === 0) return { sent: 0 };
+
+    // Claim each notification before delivery. Multiple open tabs/devices can
+    // call flushPush at the same time; the conditional update makes only the
+    // first caller responsible for a given notification.
+    const { data: claimedData } = await supabaseAdmin
+      .from("notifications")
+      .update({ pushed_at: new Date().toISOString() })
+      .in("id", candidates.map((r) => r.id))
+      .is("pushed_at", null)
+      .select("id, user_id, title, body");
+
+    const rows = (claimedData ?? []) as Row[];
     if (rows.length === 0) return { sent: 0 };
 
     const userIds = [...new Set(rows.map((r) => r.user_id))];
@@ -51,6 +64,7 @@ export const flushPush = createServerFn({ method: "POST" })
 
     let sent = 0;
     const stale: string[] = [];
+    const deliveredRows = new Set<string>();
 
     for (const row of rows) {
       const targets = subs.filter((s) => s.user_id === row.user_id);
@@ -74,8 +88,10 @@ export const flushPush = createServerFn({ method: "POST" })
             { subject, publicKey, privateKey },
           );
           const res = await fetch(target.endpoint, payload);
-          if (res.ok) sent += 1;
-          else if (res.status === 404 || res.status === 410) stale.push(target.id);
+          if (res.ok) {
+            sent += 1;
+            deliveredRows.add(row.id);
+          } else if (res.status === 404 || res.status === 410) stale.push(target.id);
           else console.error(`push falhou [${res.status}]: ${await res.text()}`);
         } catch (error) {
           console.error("push erro", error);
@@ -83,13 +99,18 @@ export const flushPush = createServerFn({ method: "POST" })
       }
     }
 
-    await supabaseAdmin
-      .from("notifications")
-      .update({ pushed_at: new Date().toISOString() })
-      .in(
-        "id",
-        rows.map((r) => r.id),
-      );
+    // A notification stays claimed once at least one device accepted it.
+    // If every delivery failed, release the claim so a later flush can retry.
+    const undeliveredIds = rows
+      .filter((row) => !deliveredRows.has(row.id))
+      .map((row) => row.id);
+    if (undeliveredIds.length > 0) {
+      await supabaseAdmin
+        .from("notifications")
+        .update({ pushed_at: null })
+        .in("id", undeliveredIds)
+        .not("pushed_at", "is", null);
+    }
 
     if (stale.length > 0) {
       await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
