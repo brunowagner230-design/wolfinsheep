@@ -57,6 +57,21 @@ function DashboardPage() {
       return (data ?? []).filter((r) => !!r.promo_link) as unknown as {house_id:string; promo_link:string; betting_houses?:{name:string}|null}[];
     },
   });
+  const { data: operationHouses = [] } = useQuery({
+    queryKey: ["operation-houses"],
+    enabled: !!user,
+    refetchInterval: 10000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("betting_houses")
+        .select("*")
+        .ilike("name", "%superbet%")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string; logo_url: string | null; is_active?: boolean; pause_message?: string | null }[];
+    },
+  });
+
   const { data: networkEarnings = 0 } = useQuery({
     queryKey: ["network-earnings", user?.id], enabled: !!user,
     queryFn: async () => {
@@ -69,12 +84,10 @@ function DashboardPage() {
   const [houseId, setHouseId] = useState("");
   const [range, setRange] = useState("30");
 
-  const houses = useMemo(() => {
-    const map = new Map<string,string>();
-    deals.forEach(d => { if (d.house_id) map.set(d.house_id, d.betting_houses?.name ?? "Casa"); });
-    houseLinks.forEach(l => { if (l.house_id) map.set(l.house_id, l.betting_houses?.name ?? "Casa"); });
-    return [...map].map(([id,name]) => ({id,name}));
-  }, [deals, houseLinks]);
+  const houses = useMemo(
+    () => operationHouses.map((h) => ({ id: h.id, name: h.name, logo_url: h.logo_url, is_active: h.is_active !== false, pause_message: h.pause_message })),
+    [operationHouses],
+  );
 
   useEffect(() => {
     if (houses.length && !houses.some(h => h.id === houseId)) setHouseId(houses[0]!.id);
@@ -91,8 +104,9 @@ function DashboardPage() {
   }), {cpa:0, clicks:0, regs:0, revenue:0});
 
   const selectedHouse = houses.find(h => h.id === houseId);
-  const activeHouseName = selectedHouse?.name ?? filtered.map(d => d.betting_houses?.name).find(Boolean) ?? null;
-  const activeLogo = houseLogo(activeHouseName);
+  const activeHouseName = selectedHouse?.name ?? null;
+  const activeLogo = selectedHouse ? (selectedHouse.logo_url || houseLogo(activeHouseName)) : null;
+  const selectedHousePaused = selectedHouse?.is_active === false;
 
   const chart = useMemo(() => {
     const days = Number(range);
@@ -188,7 +202,7 @@ function DashboardPage() {
           <section className="product-card rounded-2xl p-5">
             <div className="flex flex-wrap items-center gap-4">
               {activeLogo && <img src={activeLogo} alt={`Logo ${activeHouseName}`} className="size-11 object-contain" />}
-              <div className="min-w-0 flex-1"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-success">Operação ativa</p><p className="mt-1 text-lg font-semibold">{activeHouseName}</p><p className="text-xs text-muted-foreground">Acordo de CPA disponível para sua operação.</p></div>
+              <div className="min-w-0 flex-1"><p className={`text-xs font-semibold uppercase tracking-[0.14em] ${selectedHousePaused ? "text-amber-400" : "text-success"}`}>{selectedHousePaused ? "Operação pausada" : "Operação ativa"}</p><p className="mt-1 text-lg font-semibold">{activeHouseName}</p><p className="text-xs text-muted-foreground">{selectedHousePaused ? (selectedHouse?.pause_message || "Esta operação está temporariamente pausada pela administração.") : "Acordo de CPA disponível para sua operação."}</p></div>
               {houses.length > 1 && <Select value={houseId} onValueChange={setHouseId}><SelectTrigger className="w-52"><SelectValue /></SelectTrigger><SelectContent>{houses.map(h=><SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>)}</SelectContent></Select>}
             </div>
           </section>
@@ -219,10 +233,12 @@ function DashboardPage() {
           </Card>
         </div>
 
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-400"/>
-          <p className="text-xs leading-5 text-muted-foreground"><strong className="text-foreground">Aviso de operação:</strong> a divulgação da Betano Diária está pausada no momento. A operação tem previsão de retorno em 01/10.</p>
-        </div>
+        {selectedHousePaused && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-4">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber-400"/>
+            <div><p className="text-sm font-semibold text-foreground">Operação pausada</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{selectedHouse?.pause_message || "A administração pausou temporariamente esta operação. O status será atualizado automaticamente quando ela for reativada."}</p></div>
+          </div>
+        )}
       </div>
     </AppShell>
   );
