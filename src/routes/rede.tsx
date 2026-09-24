@@ -415,9 +415,22 @@ function NetworkPage() {
                                 key={plan.id}
                                 className="rounded-xl border border-border/60 bg-background/50 px-3 py-2.5"
                               >
-                                <p className="truncate text-xs font-semibold">
-                                  {plan.betting_houses?.name ?? "Geral"}
-                                </p>
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="truncate text-xs font-semibold">
+                                    {plan.betting_houses?.name ?? "Geral"}
+                                  </p>
+                                  <PlanDialog
+                                    downline={downline}
+                                    houses={houses}
+                                    caps={caps}
+                                    uplineId={user!.id}
+                                    initialPlan={plan}
+                                    onSaved={() => {
+                                      qc.invalidateQueries({ queryKey: ["network-plans"] });
+                                      qc.invalidateQueries({ queryKey: ["cascade"] });
+                                    }}
+                                  />
+                                </div>
                                 <div className="mt-1 flex items-center justify-between gap-2">
                                   <span className="text-sm font-bold">{brl(amount)}</span>
                                   <span className="text-xs font-semibold text-success">
@@ -605,17 +618,21 @@ function PlanDialog({
   houses,
   caps,
   uplineId,
+  initialPlan,
   onSaved,
 }: {
   downline: ProfileRow;
   houses: HouseRow[];
   caps: Record<string, number>;
   uplineId: string;
+  initialPlan?: NetworkPlanRow;
   onSaved: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [houseId, setHouseId] = useState("");
-  const [amount, setAmount] = useState("");
+  const [houseId, setHouseId] = useState(initialPlan?.house_id ?? "");
+  const [amount, setAmount] = useState(
+    initialPlan ? String(Number(initialPlan.cpa_amount)) : "",
+  );
 
   const cap = caps[houseId || "geral"] ?? 0;
   const value = Number(amount) || 0;
@@ -654,10 +671,14 @@ function PlanDialog({
       return;
     }
 
-    toast.success(`CPA de ${brl(value)} definido. Sua margem é ${brl(margin)} por CPA.`);
+    toast.success(
+      initialPlan
+        ? `CPA atualizado para ${brl(value)}. Sua margem é ${brl(margin)} por CPA.`
+        : `CPA de ${brl(value)} definido. Sua margem é ${brl(margin)} por CPA.`,
+    );
     setOpen(false);
-    setHouseId("");
-    setAmount("");
+    setHouseId(initialPlan?.house_id ?? "");
+    setAmount(initialPlan ? String(Number(initialPlan.cpa_amount)) : "");
     onSaved();
   };
 
@@ -666,12 +687,15 @@ function PlanDialog({
       <DialogTrigger asChild>
         <Button size="sm" variant="secondary" className="gap-2">
           <Settings2 className="size-3.5" />
-          Definir CPA
+          {initialPlan ? "Editar CPA" : "Definir CPA"}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>CPA · {downline.full_name || downline.email}</DialogTitle>
+          <DialogTitle>
+            {initialPlan ? "Editar CPA" : "Definir CPA"} ·{" "}
+            {downline.full_name || downline.email}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -727,6 +751,12 @@ function PlanDialog({
           {cap <= 0 && (
             <p className="text-xs text-destructive">
               Você ainda não possui um acordo de CPA nesta casa.
+            </p>
+          )}
+          {cap > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Você pode definir qualquer valor de <strong>R$ 0,01</strong> até o seu teto de{" "}
+              <strong>{brl(cap)}</strong>. Sua comissão será calculada automaticamente pela diferença.
             </p>
           )}
         </div>
