@@ -677,7 +677,14 @@ function AdminPage() {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">\n        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Afiliados</p><p className="mt-1 font-display text-2xl font-semibold">{profiles.length}</p><p className="text-[11px] text-muted-foreground">{filteredProfiles.length} no filtro atual</p></div>\n        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Solicitações pendentes</p><p className="mt-1 font-display text-2xl font-semibold text-amber-400">{pendingRequests.length}</p><p className="text-[11px] text-muted-foreground">links aguardando análise</p></div>\n        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Acordos ativos</p><p className="mt-1 font-display text-2xl font-semibold">{deals.filter(d => d.status === "ativo").length}</p><p className="text-[11px] text-muted-foreground">acordos publicados</p></div>\n        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Saques pendentes</p><p className="mt-1 font-display text-2xl font-semibold">{withdrawals.filter(w => w.status === "pendente").length}</p><p className="text-[11px] text-muted-foreground">{brl(totalPending)} aguardando processamento</p></div>\n      </div>\n\n      <Tabs defaultValue="solicitacoes">
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Afiliados</p><p className="mt-1 font-display text-2xl font-semibold">{profiles.length}</p><p className="text-[11px] text-muted-foreground">{filteredProfiles.length} no filtro atual</p></div>
+        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Solicitações pendentes</p><p className="mt-1 font-display text-2xl font-semibold text-amber-400">{pendingRequests.length}</p><p className="text-[11px] text-muted-foreground">links aguardando análise</p></div>
+        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Acordos ativos</p><p className="mt-1 font-display text-2xl font-semibold">{deals.filter(d => d.status === "ativo").length}</p><p className="text-[11px] text-muted-foreground">acordos publicados</p></div>
+        <div className="product-card rounded-2xl p-4"><p className="text-xs text-muted-foreground">Saques pendentes</p><p className="mt-1 font-display text-2xl font-semibold">{withdrawals.filter(w => w.status === "pendente").length}</p><p className="text-[11px] text-muted-foreground">{brl(totalPending)} aguardando processamento</p></div>
+      </div>
+
+      <Tabs defaultValue="solicitacoes">
         <TabsList className="h-auto w-full flex-wrap justify-start rounded-xl border border-border/70 bg-card p-1.5 shadow-sm">
           <TabsTrigger value="solicitacoes">
             Solicitações de links
