@@ -156,7 +156,7 @@ function DealsPage() {
       title="Acordos CPA"
       subtitle="Casas disponíveis para divulgação — solicite o link e acompanhe o plano de CPA liberado para você."
     >
-      <Card className="glow-panel">
+      <Card className="product-card rounded-2xl glow-panel">
         <CardHeader>
           <CardTitle className="text-base">Casas de aposta disponíveis</CardTitle>
         </CardHeader>
@@ -232,7 +232,7 @@ function DealsPage() {
         </CardContent>
       </Card>
 
-      <Card className="mt-6">
+      <Card className="product-card rounded-2xl mt-6">
         <CardHeader>
           <CardTitle className="text-base">Meus acordos de CPA ({deals.length})</CardTitle>
         </CardHeader>
