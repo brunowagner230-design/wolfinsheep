@@ -55,7 +55,8 @@ export function NotificationBell() {
         (payload: { new: NotificationRow }) => {
           const row = payload.new;
           toast.success(row.title, { description: row.body });
-          pushLocalNotification(row.title, row.body, row.id);
+          // Realtime is the in-app alert. Web Push is handled by the service worker
+          // when the page is not already open, avoiding two system notifications.
           qc.invalidateQueries({ queryKey: ["notifications"] });
           qc.invalidateQueries({ queryKey: ["wallet-deals"] });
           qc.invalidateQueries({ queryKey: ["my-withdrawals"] });
