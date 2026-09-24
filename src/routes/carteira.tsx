@@ -70,7 +70,6 @@ export const Route = createFileRoute("/carteira")({
 const MIN_WITHDRAW = 10000;
 const SUPERBET_MIN_LABEL = "10 QFTD";
 const NETWORK_KEY = "rede";
-const WITHDRAW_START = new Date("2026-10-10T00:00:00-03:00");
 
 type WalletBucket = {
   key: string;
@@ -81,6 +80,7 @@ type WalletBucket = {
   pending: number;
   available: number;
   cpas: number;
+  withdrawalsEnabled: boolean;
 };
 
 const statusBadge = (status: string) => {
@@ -106,7 +106,7 @@ function WalletPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("affiliate_deals")
-        .select("*, betting_houses(name)")
+        .select("*, betting_houses(name, withdrawals_enabled)")
         .eq("affiliate_id", user!.id);
       if (error) throw error;
       return (data ?? []).filter((d: any) => String(d.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
@@ -159,6 +159,7 @@ function WalletPage() {
           pending: 0,
           available: 0,
           cpas: 0,
+          withdrawalsEnabled: false,
         });
       return map.get(key)!;
     };
@@ -168,6 +169,7 @@ function WalletPage() {
       const bucket = ensure(key, d.house_id, d.betting_houses?.name ?? "Comissões da rede");
       bucket.earned += d.eligible_cpa * Number(d.cpa_amount);
       bucket.cpas += d.eligible_cpa;
+      bucket.withdrawalsEnabled = (d.betting_houses as any)?.withdrawals_enabled === true;
     }
 
     if (networkEarned > 0) {
@@ -225,7 +227,8 @@ function WalletPage() {
   );
 
   const totalAvailable = buckets.reduce((s, b) => s + b.available, 0);
-  const canWithdraw = new Date() >= WITHDRAW_START;
+  const isSuperbet = Boolean(active?.name.toLowerCase().includes("superbet"));
+  const canWithdraw = isSuperbet && active?.withdrawalsEnabled === true;
 
   return (
     <AppShell
@@ -317,11 +320,13 @@ function WalletPage() {
                 Sacar de {active?.name ?? "—"} · {brl(active?.available ?? 0)}
               </p>
               <p className="text-sm text-muted-foreground">
-                {canWithdraw ? <>Saque disponível a partir de 10/10/2026 · mínimo da Superbet: <strong className="text-foreground">{SUPERBET_MIN_LABEL}</strong>.</> : <>Saques da Superbet serão liberados em <strong className="text-foreground">10/10/2026</strong>. Seu saldo continua disponível para consulta.</>}
+                {canWithdraw
+                  ? <>Saque da Superbet liberado pela administração · mínimo: <strong className="text-foreground">{SUPERBET_MIN_LABEL}</strong>.</>
+                  : <>Os saques da Superbet estão temporariamente bloqueados. Seu saldo continua disponível para consulta.</>}
               </p>
             </div>
             <WithdrawDialog
-              bucket={active?.name.toLowerCase().includes("superbet") ? active : undefined}
+              bucket={isSuperbet ? active : undefined}
               userId={user?.id ?? ""}
               onSaved={() => qc.invalidateQueries({ queryKey: ["my-withdrawals"] })}
               canWithdraw={canWithdraw}
@@ -409,7 +414,7 @@ function WithdrawDialog({
       return;
     }
     if (!canWithdraw) {
-      toast.error("Os saques da Superbet serão liberados em 10/10/2026.");
+      toast.error("Os saques da Superbet estão temporariamente bloqueados pela administração.");
       return;
     }
     const value = Number(amount);
