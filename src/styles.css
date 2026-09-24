@@ -200,7 +200,8 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-weight: 500;
+    font-weight: 450;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1,
@@ -208,9 +209,34 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    font-weight: 700;
-    font-style: italic;
-    letter-spacing: -0.01em;
-    text-transform: uppercase;
+    font-weight: 650;
+    font-style: normal;
+    letter-spacing: -0.025em;
+    text-transform: none;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 28%, transparent);
+  }
+
+  .workspace-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--border) 22%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--border) 18%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(to bottom, black, transparent 78%);
+  }
+
+  .product-card {
+    border: 1px solid color-mix(in oklch, var(--border) 78%, transparent);
+    background: color-mix(in oklch, var(--card) 92%, transparent);
+    box-shadow: 0 12px 34px -26px oklch(0 0 0 / 0.55);
   }
 }
