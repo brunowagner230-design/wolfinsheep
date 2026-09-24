@@ -71,7 +71,15 @@ function AwardsPage() {
       title="Premiações"
       subtitle="Placas de faturamento em CPA — conquistadas automaticamente conforme seu volume cresce."
     >
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="panel-page">
+        <div className="page-hero">
+          <div className="relative z-10">
+            <div className="section-kicker">Programa de premiações</div>
+            <h2 className="section-title text-2xl">Acompanhe suas conquistas</h2>
+            <p className="section-description">Cada placa representa um marco de faturamento. O progresso é atualizado conforme seus resultados.</p>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
         <Card className="metric-card money-panel border-primary/30">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -174,6 +182,7 @@ function AwardsPage() {
             </article>
           );
         })}
+        </div>
       </div>
     </AppShell>
   );
