@@ -230,7 +230,7 @@ function WalletPage() {
       title="Carteira"
       subtitle="Cada casa de aposta tem seu próprio saldo — os valores nunca se misturam."
     >
-      <Card className="product-card rounded-2xl money-panel border-primary/40">
+      <Card className="product-card rounded-3xl money-panel border-primary/30 overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Saldo total disponível (todas as casas)
@@ -246,7 +246,7 @@ function WalletPage() {
       </Card>
 
       {buckets.length === 0 ? (
-        <Card className="product-card rounded-2xl mt-6">
+        <Card className="product-card rounded-3xl mt-6">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             Você ainda não tem saldo. Assim que seus CPAs forem validados, cada casa de aposta
             aparece aqui com o saldo dela.
