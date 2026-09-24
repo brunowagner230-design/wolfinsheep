@@ -330,6 +330,7 @@ function NetworkPage() {
           </CardContent>
         </Card>
 
+        {me?.is_manager ? (
         <Card className="product-card rounded-2xl">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div>
@@ -435,9 +436,26 @@ function NetworkPage() {
             )}
           </CardContent>
         </Card>
+        ) : (
+          <Card className="product-card rounded-2xl border-primary/20 bg-primary/5">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <Settings2 className="size-5" />
+                </div>
+                <div>
+                  <p className="font-semibold">Área de gerente</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Sua conta ainda não está marcada como gerente. Quando a administração liberar esse perfil,
+                    você poderá definir o CPA de cada sub-afiliado da sua rede diretamente por aqui.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        <Card className="product-card rounded-2xl border-primary/20 bg-primary/5">
-          <CardContent className="p-5">
+        <Card className="product-card rounded-2xl border-primary/20 bg-primary/5">dContent className="p-5">
             <div className="flex gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
                 <CircleDollarSign className="size-4" />
