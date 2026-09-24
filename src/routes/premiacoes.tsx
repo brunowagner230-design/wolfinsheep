@@ -72,7 +72,7 @@ function AwardsPage() {
       subtitle="Placas de faturamento em CPA — conquistadas automaticamente conforme seu volume cresce."
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="money-panel border-primary/40">
+        <Card className="product-card rounded-2xl money-panel border-primary/40">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Faturado com CPA
@@ -82,7 +82,7 @@ function AwardsPage() {
             <p className="font-display text-3xl font-bold">{brl(revenue)}</p>
           </CardContent>
         </Card>
-        <Card className="glow-panel border-border/60">
+        <Card className="product-card rounded-2xl glow-panel border-border/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Placas conquistadas
@@ -95,7 +95,7 @@ function AwardsPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="glow-panel border-border/60">
+        <Card className="product-card rounded-2xl glow-panel border-border/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Próxima placa
