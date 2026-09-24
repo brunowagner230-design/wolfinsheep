@@ -26,6 +26,7 @@ export type ProfileRow = {
   created_at: string;
   promo_link: string;
   approved: boolean;
+  is_manager?: boolean;
 };
 
 export type HouseRow = {
