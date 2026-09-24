@@ -34,6 +34,8 @@ export type HouseRow = {
   country: string;
   logo_url: string | null;
   default_cpa?: number | string | null;
+  is_active?: boolean;
+  pause_message?: string | null;
 };
 
 export type NetworkPlanRow = {
