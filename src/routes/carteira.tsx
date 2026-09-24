@@ -68,7 +68,7 @@ export const Route = createFileRoute("/carteira")({
 });
 
 const MIN_WITHDRAW = 10000;
-const SUPERBET_MIN_LABEL = "10KFTB";
+const SUPERBET_MIN_LABEL = "10 QFTD";
 const NETWORK_KEY = "rede";
 
 type WalletBucket = {
