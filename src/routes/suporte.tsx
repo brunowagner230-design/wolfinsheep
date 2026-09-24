@@ -133,8 +133,8 @@ function SupportPage() {
       title="Suporte"
       subtitle="Fale direto com a equipe Wolf in Sheep: chat ao vivo dentro do painel."
     >
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <Card className="product-card rounded-2xl glow-panel h-fit">
+      <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <Card className="form-section h-fit">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <LifeBuoy className="size-4 text-primary" /> Abrir atendimento
@@ -212,7 +212,7 @@ function SupportPage() {
             </Card>
           ) : (
             tickets.map((t) => (
-              <Card key={t.id} className="min-w-0">
+              <Card key={t.id} className="product-card min-w-0 rounded-2xl overflow-hidden">
                 <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
                   <div className="min-w-0">
                     <CardTitle className="truncate text-base">{t.subject}</CardTitle>
