@@ -1737,9 +1737,23 @@ function LinkRequestCard({
   const [form, setForm] = useState({
     promo_link: request.promo_link ?? "",
     cpa_amount: request.cpa_amount ? String(request.cpa_amount) : "",
+    is_manager: false,
   });
   const [saving, setSaving] = useState(false);
   const sb = supabase as unknown as { from: (t: string) => any };
+
+  const { data: requestedProfile } = useQuery({
+    queryKey: ["link-request-profile", request.user_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, referred_by, is_manager")
+        .eq("id", request.user_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { id: string; referred_by: string | null; is_manager?: boolean } | null;
+    },
+  });
 
   const { data: plan } = useQuery({
     queryKey: ["link-request-plan", request.user_id, request.house_id],
@@ -1770,9 +1784,17 @@ function LinkRequestCard({
     },
   });
 
+  const isDirectSignup = !requestedProfile?.referred_by;
+  const isExistingManager = requestedProfile?.is_manager === true;
+  const managerSelected = form.is_manager || isExistingManager;
+  const directDefaultAmount = managerSelected ? 210 : 200;
   const autoAmount =
-    plan && plan > 0 ? plan : houseDefault && houseDefault > 0 ? houseDefault : null;
-  const fromHouse = !(plan && plan > 0) && !!autoAmount;
+    plan && plan > 0
+      ? plan
+      : isDirectSignup
+        ? directDefaultAmount
+        : null;
+  const fromManagerPlan = !!(plan && plan > 0);
 
 
   const release = async () => {
@@ -1782,6 +1804,11 @@ function LinkRequestCard({
     }
     setSaving(true);
     const amount = autoAmount;
+    if (amount === null || amount <= 0) {
+      toast.error("Este afiliado veio por uma rede. O gerente precisa definir o CPA dele antes da liberação.");
+      setSaving(false);
+      return;
+    }
     const link = form.promo_link.trim().slice(0, 500);
     const houseName = request.betting_houses?.name ?? "Acordo CPA";
 
@@ -1789,7 +1816,7 @@ function LinkRequestCard({
       .from("link_requests")
       .update({
         promo_link: link,
-        ...(amount !== null ? { cpa_amount: amount } : {}),
+        cpa_amount: amount,
         status: "liberado",
       })
       .eq("id", request.id);
@@ -1800,7 +1827,10 @@ function LinkRequestCard({
       return;
     }
 
-    await supabase.from("profiles").update({ promo_link: link }).eq("id", request.user_id);
+    await supabase
+      .from("profiles")
+      .update({ promo_link: link, is_manager: managerSelected })
+      .eq("id", request.user_id);
 
     const { data: existing } = await supabase
       .from("affiliate_deals")
@@ -1813,7 +1843,7 @@ function LinkRequestCard({
       ? await supabase
           .from("affiliate_deals")
           .update({
-            ...(amount !== null ? { cpa_amount: amount } : {}),
+            cpa_amount: amount,
             deal_name: houseName,
           })
           .eq("id", existing[0].id)
@@ -1821,7 +1851,7 @@ function LinkRequestCard({
           affiliate_id: request.user_id,
           house_id: request.house_id,
           deal_name: houseName,
-          cpa_amount: amount ?? 0,
+          cpa_amount: amount,
         });
 
 
@@ -1885,20 +1915,55 @@ function LinkRequestCard({
             maxLength={500}
           />
         </div>
-        <div className="space-y-1 sm:col-span-2">
-          <Label className="text-xs">Valor do CPA (R$)</Label>
-          {autoAmount !== null ? (
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm">
-              <strong className="text-foreground">{brl(autoAmount)}</strong>
-              <Badge variant="secondary" className="text-[10px]">
-                {fromHouse ? "CPA automático da casa" : "definido pelo gerente da rede"}
-              </Badge>
+        <div className="space-y-2 sm:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label className="text-xs">Plano do afiliado</Label>
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold">
+              <input
+                type="checkbox"
+                checked={managerSelected}
+                disabled={isExistingManager}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setForm((f) => ({
+                    ...f,
+                    is_manager: checked,
+                    cpa_amount: String(checked ? 210 : 200),
+                  }));
+                }}
+                className="size-4 accent-primary"
+              />
+              Tornar gerente
+            </label>
+          </div>
+          {isDirectSignup ? (
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+              <Input
+                id="link-request-cpa"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.cpa_amount || String(directDefaultAmount)}
+                onChange={(e) => setForm((f) => ({ ...f, cpa_amount: e.target.value }))}
+              />
+              <div className="flex items-center rounded-md border border-border/60 bg-background/60 px-3 text-xs text-muted-foreground">
+                {managerSelected ? "Gerente · sugestão R$ 210" : "Afiliado · sugestão R$ 200"}
+              </div>
+            </div>
+          ) : plan && plan > 0 ? (
+            <div className="flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+              <strong>{brl(plan)}</strong>
+              <Badge variant="secondary" className="text-[10px]">definido pelo gerente</Badge>
             </div>
           ) : (
-            <div className="rounded-md border border-border/60 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
-              Aguardando o gerente da rede definir o CPA deste afiliado em Minha rede. Você pode
-              liberar o link agora — o valor entra automaticamente quando ele for definido.
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+              Este cadastro veio por uma rede. O gerente precisa definir o CPA em <strong>Minha rede</strong> antes da liberação.
             </div>
+          )}
+          {isDirectSignup && (
+            <p className="text-[11px] text-muted-foreground">
+              O valor é editável pelo head da operação. R$ 200 é o padrão de afiliado e R$ 210 é a sugestão para gerente.
+            </p>
           )}
         </div>
 
