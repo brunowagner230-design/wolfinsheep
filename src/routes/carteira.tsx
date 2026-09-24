@@ -70,6 +70,7 @@ export const Route = createFileRoute("/carteira")({
 const MIN_WITHDRAW = 10000;
 const SUPERBET_MIN_LABEL = "10 QFTD";
 const NETWORK_KEY = "rede";
+const WITHDRAW_START = new Date("2026-10-10T00:00:00-03:00");
 
 type WalletBucket = {
   key: string;
@@ -224,6 +225,7 @@ function WalletPage() {
   );
 
   const totalAvailable = buckets.reduce((s, b) => s + b.available, 0);
+  const canWithdraw = new Date() >= WITHDRAW_START;
 
   return (
     <AppShell
@@ -315,13 +317,14 @@ function WalletPage() {
                 Sacar de {active?.name ?? "—"} · {brl(active?.available ?? 0)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Saque mínimo da Superbet: <strong className="text-foreground">{SUPERBET_MIN_LABEL}</strong> · o saldo desta casa é independente.
+                {canWithdraw ? <>Saque disponível a partir de 10/10/2026 · mínimo da Superbet: <strong className="text-foreground">{SUPERBET_MIN_LABEL}</strong>.</> : <>Saques da Superbet serão liberados em <strong className="text-foreground">10/10/2026</strong>. Seu saldo continua disponível para consulta.</>}
               </p>
             </div>
             <WithdrawDialog
-              bucket={active}
+              bucket={active?.name.toLowerCase().includes("superbet") ? active : undefined}
               userId={user?.id ?? ""}
               onSaved={() => qc.invalidateQueries({ queryKey: ["my-withdrawals"] })}
+              canWithdraw={canWithdraw}
             />
           </div>
         </>
@@ -386,10 +389,12 @@ function WithdrawDialog({
   bucket,
   userId,
   onSaved,
+  canWithdraw,
 }: {
   bucket: WalletBucket | undefined;
   userId: string;
   onSaved: () => void;
+  canWithdraw: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
@@ -401,6 +406,10 @@ function WithdrawDialog({
   const save = async () => {
     if (!bucket) {
       toast.error("Selecione a casa de aposta");
+      return;
+    }
+    if (!canWithdraw) {
+      toast.error("Os saques da Superbet serão liberados em 10/10/2026.");
       return;
     }
     const value = Number(amount);
@@ -438,7 +447,7 @@ function WithdrawDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2" disabled={!bucket}>
+        <Button className="gap-2" disabled={!bucket || !canWithdraw}>
           <BanknoteArrowUp className="size-4" />
           Solicitar saque
         </Button>
