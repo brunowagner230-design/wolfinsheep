@@ -193,8 +193,8 @@ function NetworkPage() {
       title="Minha rede"
       subtitle="Controle sua estrutura, seus repasses e a margem gerada por cada nível."
     >
-      <div className="space-y-6">
-        <Card className="product-card rounded-2xl overflow-hidden border-primary/30 bg-card shadow-xl shadow-primary/5">
+      <div className="panel-page">
+        <Card className="page-hero rounded-3xl overflow-hidden border-primary/20">
           <CardContent className="p-0">
             <div className="grid lg:grid-cols-[1fr_auto]">
               <div className="p-6 lg:p-7">
@@ -258,7 +258,7 @@ function NetworkPage() {
             return (
               <Card
                 key={level}
-                className="relative overflow-hidden border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/40"
+                className="product-card relative overflow-hidden rounded-2xl border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/40"
               >
                 <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
                 <CardHeader className="relative pb-3">
