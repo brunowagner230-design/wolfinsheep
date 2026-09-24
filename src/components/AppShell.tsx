@@ -44,8 +44,7 @@ export function AppShell({ title, subtitle, children }: {
     document.documentElement.classList.toggle("dark", panelTheme === "dark");
   }, [panelTheme]);
 
-  const togglePanelTheme = () => {
-    const next = panelTheme === "dark" ? "light" : "dark";
+  const setPanelThemePreference = (next: "light" | "dark") => {
     setPanelTheme(next);
     window.localStorage.setItem(PANEL_THEME_KEY, next);
   };
@@ -188,9 +187,28 @@ export function AppShell({ title, subtitle, children }: {
               {subtitle && <p className="mt-0.5 hidden text-xs text-muted-foreground sm:block">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-1.5">
-              <Button variant="secondary" size="sm" className="hidden gap-2 sm:flex" onClick={togglePanelTheme} aria-label="Alternar modo claro e escuro">
-                {panelTheme === "dark" ? <><Sun className="size-4" /> Claro</> : <><Moon className="size-4" /> Escuro</>}
-              </Button>
+              {pathname === "/dashboard" && (
+                <div className="hidden items-center gap-1 rounded-xl border border-border/70 bg-card p-1 sm:flex" aria-label="Escolher aparência do painel">
+                  <Button
+                    variant={panelTheme === "light" ? "default" : "ghost"}
+                    size="sm"
+                    className="h-8 gap-1.5 rounded-lg px-3"
+                    onClick={() => setPanelThemePreference("light")}
+                    aria-pressed={panelTheme === "light"}
+                  >
+                    <Sun className="size-3.5" /> Claro
+                  </Button>
+                  <Button
+                    variant={panelTheme === "dark" ? "default" : "ghost"}
+                    size="sm"
+                    className="h-8 gap-1.5 rounded-lg px-3"
+                    onClick={() => setPanelThemePreference("dark")}
+                    aria-pressed={panelTheme === "dark"}
+                  >
+                    <Moon className="size-3.5" /> Escuro
+                  </Button>
+                </div>
+              )}
               <InstallAppButton /><EnableNotificationsButton /><NotificationBell />
             </div>
           </div>
