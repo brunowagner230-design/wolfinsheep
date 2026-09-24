@@ -632,7 +632,15 @@ function AdminPage() {
     toast.success(`Planilha gerada com ${groups.size} aba(s) de casas.`);
   };
 
-  if (!loading && !isAdmin) {
+  if (loading) {
+    return (
+      <AppShell title="Administração">
+        <p className="text-sm text-muted-foreground">Carregando administração...</p>
+      </AppShell>
+    );
+  }
+
+  if (!isAdmin || !user) {
     return (
       <AppShell title="Administração">
         <p className="text-sm text-muted-foreground">
@@ -1223,7 +1231,7 @@ function AdminPage() {
           </Card>
         </TabsContent>
         <TabsContent value="suporte" className="pt-6">
-          <SupportInbox adminId={user!.id} />
+          <SupportInbox adminId={user.id} />
         </TabsContent>
       </Tabs>
     </AppShell>
