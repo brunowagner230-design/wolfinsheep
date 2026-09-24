@@ -132,6 +132,7 @@ function DashboardPage() {
     {label:"Cliques",value:totals.clicks.toLocaleString("pt-BR"),icon:MousePointerClick,hint:"Tráfego registrado"},
     {label:"Registros",value:totals.regs.toLocaleString("pt-BR"),icon:UserPlus,hint:"Cadastros gerados"},
     {label:"Ganhos CPA",value:brl(totals.revenue),icon:Wallet,hint:"Comissão própria"},
+    {label:"Ganhos com a rede",value:brl(Number(networkEarnings)),icon:Network,hint:"Comissões da sua rede"},
   ];
 
   return (
@@ -151,7 +152,7 @@ function DashboardPage() {
           </div>
         </section>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {cards.map(c => (
             <Card key={c.label} className="metric-card">
               <CardContent className="p-5">
