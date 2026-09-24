@@ -55,16 +55,16 @@ function Home() {
   return (
     <div className="relative min-h-screen">
       <div className="relative z-10">
-        <header className="flex items-center justify-between px-6 py-5 lg:px-12">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/50 bg-background/80 px-6 py-4 backdrop-blur-xl lg:px-12">
           <div className="flex items-center gap-3">
             <Wordmark className="h-8 sm:h-10" />
           </div>
-          <Button asChild variant="secondary" size="sm">
+          <Button asChild variant="secondary" size="sm" className="rounded-lg">
             <Link to="/auth">Entrar</Link>
           </Button>
         </header>
 
-        <section className="relative mx-auto max-w-5xl overflow-hidden px-6 pb-16 pt-14 lg:pt-24">
+        <section className="relative mx-auto max-w-6xl overflow-hidden px-6 pb-20 pt-14 lg:pt-24">
           <img
             src={markImg}
             alt=""
@@ -87,12 +87,18 @@ function Home() {
             Junte-se à rede que já pagou mais de R$ 15 milhões em comissões. Indique jogadores,
             construa sua rede de afiliados e receba via Pix de forma rápida e transparente.
           </p>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Button asChild size="lg">
               <Link to="/auth">
                 Criar minha conta <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-6 border-y border-border/60 py-5 text-xs text-muted-foreground">
+            <span><strong className="text-foreground">CPA transparente</strong> · acordos claros</span>
+            <span><strong className="text-foreground">Carteira própria</strong> · acompanhamento no painel</span>
+            <span><strong className="text-foreground">Suporte</strong> · atendimento para afiliados</span>
           </div>
 
           <div className="mt-14">
@@ -101,7 +107,7 @@ function Home() {
 
           <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {features.map((f) => (
-              <div key={f.title} className="glow-panel rounded-2xl border border-border/60 p-6">
+              <div key={f.title} className="product-card rounded-2xl p-6 transition-transform duration-200 hover:-translate-y-0.5">
                 <f.icon className="size-5 text-primary" />
                 <h2 className="mt-4 text-lg font-semibold">{f.title}</h2>
                 <p className="mt-2 text-sm text-muted-foreground">{f.text}</p>
