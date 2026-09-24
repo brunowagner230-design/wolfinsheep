@@ -194,7 +194,7 @@ function NetworkPage() {
       subtitle="Controle sua estrutura, seus repasses e a margem gerada por cada nível."
     >
       <div className="space-y-6">
-        <Card className="overflow-hidden border-primary/30 bg-card shadow-xl shadow-primary/5">
+        <Card className="product-card rounded-2xl overflow-hidden border-primary/30 bg-card shadow-xl shadow-primary/5">
           <CardContent className="p-0">
             <div className="grid lg:grid-cols-[1fr_auto]">
               <div className="p-6 lg:p-7">
@@ -296,7 +296,7 @@ function NetworkPage() {
           })}
         </div>
 
-        <Card className="border-primary/20">
+        <Card className="product-card rounded-2xl border-primary/20">
           <CardHeader className="border-b border-border/70 pb-5">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -330,7 +330,7 @@ function NetworkPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="product-card rounded-2xl">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
@@ -436,7 +436,7 @@ function NetworkPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20 bg-primary/5">
+        <Card className="product-card rounded-2xl border-primary/20 bg-primary/5">
           <CardContent className="p-5">
             <div className="flex gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
