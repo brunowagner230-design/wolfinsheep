@@ -220,7 +220,8 @@ function AdminPage() {
 
   const toggleHouseOperation = async (h: HouseRow) => {
     const nextActive = h.is_active === false;
-    const { error } = await supabase
+    const adminDb = supabase as unknown as { from: (table: string) => any };
+    const { error } = await adminDb
       .from("betting_houses")
       .update({
         is_active: nextActive,
@@ -252,7 +253,8 @@ function AdminPage() {
 
   const toggleSuperbetWithdrawals = async (h: HouseRow) => {
     const enabled = h.withdrawals_enabled !== true;
-    const { error } = await supabase
+    const adminDb = supabase as unknown as { from: (table: string) => any };
+    const { error } = await adminDb
       .from("betting_houses")
       .update({ withdrawals_enabled: enabled })
       .eq("id", h.id);
@@ -632,7 +634,15 @@ function AdminPage() {
     toast.success(`Planilha gerada com ${groups.size} aba(s) de casas.`);
   };
 
-  if (!loading && !isAdmin) {
+  if (loading) {
+    return (
+      <AppShell title="Administração">
+        <p className="text-sm text-muted-foreground">Carregando administração...</p>
+      </AppShell>
+    );
+  }
+
+  if (!isAdmin || !user) {
     return (
       <AppShell title="Administração">
         <p className="text-sm text-muted-foreground">
@@ -1223,7 +1233,7 @@ function AdminPage() {
           </Card>
         </TabsContent>
         <TabsContent value="suporte" className="pt-6">
-          <SupportInbox adminId={user!.id} />
+          <SupportInbox adminId={user.id} />
         </TabsContent>
       </Tabs>
     </AppShell>
@@ -1815,7 +1825,7 @@ function LinkRequestCard({
       return;
     }
 
-    await supabase
+    await sb
       .from("profiles")
       .update({ promo_link: link, is_manager: managerSelected })
       .eq("id", request.user_id);
