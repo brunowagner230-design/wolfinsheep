@@ -1,8 +1,8 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  LayoutDashboard, Handshake, Network, Wallet, Trophy, ShieldCheck, LogOut, Menu,
-  LifeBuoy, Sun, Moon, ChevronRight, CircleUserRound,
+  LayoutDashboard, Handshake, Network, WalletCards, Trophy, ShieldCheck, LogOut, Menu,
+  LifeBuoy, Sun, Moon, ChevronRight, CircleUserRound, Settings2, Sparkles,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,12 +16,12 @@ import { cn } from "@/lib/utils";
 import { flushPush } from "@/lib/push.functions";
 
 const navItems = [
-  { to: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
-  { to: "/acordos", label: "Acordos CPA", icon: Handshake },
-  { to: "/rede", label: "Minha rede", icon: Network },
-  { to: "/premiacoes", label: "Premiações", icon: Trophy },
-  { to: "/carteira", label: "Carteira", icon: Wallet },
-  { to: "/suporte", label: "Suporte", icon: LifeBuoy },
+  { to: "/dashboard", label: "Visão geral", description: "Resumo da operação", icon: LayoutDashboard },
+  { to: "/acordos", label: "Acordos CPA", description: "Casas e campanhas", icon: Handshake },
+  { to: "/rede", label: "Minha rede", description: "Afiliados e níveis", icon: Network },
+  { to: "/premiacoes", label: "Premiações", description: "Bônus e rankings", icon: Trophy },
+  { to: "/carteira", label: "Carteira", description: "Saldo e saques", icon: WalletCards },
+  { to: "/suporte", label: "Suporte", description: "Atendimento", icon: LifeBuoy },
 ] as const;
 
 const ADMIN_THEME_KEY = "wolf-admin-theme";
@@ -104,35 +104,58 @@ export function AppShell({ title, subtitle, children }: {
         "fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-sidebar-border bg-sidebar/95 px-3 py-4 backdrop-blur-xl transition-transform lg:static lg:translate-x-0",
         open ? "translate-x-0" : "-translate-x-full",
       )}>
-        <div className="flex h-12 items-center px-3">
+        <div className="flex h-12 items-center justify-between px-3">
           <Link to="/dashboard" className="flex items-center"><Wordmark className="h-8" /></Link>
+          <div className="hidden size-8 items-center justify-center rounded-lg border border-sidebar-border/70 bg-sidebar-accent/50 text-sidebar-foreground/60 lg:flex">
+            <Sparkles className="size-3.5" />
+          </div>
         </div>
-        <div className="mx-2 mt-5 rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 px-3 py-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/45">
-            Workspace
-          </p>
-          <p className="mt-1 truncate text-sm font-semibold text-sidebar-foreground">
-            Wolf in Sheep
-          </p>
+        <div className="mx-2 mt-5 rounded-2xl border border-sidebar-border/70 bg-gradient-to-br from-sidebar-accent/80 to-sidebar-accent/20 p-3.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/20">
+              <Settings2 className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/40">Workspace</p>
+              <p className="truncate text-xs font-semibold text-sidebar-foreground">Wolf in Sheep</p>
+            </div>
+          </div>
+          <div className="mt-3 h-1 overflow-hidden rounded-full bg-sidebar-foreground/10">
+            <div className="h-full w-3/4 rounded-full bg-primary/70" />
+          </div>
+          <p className="mt-2 text-[9px] text-sidebar-foreground/40">Painel operacional</p>
         </div>
-        <nav className="mt-6 flex flex-1 flex-col gap-1">
-          <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/35">Menu</p>
+        <nav className="mt-6 flex flex-1 flex-col gap-1.5">
+          <p className="px-3 pb-2 text-[9px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/35">Navegação</p>
           {navItems.map((item) => (
             <Link key={item.to} to={item.to} onClick={() => setOpen(false)}
-              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/60 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              activeProps={{ className: "group flex items-center gap-3 rounded-xl bg-sidebar-accent px-3 py-2.5 text-sm font-semibold text-sidebar-foreground shadow-sm ring-1 ring-primary/20" }}>
-              <item.icon className="size-[17px]" />
-              <span className="flex-1">{item.label}</span>
-              <ChevronRight className="size-3 opacity-0 transition-opacity group-hover:opacity-50" />
+              className="group relative flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sidebar-foreground/55 transition-all hover:border-sidebar-border/70 hover:bg-sidebar-accent/70 hover:text-sidebar-foreground"
+              activeProps={{ className: "group relative flex items-center gap-3 rounded-2xl border border-primary/20 bg-sidebar-accent px-3 py-2.5 text-sidebar-foreground shadow-sm" }}>
+              <span className="absolute left-0 top-1/2 h-7 w-0.5 -translate-y-1/2 rounded-full bg-primary opacity-0 transition-opacity group-data-[status=active]:opacity-100" />
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-foreground/[0.045] text-sidebar-foreground/55 transition-all group-hover:bg-primary/10 group-hover:text-primary group-data-[status=active]:bg-primary/15 group-data-[status=active]:text-primary">
+                <item.icon className="size-[17px]" strokeWidth={1.9} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] font-semibold leading-4">{item.label}</span>
+                <span className="mt-0.5 block truncate text-[10px] text-sidebar-foreground/35">{item.description}</span>
+              </span>
+              <ChevronRight className="size-3.5 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-40 group-data-[status=active]:opacity-50" />
             </Link>
           ))}
           {isAdmin && (
             <>
-              <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-sidebar-foreground/35">Gestão</p>
+              <p className="px-3 pb-2 pt-6 text-[9px] font-bold uppercase tracking-[0.2em] text-sidebar-foreground/35">Gestão</p>
               <Link to="/admin" onClick={() => setOpen(false)}
-                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/60 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                activeProps={{ className: "group flex items-center gap-3 rounded-xl bg-primary/10 px-3 py-2.5 text-sm font-semibold text-foreground ring-1 ring-primary/25" }}>
-                <ShieldCheck className="size-[17px]" /><span className="flex-1">Administração</span><ChevronRight className="size-3 opacity-0 group-hover:opacity-50" />
+                className="group relative flex items-center gap-3 rounded-2xl border border-transparent px-3 py-2.5 text-sidebar-foreground/55 transition-all hover:border-primary/20 hover:bg-primary/5 hover:text-sidebar-foreground"
+                activeProps={{ className: "group relative flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/10 px-3 py-2.5 text-foreground shadow-sm" }}>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/10">
+                  <ShieldCheck className="size-[17px]" strokeWidth={1.9} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] font-semibold">Administração</span>
+                  <span className="mt-0.5 block text-[10px] text-sidebar-foreground/35">Gestão do painel</span>
+                </span>
+                <ChevronRight className="size-3.5 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-50" />
               </Link>
             </>
           )}
