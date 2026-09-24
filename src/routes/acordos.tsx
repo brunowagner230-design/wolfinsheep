@@ -98,7 +98,7 @@ function DealsPage() {
         .eq("affiliate_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as DealRow[];
+      return (data ?? []).filter((d: any) => String(d.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
     },
   });
 
@@ -242,14 +242,14 @@ function DealsPage() {
 
       <Card className="product-card rounded-2xl mt-6">
         <CardHeader>
-          <CardTitle className="text-base">Meus acordos de CPA ({deals.length})</CardTitle>
+          <CardTitle className="text-base">Meus acordos e CPAs ({deals.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Carregando acordos…</p>
           ) : deals.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhum acordo lançado para você ainda. Solicite o link de uma casa acima para começar.
+              Nenhum acordo Superbet lançado para você ainda. Solicite o link da Superbet acima para começar.
             </p>
           ) : (
             <div className="overflow-x-auto">
