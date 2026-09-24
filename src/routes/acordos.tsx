@@ -161,7 +161,7 @@ function DealsPage() {
       title="Acordos CPA"
       subtitle="Casas disponíveis para divulgação — solicite o link e acompanhe o plano de CPA liberado para você."
     >
-      <Card className="product-card rounded-2xl glow-panel">
+      <Card className="product-card rounded-3xl overflow-hidden">
         <CardHeader>
           <CardTitle className="text-base">Casas de aposta disponíveis</CardTitle>
         </CardHeader>
@@ -171,7 +171,7 @@ function DealsPage() {
               Nenhuma casa disponível no momento.
             </p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 p-1 sm:grid-cols-2 xl:grid-cols-3">
               {activeHouses.map((h) => {
                 const req = requestOf(h.id);
                 const deal = dealOf(h.id);
@@ -180,7 +180,7 @@ function DealsPage() {
                 return (
                   <div
                     key={h.id}
-                    className="group flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
+                    className="group flex min-h-[220px] flex-col gap-4 rounded-2xl border border-border/70 bg-muted/10 p-5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/5"
                   >
                     <HouseBadge name={h.name} logoUrl={h.logo_url} />
 
@@ -240,7 +240,7 @@ function DealsPage() {
         </CardContent>
       </Card>
 
-      <Card className="product-card rounded-2xl mt-6">
+      <Card className="product-card rounded-3xl mt-6 overflow-hidden">
         <CardHeader>
           <CardTitle className="text-base">Meus acordos e CPAs ({deals.length})</CardTitle>
         </CardHeader>
