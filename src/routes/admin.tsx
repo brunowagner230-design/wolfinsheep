@@ -250,6 +250,26 @@ function AdminPage() {
     qc.invalidateQueries({ queryKey: ["houses"] });
   };
 
+  const toggleSuperbetWithdrawals = async (h: HouseRow) => {
+    const enabled = h.withdrawals_enabled !== true;
+    const { error } = await supabase
+      .from("betting_houses")
+      .update({ withdrawals_enabled: enabled })
+      .eq("id", h.id);
+
+    if (error) {
+      if (error.message.includes("withdrawals_enabled") || error.message.includes("schema cache")) {
+        toast.error("A opção de saque ainda não foi criada no banco. A migration precisa ser aplicada no Supabase.");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
+
+    toast.success(enabled ? "Saques da Superbet liberados para todos os afiliados." : "Saques da Superbet bloqueados.");
+    qc.invalidateQueries({ queryKey: ["houses"] });
+  };
+
   const deleteHouse = async (h: HouseRow) => {
     const { error } = await supabase.from("betting_houses").delete().eq("id", h.id);
     if (error) {
@@ -979,6 +999,16 @@ function AdminPage() {
                         {h.is_active === false ? <PlayCircle className="size-4 text-success" /> : <PauseCircle className="size-4 text-amber-500" />}
                         {h.is_active === false ? "Reativar" : "Pausar"}
                       </Button>
+                      {h.name.toLowerCase().includes("superbet") && (
+                        <Button
+                          variant={h.withdrawals_enabled ? "default" : "outline"}
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => toggleSuperbetWithdrawals(h)}
+                        >
+                          {h.withdrawals_enabled ? "Saque liberado" : "Liberar saque"}
+                        </Button>
+                      )}
                       <HouseDialog
                         house={h}
                         onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })}
