@@ -12,7 +12,7 @@ export type DealRow = {
   status: string;
   notes: string | null;
   created_at: string;
-  betting_houses?: { name: string } | null;
+  betting_houses?: { name: string; withdrawals_enabled?: boolean } | null;
   profiles?: { full_name: string; email: string } | null;
 };
 
@@ -35,6 +35,7 @@ export type HouseRow = {
   logo_url: string | null;
   default_cpa?: number | string | null;
   is_active?: boolean;
+  withdrawals_enabled?: boolean;
   pause_message?: string | null;
 };
 
