@@ -455,7 +455,8 @@ function NetworkPage() {
           </Card>
         )}
 
-        <Card className="product-card rounded-2xl border-primary/20 bg-primary/5">dContent className="p-5">
+        <Card className="product-card rounded-2xl border-primary/20 bg-primary/5">
+          <CardContent className="p-5">
             <div className="flex gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
                 <CircleDollarSign className="size-4" />
