@@ -35,7 +35,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("message", (event) => {
   const data = event.data || {};
   if (data.type === "notify" && self.registration.showNotification) {
-    event.waitUntil(show({ ...data, force: true }));
+    event.waitUntil(show(data));
   }
 });
 
