@@ -224,13 +224,28 @@ function AdminPage() {
       .from("betting_houses")
       .update({
         is_active: nextActive,
-        pause_message: nextActive ? null : (h.pause_message || "Esta operação está temporariamente pausada pela administração."),
+        pause_message: nextActive
+          ? null
+          : (h.pause_message || "Esta operação está temporariamente pausada pela administração."),
       })
       .eq("id", h.id);
+
     if (error) {
-      toast.error(error.message);
+      const missingColumn =
+        error.message.includes("is_active") ||
+        error.message.includes("pause_message") ||
+        error.message.includes("schema cache");
+
+      if (missingColumn) {
+        toast.error(
+          "O banco ainda não recebeu o status de operação. A migration precisa ser aplicada no Supabase para a pausa sincronizar com todos os afiliados.",
+        );
+      } else {
+        toast.error(error.message);
+      }
       return;
     }
+
     toast.success(nextActive ? `Operação da ${h.name} reativada.` : `Operação da ${h.name} pausada.`);
     qc.invalidateQueries({ queryKey: ["houses"] });
   };
@@ -927,7 +942,7 @@ function AdminPage() {
         <TabsContent value="casas" className="pt-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle><p className="mt-1 text-xs text-muted-foreground">Pause uma operação e o status será refletido para os afiliados em todas as telas.</p></div>
+              <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle><p className="mt-1 text-xs text-muted-foreground">A Betano fica fora da área pública. A pausa da operação é sincronizada com os afiliados após a migration do banco.</p></div>
               <HouseDialog onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })} />
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
