@@ -67,6 +67,7 @@ function DealsPage() {
 
   const { data: houses = [] } = useQuery({
     queryKey: ["houses"],
+    refetchInterval: 10000,
     queryFn: async () => {
       const { data, error } = await supabase.from("betting_houses").select("*").order("name");
       if (error) throw error;
@@ -172,23 +173,26 @@ function DealsPage() {
                 const deal = dealOf(h.id);
                 const link = releasedLink(h.id);
                 const minimum = minimumQualifications(h.name);
-                const cpaValue =
-                  Number(deal?.cpa_amount ?? 0) ||
-                  Number(req?.cpa_amount ?? 0) ||
-                  Number(h.default_cpa ?? 0);
                 return (
                   <div
                     key={h.id}
                     className="group flex flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
                   >
                     <HouseBadge name={h.name} logoUrl={h.logo_url} />
-                    {cpaValue > 0 && (
-                      <p className="text-sm">
-                        <span className="text-xs text-muted-foreground">CPA por qualificação: </span>
-                        <strong className="text-primary">{brl(cpaValue)}</strong>
-                      </p>
-                    )}
-                    {link ? (
+
+                    {h.is_active === false ? (
+                      <>
+                        <Badge variant="secondary" className="w-fit gap-1 border-amber-500/30 bg-amber-500/10 text-amber-300">
+                          <Clock className="size-3" /> operação pausada
+                        </Badge>
+                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+                          <p className="text-sm font-semibold text-foreground">Operação temporariamente pausada</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            {h.pause_message || "A administração pausou esta operação no momento. Você será avisado quando ela for reativada."}
+                          </p>
+                        </div>
+                      </>
+                    ) : link ? (
                       <>
                         <Badge className="w-fit gap-1 bg-success text-success-foreground">
                           <Check className="size-3" /> link liberado
