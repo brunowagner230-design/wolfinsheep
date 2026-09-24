@@ -240,3 +240,91 @@
     box-shadow: 0 12px 34px -26px oklch(0 0 0 / 0.55);
   }
 }
+
+
+@layer components {
+  .panel-page {
+    @apply space-y-6;
+  }
+
+  .page-hero {
+    @apply relative overflow-hidden rounded-3xl border border-border/70 bg-card/95 p-6 shadow-sm;
+  }
+
+  .page-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -8% -55% 48%;
+    height: 180px;
+    background: radial-gradient(circle, color-mix(in oklch, var(--primary) 18%, transparent), transparent 68%);
+    pointer-events: none;
+  }
+
+  .section-heading {
+    @apply flex flex-wrap items-end justify-between gap-3;
+  }
+
+  .section-kicker {
+    @apply text-[0.68rem] font-bold uppercase tracking-[0.18em] text-primary;
+  }
+
+  .section-title {
+    @apply mt-1 text-xl font-semibold tracking-tight;
+  }
+
+  .section-description {
+    @apply mt-1 max-w-2xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .metric-card {
+    @apply rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md;
+  }
+
+  .metric-icon {
+    @apply flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary;
+  }
+
+  .data-table-shell {
+    @apply overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm;
+  }
+
+  .data-table-shell [data-slot="table-container"] {
+    @apply overflow-x-auto;
+  }
+
+  .data-table-shell table {
+    @apply min-w-[760px];
+  }
+
+  .data-table-shell th {
+    @apply h-11 bg-muted/30 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-muted-foreground;
+  }
+
+  .data-table-shell td {
+    @apply h-14 border-border/60 text-sm;
+  }
+
+  .data-table-shell tbody tr {
+    @apply transition-colors hover:bg-muted/20;
+  }
+
+  .soft-panel {
+    @apply rounded-2xl border border-border/70 bg-muted/10;
+  }
+
+  .action-row {
+    @apply flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-sm;
+  }
+
+  .empty-panel {
+    @apply flex min-h-40 flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-muted/10 p-6 text-center;
+  }
+
+  .status-dot {
+    @apply size-2 rounded-full bg-success shadow-[0_0_0_4px_color-mix(in_oklch,var(--success)_10%,transparent)];
+  }
+
+  .form-section {
+    @apply rounded-2xl border border-border/70 bg-card p-5 shadow-sm;
+  }
+}
