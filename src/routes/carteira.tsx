@@ -68,6 +68,7 @@ export const Route = createFileRoute("/carteira")({
 });
 
 const MIN_WITHDRAW = 100;
+const SUPERBET_MIN_LABEL = "10KFTB";
 const NETWORK_KEY = "rede";
 
 type WalletBucket = {
@@ -107,7 +108,7 @@ function WalletPage() {
         .select("*, betting_houses(name)")
         .eq("affiliate_id", user!.id);
       if (error) throw error;
-      return (data ?? []) as unknown as DealRow[];
+      return (data ?? []).filter((d: any) => String(d.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
     },
   });
 
@@ -132,7 +133,10 @@ function WalletPage() {
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as (WithdrawalRow & {
+      return (data ?? []).filter((w: any) => {
+        if (!w.house_id) return true;
+        return String(w.betting_houses?.name ?? "").toLowerCase().includes("superbet");
+      }) as unknown as (WithdrawalRow & {
         house_id: string | null;
         betting_houses?: { name: string } | null;
       })[];
@@ -236,7 +240,7 @@ function WalletPage() {
         <CardContent>
           <p className="font-display text-4xl font-bold">{brl(totalAvailable)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Saque mínimo de {brl(MIN_WITHDRAW)} por casa de aposta.
+            Saque mínimo da Superbet: <strong className="text-foreground">{SUPERBET_MIN_LABEL}</strong>.
           </p>
         </CardContent>
       </Card>
@@ -311,7 +315,7 @@ function WalletPage() {
                 Sacar de {active?.name ?? "—"} · {brl(active?.available ?? 0)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Saque mínimo de {brl(MIN_WITHDRAW)} · o saldo desta casa é independente das outras.
+                Saque mínimo da Superbet: <strong className="text-foreground">{SUPERBET_MIN_LABEL}</strong> · o saldo desta casa é independente.
               </p>
             </div>
             <WithdrawDialog
