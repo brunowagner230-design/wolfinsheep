@@ -134,7 +134,7 @@ function SupportPage() {
       subtitle="Fale direto com a equipe Wolf in Sheep: chat ao vivo dentro do painel."
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
-        <Card className="glow-panel h-fit">
+        <Card className="product-card rounded-2xl glow-panel h-fit">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <LifeBuoy className="size-4 text-primary" /> Abrir atendimento
@@ -205,7 +205,7 @@ function SupportPage() {
 
         <div className="min-w-0 space-y-4">
           {tickets.length === 0 ? (
-            <Card>
+            <Card className="product-card rounded-2xl">
               <CardContent className="py-10 text-center text-sm text-muted-foreground">
                 Você ainda não abriu nenhum atendimento.
               </CardContent>
