@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
   LayoutDashboard, Handshake, Network, WalletCards, Trophy, ShieldCheck, LogOut, Menu,
-  LifeBuoy, Sun, Moon, ChevronRight, CircleUserRound, Settings2, Sparkles,
+  Sun, Moon, ChevronRight, CircleUserRound, Settings2, Sparkles,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,10 +21,9 @@ const navItems = [
   { to: "/rede", label: "Minha rede", description: "Afiliados e níveis", icon: Network },
   { to: "/premiacoes", label: "Premiações", description: "Bônus e rankings", icon: Trophy },
   { to: "/carteira", label: "Carteira", description: "Saldo e saques", icon: WalletCards },
-  { to: "/suporte", label: "Suporte", description: "Atendimento", icon: LifeBuoy },
 ] as const;
 
-const ADMIN_THEME_KEY = "wolf-admin-theme";
+const PANEL_THEME_KEY = "wolf-panel-theme";
 
 export function AppShell({ title, subtitle, children }: {
   title: string; subtitle?: string; children: ReactNode;
@@ -33,19 +32,22 @@ export function AppShell({ title, subtitle, children }: {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
-  const [adminTheme, setAdminTheme] = useState<"dark" | "light">("dark");
+  const [panelTheme, setPanelTheme] = useState<"dark" | "light">("dark");
   const isAdminRoute = pathname.startsWith("/admin");
 
   useEffect(() => {
-    if (!isAdminRoute) return;
-    const saved = window.localStorage.getItem(ADMIN_THEME_KEY);
-    if (saved === "light" || saved === "dark") setAdminTheme(saved);
-  }, [isAdminRoute]);
+    const saved = window.localStorage.getItem(PANEL_THEME_KEY);
+    if (saved === "light" || saved === "dark") setPanelTheme(saved);
+  }, []);
 
-  const toggleAdminTheme = () => {
-    const next = adminTheme === "dark" ? "light" : "dark";
-    setAdminTheme(next);
-    window.localStorage.setItem(ADMIN_THEME_KEY, next);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", panelTheme === "dark");
+  }, [panelTheme]);
+
+  const togglePanelTheme = () => {
+    const next = panelTheme === "dark" ? "light" : "dark";
+    setPanelTheme(next);
+    window.localStorage.setItem(PANEL_THEME_KEY, next);
   };
 
   const { data: profile } = useQuery({
@@ -98,7 +100,7 @@ export function AppShell({ title, subtitle, children }: {
     </div>;
   }
 
-  return <div className={cn("min-h-screen bg-background", isAdminRoute && (adminTheme === "light" ? "admin-theme-light" : "admin-theme-dark"))}>
+  return <div className={cn("min-h-screen bg-background", isAdminRoute && (panelTheme === "light" ? "admin-theme-light" : "admin-theme-dark"))}>
     <div className="flex min-h-screen">
       <aside className={cn(
         "fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-sidebar-border bg-sidebar/95 px-3 py-4 backdrop-blur-xl transition-transform lg:static lg:translate-x-0",
@@ -186,9 +188,9 @@ export function AppShell({ title, subtitle, children }: {
               {subtitle && <p className="mt-0.5 hidden text-xs text-muted-foreground sm:block">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-1.5">
-              {isAdminRoute && <Button variant="secondary" size="sm" className="hidden gap-2 sm:flex" onClick={toggleAdminTheme}>
-                {adminTheme === "dark" ? <><Sun className="size-4" /> Claro</> : <><Moon className="size-4" /> Escuro</>}
-              </Button>}
+              <Button variant="secondary" size="sm" className="hidden gap-2 sm:flex" onClick={togglePanelTheme} aria-label="Alternar modo claro e escuro">
+                {panelTheme === "dark" ? <><Sun className="size-4" /> Claro</> : <><Moon className="size-4" /> Escuro</>}
+              </Button>
               <InstallAppButton /><EnableNotificationsButton /><NotificationBell />
             </div>
           </div>
