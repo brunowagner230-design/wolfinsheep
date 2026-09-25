@@ -280,6 +280,10 @@ function AdminPage() {
   };
 
   const deleteHouse = async (h: HouseRow) => {
+    if (h.id === SUPERBET_MENSAL_ID) {
+      toast.error("A operação Superbet Mensal não pode ser excluída.");
+      return;
+    }
     const { error } = await supabase.from("betting_houses").delete().eq("id", h.id);
     if (error) {
       toast.error("Não foi possível excluir. Remova antes os acordos dessa casa.");
@@ -1052,14 +1056,6 @@ function AdminPage() {
                         house={h}
                         onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })}
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Excluir ${h.name}`}
-                        onClick={() => deleteHouse(h)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
                     </div>
                   </div>
                 </div>

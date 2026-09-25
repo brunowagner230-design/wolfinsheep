@@ -53,13 +53,12 @@ export const Route = createFileRoute("/carteira")({
       { title: "Carteira | Wolf in Sheep Affiliates" },
       {
         name: "description",
-        content:
-          "Saldo separado por casa de aposta, cadastro da chave Pix e histórico de saques do afiliado.",
+        content: "Saldo CPA da Superbet Mensal, chave Pix e histórico de saques do afiliado.",
       },
       { property: "og:title", content: "Carteira | Wolf in Sheep Affiliates" },
       {
         property: "og:description",
-        content: "Saldo por casa de aposta, chave Pix e saques do afiliado.",
+        content: "Saldo CPA da Superbet Mensal, chave Pix e saques do afiliado.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

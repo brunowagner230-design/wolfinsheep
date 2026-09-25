@@ -17,12 +17,12 @@ export const Route = createFileRoute("/premiacoes")({
       {
         name: "description",
         content:
-          "Placas de premiação por faturamento em CPA: 10K, 30K, 50K, 100K, 250K, 500K e 1M com progresso em tempo real.",
+          "Placas de premiação por faturamento em CPA: 50K, 100K, 250K, 500K e 1M com progresso em tempo real.",
       },
       { property: "og:title", content: "Premiações | Wolf in Sheep Affiliates" },
       {
         property: "og:description",
-        content: "Conquiste as placas de faturamento em CPA de 10K até 1M.",
+        content: "Conquiste as placas de faturamento em CPA de 50K até 1M.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

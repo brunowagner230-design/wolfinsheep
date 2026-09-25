@@ -1,4 +1,4 @@
-export function houseLogo(name?: string | null) {
+export function houseLogo(_name?: string | null) {
   return null;
 }
 
