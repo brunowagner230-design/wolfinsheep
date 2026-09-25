@@ -56,7 +56,6 @@ function minimumQualifications(name: string) {
   if (normalized.includes("superbet") && normalized.includes("mensal")) return 10;
   if (normalized.includes("aposta") && normalized.includes("ganha")) return 10;
   if (normalized.includes("superbet") && normalized.includes("diaria")) return 2;
-  if (normalized.includes("betano") && normalized.includes("diaria")) return 2;
   return null;
 }
 
