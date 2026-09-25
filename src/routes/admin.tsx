@@ -960,12 +960,18 @@ function AdminPage() {
                           request={
                             affiliateHouseFilter === "todas"
                               ? undefined
-                              : linkRequests.find(
-                                  (r) =>
-                                    r.user_id === p.id &&
-                                    r.house_id === affiliateHouseFilter &&
-                                    r.status !== "rejeitado",
-                                )
+                              : linkRequests
+                                  .filter(
+                                    (r) =>
+                                      r.user_id === p.id &&
+                                      r.house_id === affiliateHouseFilter &&
+                                      r.status !== "rejeitado",
+                                  )
+                                  .sort(
+                                    (a, b) =>
+                                      Number(b.status === "liberado") - Number(a.status === "liberado") ||
+                                      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+                                  )[0]
                           }
                           onSaved={() => {
                             qc.invalidateQueries({ queryKey: ["admin-profiles"] });
