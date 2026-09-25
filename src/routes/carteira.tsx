@@ -228,7 +228,7 @@ function WalletPage() {
   );
 
   const totalAvailable = buckets.reduce((s, b) => s + b.available, 0);
-  const isSuperbet = Boolean(active?.name.toLowerCase().includes("superbet"));
+  const isSuperbet = active?.houseId === SUPERBET_MENSAL_ID;
   const canWithdraw = isSuperbet && active?.withdrawalsEnabled === true;
 
   return (

@@ -403,7 +403,7 @@ function AdminPage() {
       const key = `${request.user_id}:${request.house_id}`;
       const current = rowsByKey.get(key);
       if (current) {
-        current.link = [current.link, request.promo_link].filter(Boolean).join("\n");
+        current.link = getLink(request.user_id, request.house_id);
         return;
       }
       const profile = getProfile(request.user_id);
@@ -422,27 +422,6 @@ function AdminPage() {
         registros: 0,
       });
     });
-
-    if (houseFilter === "todas") {
-      filteredProfiles.forEach((profile) => {
-        const hasHouse = [...rowsByKey.values()].some((row) => row.affiliateId === profile.id);
-        if (!hasHouse) {
-          rowsByKey.set(`${profile.id}:sem-casa`, {
-            affiliateId: profile.id,
-            houseId: null,
-            casa: "Sem casa vinculada",
-            nome: profile.full_name || "Sem nome",
-            email: profile.email || "",
-            celular: profile.phone || "",
-            link: "",
-            valor: "",
-            validados: 0,
-            cliques: 0,
-            registros: 0,
-          });
-        }
-      });
-    }
 
     const exportRows = [...rowsByKey.values()].sort(
       (a, b) =>
@@ -1542,14 +1521,16 @@ function HouseDialog({ house, onSaved }: { house?: HouseRow; onSaved: () => void
       toast.error("Informe o nome da casa");
       return;
     }
+    if (!house || house.id !== SUPERBET_MENSAL_ID) {
+      toast.error("Somente a Superbet Mensal pode ser editada.");
+      return;
+    }
     const payload = {
       name: name.trim().slice(0, 120),
       country: country.trim().slice(0, 8) || "BR",
       logo_url: logoUrl.trim() ? logoUrl.trim().slice(0, 500) : null,
     };
-    const { error } = house
-      ? await supabase.from("betting_houses").update(payload).eq("id", house.id)
-      : await supabase.from("betting_houses").insert(payload);
+    const { error } = await supabase.from("betting_houses").update(payload).eq("id", SUPERBET_MENSAL_ID);
     if (error) {
       toast.error(error.message);
       return;

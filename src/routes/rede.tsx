@@ -58,6 +58,10 @@ export const Route = createFileRoute("/rede")({
         content:
           "Gerencie sua rede de afiliados em até três níveis e acompanhe sua margem real por CPA.",
       },
+      { property: "og:title", content: "Minha rede de afiliados | Wolf in Sheep Affiliates" },
+      { property: "og:description", content: "Gerencie sua rede em até três níveis e acompanhe sua margem real por CPA." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: NetworkPage,
