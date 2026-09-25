@@ -120,6 +120,7 @@ function AdminPage() {
   const [search, setSearch] = useState("");
   const [houseFilter, setHouseFilter] = useState("todas");
   const [statusFilter, setStatusFilter] = useState("pendente");
+  const [affiliateHouseFilter, setAffiliateHouseFilter] = useState("todas");
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
