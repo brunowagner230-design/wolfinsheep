@@ -868,14 +868,14 @@ function AdminPage() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <CardTitle className="text-base">
-                    E-mails cadastrados ({
+                    Afiliados da Superbet Mensal ({
                       filteredProfiles.filter(
                         (p) =>
                           deals.some(
                             (d) =>
                               d.affiliate_id === p.id &&
                               d.house_id === affiliateHouseFilter,
-                          ),
+                          ) || linkRequests.some((r) => r.user_id === p.id && r.house_id === affiliateHouseFilter),
                       ).length
                     })
                   </CardTitle>
@@ -923,7 +923,7 @@ function AdminPage() {
                           (d) =>
                             d.affiliate_id === p.id &&
                             d.house_id === affiliateHouseFilter,
-                        ),
+                        ) || linkRequests.some((r) => r.user_id === p.id && r.house_id === affiliateHouseFilter),
                     )
                     .map((p) => (
                     <TableRow key={p.id}>
@@ -951,6 +951,7 @@ function AdminPage() {
                       </TableCell>
                       <TableCell>
                         <div className="min-w-[260px] space-y-2">
+                          <p className="text-xs font-semibold text-primary">Superbet Mensal · CPA {brl(Number(deals.find((d) => d.affiliate_id === p.id && d.house_id === SUPERBET_MENSAL_ID)?.cpa_amount ?? 0))}</p>
                           {linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID).length === 0 ? (
                             <p className="text-xs text-muted-foreground">Nenhum link cadastrado para a Superbet Mensal.</p>
                           ) : linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID).map((r) => (
@@ -1413,8 +1414,8 @@ function DealDialog({
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const save = async () => {
-    if (!form.house_id) {
-      toast.error("Selecione a casa de aposta");
+    if (form.house_id !== SUPERBET_MENSAL_ID || !houses.some((h) => h.id === form.house_id)) {
+      toast.error("Somente a Superbet Mensal está disponível.");
       return;
     }
     const { error } = await supabase.from("affiliate_deals").insert({
@@ -1757,75 +1758,6 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
   );
 }
 
-function PromoLinkCell({
-  profile,
-  request,
-  houseSelected,
-  onSaved,
-}: {
-  profile: ProfileRow;
-  request?: AdminLinkRequest;
-  houseSelected: boolean;
-  onSaved: () => void;
-}) {
-  const [link, setLink] = useState(
-    houseSelected ? request?.promo_link ?? "" : profile.promo_link ?? "",
-  );
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    const value = link.trim().slice(0, 500);
-    setSaving(true);
-
-    if (houseSelected) {
-      if (!request) {
-        setSaving(false);
-        toast.error("Este afiliado não possui um link cadastrado para esta casa.");
-        return;
-      }
-      const { error } = await supabase
-        .from("link_requests")
-        .update({ promo_link: value })
-        .eq("id", request.id);
-      setSaving(false);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      toast.success("Link da casa salvo!");
-      onSaved();
-      return;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ promo_link: value })
-      .eq("id", profile.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Link de divulgação salvo!");
-    onSaved();
-  };
-
-  return (
-    <div className="flex min-w-[240px] items-center gap-2">
-      <Input
-        value={link}
-        onChange={(e) => setLink(e.target.value)}
-        placeholder={houseSelected ? "Link desta casa" : "https://..."}
-        className="h-9 text-xs"
-        maxLength={500}
-      />
-      <Button size="sm" variant="secondary" onClick={save} disabled={saving}>
-        Salvar
-      </Button>
-    </div>
-  );
-}
-
 function LinkRequestCard({
   request,
   onSaved,
@@ -1860,13 +1792,10 @@ function LinkRequestCard({
       const { data } = await supabase
         .from("network_plans")
         .select("cpa_amount, house_id")
-        .eq("downline_id", request.user_id)
+        .eq("downline_id", request.user_id).eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       const rows = data ?? [];
-      const match =
-        rows.find((r: any) => r.house_id === request.house_id) ??
-        rows.find((r: any) => !r.house_id) ??
-        null;
+      const match = rows.find((r: any) => r.house_id === SUPERBET_MENSAL_ID) ?? null;
       return match ? Number(match.cpa_amount) : null;
     },
   });
@@ -1885,6 +1814,7 @@ function LinkRequestCard({
 
 
   const release = async () => {
+    if (request.house_id !== SUPERBET_MENSAL_ID) return;
     if (!form.promo_link.trim()) {
       toast.error("Informe o link de divulgação.");
       return;
@@ -1914,10 +1844,7 @@ function LinkRequestCard({
       return;
     }
 
-    await sb
-      .from("profiles")
-      .update({ promo_link: link, is_manager: managerSelected })
-      .eq("id", request.user_id);
+    await sb.from("profiles").update({ is_manager: managerSelected }).eq("id", request.user_id);
 
     const { data: existing } = await supabase
       .from("affiliate_deals")
@@ -2244,6 +2171,7 @@ function AffiliateLinksCard({
   const [saving, setSaving] = useState<string | null>(null);
 
   const save = async (r: AdminLinkRequest) => {
+    if (r.house_id !== SUPERBET_MENSAL_ID || r.user_id !== profile.id) return;
     const link = (drafts[r.id] ?? r.promo_link).trim();
     setSaving(r.id);
     const sb = supabase as unknown as { from: (t: string) => any };
@@ -2275,7 +2203,7 @@ function AffiliateLinksCard({
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary">
-            {requests.length} casa{requests.length === 1 ? "" : "s"} · {liberados} liberado
+            {requests.length} link{requests.length === 1 ? "" : "s"} · {liberados} liberado
             {liberados === 1 ? "" : "s"}
           </Badge>
           <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -2286,7 +2214,7 @@ function AffiliateLinksCard({
         <div className="grid gap-3 border-t border-border/60 px-4 py-4">
           {requests.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Este afiliado ainda não possui casas com link solicitado.
+              Nenhum link cadastrado para a Superbet Mensal.
             </p>
           ) : (
             requests.map((r) => (
@@ -2297,6 +2225,7 @@ function AffiliateLinksCard({
                     {r.status}
                   </Badge>
                 </div>
+                <p className="text-xs text-muted-foreground">Criado em {new Date(r.created_at).toLocaleDateString("pt-BR")}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
                     className="min-w-0 flex-1 font-mono text-xs"
