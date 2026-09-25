@@ -101,31 +101,15 @@ function DealsPage() {
     },
   });
 
-  const { data: profile } = useQuery({
-    queryKey: ["my-profile-link", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("promo_link")
-        .eq("id", user!.id)
-        .maybeSingle();
-      if (error) throw error;
-      return data as { promo_link: string } | null;
-    },
-  });
-
   const activeHouses = houses.filter((house) => house.name.toLowerCase().includes("superbet"));
 
   const requestOf = (houseId: string) => requests.find((r) => r.house_id === houseId);
   const dealOf = (houseId: string) => deals.find((d) => d.house_id === houseId);
 
-  /** Link já liberado: da solicitação, ou do acordo existente + link do perfil. */
+  /** Link já liberado: sempre usa a solicitação específica da casa. */
   const releasedLink = (houseId: string) => {
     const req = requestOf(houseId);
     if (req?.status === "liberado" && req.promo_link) return req.promo_link;
-    const deal = dealOf(houseId);
-    if (deal && profile?.promo_link) return profile.promo_link;
     return null;
   };
 
