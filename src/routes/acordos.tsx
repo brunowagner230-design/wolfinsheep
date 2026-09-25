@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type DealRow, type HouseRow } from "@/lib/panel";
 import { HouseBadge } from "@/components/HouseBadge";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 
 export const Route = createFileRoute("/acordos")({
   head: () => ({
@@ -54,8 +55,6 @@ type LinkRequestRow = {
 function minimumQualifications(name: string) {
   const normalized = name.toLowerCase();
   if (normalized.includes("superbet") && normalized.includes("mensal")) return 10;
-  if (normalized.includes("aposta") && normalized.includes("ganha")) return 10;
-  if (normalized.includes("superbet") && normalized.includes("diaria")) return 2;
   return null;
 }
 
@@ -68,7 +67,7 @@ function DealsPage() {
     queryKey: ["houses"],
     refetchInterval: 10000,
     queryFn: async () => {
-      const { data, error } = await supabase.from("betting_houses").select("*").order("name");
+      const { data, error } = await supabase.from("betting_houses").select("*").eq("id", SUPERBET_MENSAL_ID).order("name");
       if (error) throw error;
       return (data ?? []) as unknown as HouseRow[];
     },
@@ -81,7 +80,7 @@ function DealsPage() {
       const { data, error } = await sb
         .from("link_requests")
         .select("*")
-        .eq("user_id", user!.id);
+        .eq("user_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
       return (data ?? []) as LinkRequestRow[];
     },
@@ -94,14 +93,14 @@ function DealsPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*, betting_houses(name)")
-        .eq("affiliate_id", user!.id)
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((d: any) => String(d.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
+      return (data ?? []) as unknown as DealRow[];
     },
   });
 
-  const activeHouses = houses.filter((house) => house.name.toLowerCase().includes("superbet"));
+  const activeHouses = houses;
 
   const requestOf = (houseId: string) => requests.find((r) => r.house_id === houseId);
   const dealOf = (houseId: string) => deals.find((d) => d.house_id === houseId);
@@ -114,6 +113,7 @@ function DealsPage() {
   };
 
   const requestLink = async (house: HouseRow) => {
+    if (house.id !== SUPERBET_MENSAL_ID) return;
     if (house.is_active === false) {
       toast.error("Esta operação está pausada no momento.");
       return;

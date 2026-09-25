@@ -1,19 +1,8 @@
 const houses = [
-  { name: "Bet365", color: "oklch(0.72 0.17 150)" },
   { name: "Superbet", color: "oklch(0.68 0.2 25)" },
-  { name: "KTO", color: "oklch(0.75 0.18 200)" },
-  { name: "Betfair", color: "oklch(0.8 0.16 95)" },
-  { name: "Estrela Bet", color: "oklch(0.72 0.19 300)" },
-  { name: "Novibet", color: "oklch(0.7 0.17 250)" },
-  { name: "Blaze", color: "oklch(0.72 0.2 40)" },
-  { name: "Vera Bet", color: "oklch(0.74 0.17 330)" },
-  { name: "Bet7k", color: "oklch(0.76 0.17 170)" },
-  { name: "Aposta-Tudo", color: "oklch(0.7 0.22 320)" },
-  { name: "Esportiva Bet", color: "oklch(0.74 0.18 130)" },
-  { name: "MC Games", color: "oklch(0.75 0.18 60)" },
 ];
 
-export function HouseMarquee({ label = "Casas de aposta parceiras" }: { label?: string }) {
+export function HouseMarquee({ label = "Operação ativa" }: { label?: string }) {
   const loop = [...houses, ...houses];
 
   return (

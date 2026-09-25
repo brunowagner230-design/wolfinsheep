@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BanknoteArrowUp,
@@ -52,13 +53,12 @@ export const Route = createFileRoute("/carteira")({
       { title: "Carteira | Wolf in Sheep Affiliates" },
       {
         name: "description",
-        content:
-          "Saldo separado por casa de aposta, cadastro da chave Pix e histórico de saques do afiliado.",
+        content: "Saldo CPA da Superbet Mensal, chave Pix e histórico de saques do afiliado.",
       },
       { property: "og:title", content: "Carteira | Wolf in Sheep Affiliates" },
       {
         property: "og:description",
-        content: "Saldo por casa de aposta, chave Pix e saques do afiliado.",
+        content: "Saldo CPA da Superbet Mensal, chave Pix e saques do afiliado.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -107,9 +107,9 @@ function WalletPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*, betting_houses(name, withdrawals_enabled)")
-        .eq("affiliate_id", user!.id);
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
-      return (data ?? []).filter((d: any) => String(d.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
+      return (data ?? []) as unknown as DealRow[];
     },
   });
 
@@ -136,7 +136,7 @@ function WalletPage() {
       if (error) throw error;
       return (data ?? []).filter((w: any) => {
         if (!w.house_id) return true;
-        return String(w.betting_houses?.name ?? "").toLowerCase().includes("superbet");
+        return w.house_id === SUPERBET_MENSAL_ID;
       }) as unknown as (WithdrawalRow & {
         house_id: string | null;
         betting_houses?: { name: string } | null;
@@ -227,7 +227,7 @@ function WalletPage() {
   );
 
   const totalAvailable = buckets.reduce((s, b) => s + b.available, 0);
-  const isSuperbet = Boolean(active?.name.toLowerCase().includes("superbet"));
+  const isSuperbet = active?.houseId === SUPERBET_MENSAL_ID;
   const canWithdraw = isSuperbet && active?.withdrawalsEnabled === true;
 
   return (

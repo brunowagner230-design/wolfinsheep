@@ -37,6 +37,7 @@ import { HouseBadge } from "@/components/HouseBadge";
 import { TicketChat } from "@/components/SupportChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 import {
   brl,
   type DealRow,
@@ -75,6 +76,8 @@ export const Route = createFileRoute("/admin")({
         property: "og:description",
         content: "Gestão de afiliados, casas de aposta e acordos de CPA.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AdminPage,
@@ -118,9 +121,9 @@ function AdminPage() {
   const { isAdmin, loading, user } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [houseFilter, setHouseFilter] = useState("todas");
+  const [houseFilter, setHouseFilter] = useState(SUPERBET_MENSAL_ID);
   const [statusFilter, setStatusFilter] = useState("pendente");
-  const [affiliateHouseFilter, setAffiliateHouseFilter] = useState("todas");
+  const [affiliateHouseFilter, setAffiliateHouseFilter] = useState(SUPERBET_MENSAL_ID);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -139,9 +142,9 @@ function AdminPage() {
     queryKey: ["houses"],
     enabled: isAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase.from("betting_houses").select("*").order("name");
+      const { data, error } = await supabase.from("betting_houses").select("*").eq("id", SUPERBET_MENSAL_ID).order("name");
       if (error) throw error;
-      return (data ?? []).filter((house: any) => String(house.name ?? "").toLowerCase().includes("superbet")) as unknown as HouseRow[];
+      return (data ?? []) as unknown as HouseRow[];
     },
   });
 
@@ -152,9 +155,10 @@ function AdminPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*, betting_houses(name), profiles(full_name, email)")
+        .eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((deal: any) => String(deal.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
+      return (data ?? []) as unknown as DealRow[];
     },
   });
 
@@ -166,9 +170,10 @@ function AdminPage() {
       const { data, error } = await sb
         .from("link_requests")
         .select("*, betting_houses(name), profiles(full_name, email)")
+        .eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((request: any) => String(request.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as AdminLinkRequest[];
+      return (data ?? []) as AdminLinkRequest[];
     },
   });
 
@@ -179,9 +184,10 @@ function AdminPage() {
       const { data, error } = await supabase
         .from("withdrawals")
         .select("*, profiles(full_name, email), betting_houses(name)")
+        .eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((withdrawal: any) => String(withdrawal.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as (WithdrawalRow & {
+      return (data ?? []) as unknown as (WithdrawalRow & {
         betting_houses?: { name: string } | null;
       })[];
     },
@@ -274,6 +280,10 @@ function AdminPage() {
   };
 
   const deleteHouse = async (h: HouseRow) => {
+    if (h.id === SUPERBET_MENSAL_ID) {
+      toast.error("A operação Superbet Mensal não pode ser excluída.");
+      return;
+    }
     const { error } = await supabase.from("betting_houses").delete().eq("id", h.id);
     if (error) {
       toast.error("Não foi possível excluir. Remova antes os acordos dessa casa.");
@@ -284,11 +294,7 @@ function AdminPage() {
   };
 
   const q = search.trim().toLowerCase();
-  const matchHouse = (id?: string | null) => houseFilter === "todas" || id === houseFilter;
-
-  const houseAffiliateIds = new Set(
-    deals.filter((d) => matchHouse(d.house_id)).map((d) => d.affiliate_id),
-  );
+  const matchHouse = (id?: string | null) => id === SUPERBET_MENSAL_ID;
 
   const filteredProfiles = profiles.filter((p) => {
     const okText =
@@ -297,8 +303,7 @@ function AdminPage() {
       p.full_name.toLowerCase().includes(q) ||
       (p.phone ?? "").toLowerCase().includes(q) ||
       p.referral_code.toLowerCase().includes(q);
-    const okHouse = houseFilter === "todas" || houseAffiliateIds.has(p.id);
-    return okText && okHouse;
+    return okText;
   });
 
   const filteredDeals = deals.filter((d) => {
@@ -362,9 +367,9 @@ function AdminPage() {
     const getHouseName = (houseId: string | null, fallback?: string | null) =>
       houses.find((house) => house.id === houseId)?.name ?? fallback ?? "Casa não identificada";
     const getLink = (affiliateId: string, houseId: string | null) =>
-      visibleLinks.find(
+      visibleLinks.filter(
         (request) => request.user_id === affiliateId && request.house_id === houseId,
-      )?.promo_link ?? "";
+      ).map((request) => request.promo_link).filter(Boolean).join("\n");
 
     visibleDeals.forEach((deal) => {
       const profile = getProfile(deal.affiliate_id);
@@ -397,7 +402,7 @@ function AdminPage() {
       const key = `${request.user_id}:${request.house_id}`;
       const current = rowsByKey.get(key);
       if (current) {
-        current.link = request.promo_link;
+        current.link = getLink(request.user_id, request.house_id);
         return;
       }
       const profile = getProfile(request.user_id);
@@ -416,27 +421,6 @@ function AdminPage() {
         registros: 0,
       });
     });
-
-    if (houseFilter === "todas") {
-      filteredProfiles.forEach((profile) => {
-        const hasHouse = [...rowsByKey.values()].some((row) => row.affiliateId === profile.id);
-        if (!hasHouse) {
-          rowsByKey.set(`${profile.id}:sem-casa`, {
-            affiliateId: profile.id,
-            houseId: null,
-            casa: "Sem casa vinculada",
-            nome: profile.full_name || "Sem nome",
-            email: profile.email || "",
-            celular: profile.phone || "",
-            link: "",
-            valor: "",
-            validados: 0,
-            cliques: 0,
-            registros: 0,
-          });
-        }
-      });
-    }
 
     const exportRows = [...rowsByKey.values()].sort(
       (a, b) =>
@@ -692,7 +676,6 @@ function AdminPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas as casas</SelectItem>
                 {houses.map((h) => (
                   <SelectItem key={h.id} value={h.id}>
                     {h.name}
@@ -733,7 +716,7 @@ function AdminPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Building2 className="size-4 text-primary" />
-            <span><strong className="text-foreground">{houseFilter === "todas" ? houses.length : 1}</strong> casa(s), cada uma em sua aba</span>
+            <span><strong className="text-foreground">{houses.length}</strong> operação ativa na planilha</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <FileSpreadsheet className="size-4 text-primary" />
@@ -845,7 +828,7 @@ function AdminPage() {
                   <AffiliateLinksCard
                     key={p.id}
                     profile={p}
-                    requests={linkRequests.filter((r) => r.user_id === p.id)}
+                    requests={linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID)}
                     onSaved={() => {
                       qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
                       qc.invalidateQueries({ queryKey: ["admin-profiles"] });
@@ -863,15 +846,14 @@ function AdminPage() {
               <div className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <CardTitle className="text-base">
-                    E-mails cadastrados ({
+                    Afiliados da Superbet Mensal ({
                       filteredProfiles.filter(
                         (p) =>
-                          affiliateHouseFilter === "todas" ||
                           deals.some(
                             (d) =>
                               d.affiliate_id === p.id &&
                               d.house_id === affiliateHouseFilter,
-                          ),
+                          ) || linkRequests.some((r) => r.user_id === p.id && r.house_id === affiliateHouseFilter),
                       ).length
                     })
                   </CardTitle>
@@ -889,7 +871,6 @@ function AdminPage() {
                       <SelectValue placeholder="Selecione a casa" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todas">Todas as casas</SelectItem>
                       {houses.map((h) => (
                         <SelectItem key={h.id} value={h.id}>
                           {h.name}
@@ -916,12 +897,11 @@ function AdminPage() {
                   {filteredProfiles
                     .filter(
                       (p) =>
-                        affiliateHouseFilter === "todas" ||
                         deals.some(
                           (d) =>
                             d.affiliate_id === p.id &&
                             d.house_id === affiliateHouseFilter,
-                        ),
+                        ) || linkRequests.some((r) => r.user_id === p.id && r.house_id === affiliateHouseFilter),
                     )
                     .map((p) => (
                     <TableRow key={p.id}>
@@ -948,30 +928,17 @@ function AdminPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <PromoLinkCell
-                          profile={p}
-                          houseSelected={affiliateHouseFilter !== "todas"}
-                          request={
-                            affiliateHouseFilter === "todas"
-                              ? undefined
-                              : linkRequests
-                                  .filter(
-                                    (r) =>
-                                      r.user_id === p.id &&
-                                      r.house_id === affiliateHouseFilter &&
-                                      r.status !== "rejeitado",
-                                  )
-                                  .sort(
-                                    (a, b) =>
-                                      Number(b.status === "liberado") - Number(a.status === "liberado") ||
-                                      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-                                  )[0]
-                          }
-                          onSaved={() => {
-                            qc.invalidateQueries({ queryKey: ["admin-profiles"] });
-                            qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
-                          }}
-                        />
+                        <div className="min-w-[260px] space-y-2">
+                          <p className="text-xs font-semibold text-primary">Superbet Mensal · CPA {brl(Number(deals.find((d) => d.affiliate_id === p.id && d.house_id === SUPERBET_MENSAL_ID)?.cpa_amount ?? 0))}</p>
+                          {linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID).length === 0 ? (
+                            <p className="text-xs text-muted-foreground">Nenhum link cadastrado para a Superbet Mensal.</p>
+                          ) : linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID).map((r) => (
+                            <div key={r.id} className="border-b border-border/60 pb-2 last:border-0">
+                              <p className="break-all font-mono text-xs">{r.promo_link || "Link ainda não informado"}</p>
+                              <p className="text-xs text-muted-foreground">{r.status} · {new Date(r.created_at).toLocaleDateString("pt-BR")}</p>
+                            </div>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <DealDialog
@@ -1040,7 +1007,6 @@ function AdminPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle></div>
-              <HouseDialog onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })} />
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {houses.map((h) => (
@@ -1076,7 +1042,7 @@ function AdminPage() {
                         {h.is_active === false ? <PlayCircle className="size-4 text-success" /> : <PauseCircle className="size-4 text-amber-500" />}
                         {h.is_active === false ? "Reativar" : "Pausar"}
                       </Button>
-                      {h.name.toLowerCase().includes("superbet") && (
+                      {h.id === SUPERBET_MENSAL_ID && (
                         <Button
                           variant={h.withdrawals_enabled ? "default" : "outline"}
                           size="sm"
@@ -1090,14 +1056,6 @@ function AdminPage() {
                         house={h}
                         onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })}
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Excluir ${h.name}`}
-                        onClick={() => deleteHouse(h)}
-                      >
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1425,8 +1383,8 @@ function DealDialog({
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const save = async () => {
-    if (!form.house_id) {
-      toast.error("Selecione a casa de aposta");
+    if (form.house_id !== SUPERBET_MENSAL_ID || !houses.some((h) => h.id === form.house_id)) {
+      toast.error("Somente a Superbet Mensal está disponível.");
       return;
     }
     const { error } = await supabase.from("affiliate_deals").insert({
@@ -1553,14 +1511,16 @@ function HouseDialog({ house, onSaved }: { house?: HouseRow; onSaved: () => void
       toast.error("Informe o nome da casa");
       return;
     }
+    if (!house || house.id !== SUPERBET_MENSAL_ID) {
+      toast.error("Somente a Superbet Mensal pode ser editada.");
+      return;
+    }
     const payload = {
       name: name.trim().slice(0, 120),
       country: country.trim().slice(0, 8) || "BR",
       logo_url: logoUrl.trim() ? logoUrl.trim().slice(0, 500) : null,
     };
-    const { error } = house
-      ? await supabase.from("betting_houses").update(payload).eq("id", house.id)
-      : await supabase.from("betting_houses").insert(payload);
+    const { error } = await supabase.from("betting_houses").update(payload).eq("id", SUPERBET_MENSAL_ID);
     if (error) {
       toast.error(error.message);
       return;
@@ -1769,75 +1729,6 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
   );
 }
 
-function PromoLinkCell({
-  profile,
-  request,
-  houseSelected,
-  onSaved,
-}: {
-  profile: ProfileRow;
-  request?: AdminLinkRequest;
-  houseSelected: boolean;
-  onSaved: () => void;
-}) {
-  const [link, setLink] = useState(
-    houseSelected ? request?.promo_link ?? "" : profile.promo_link ?? "",
-  );
-  const [saving, setSaving] = useState(false);
-
-  const save = async () => {
-    const value = link.trim().slice(0, 500);
-    setSaving(true);
-
-    if (houseSelected) {
-      if (!request) {
-        setSaving(false);
-        toast.error("Este afiliado não possui um link cadastrado para esta casa.");
-        return;
-      }
-      const { error } = await supabase
-        .from("link_requests")
-        .update({ promo_link: value })
-        .eq("id", request.id);
-      setSaving(false);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-      toast.success("Link da casa salvo!");
-      onSaved();
-      return;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ promo_link: value })
-      .eq("id", profile.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Link de divulgação salvo!");
-    onSaved();
-  };
-
-  return (
-    <div className="flex min-w-[240px] items-center gap-2">
-      <Input
-        value={link}
-        onChange={(e) => setLink(e.target.value)}
-        placeholder={houseSelected ? "Link desta casa" : "https://..."}
-        className="h-9 text-xs"
-        maxLength={500}
-      />
-      <Button size="sm" variant="secondary" onClick={save} disabled={saving}>
-        Salvar
-      </Button>
-    </div>
-  );
-}
-
 function LinkRequestCard({
   request,
   onSaved,
@@ -1872,13 +1763,10 @@ function LinkRequestCard({
       const { data } = await supabase
         .from("network_plans")
         .select("cpa_amount, house_id")
-        .eq("downline_id", request.user_id)
+        .eq("downline_id", request.user_id).eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       const rows = data ?? [];
-      const match =
-        rows.find((r: any) => r.house_id === request.house_id) ??
-        rows.find((r: any) => !r.house_id) ??
-        null;
+      const match = rows.find((r: any) => r.house_id === SUPERBET_MENSAL_ID) ?? null;
       return match ? Number(match.cpa_amount) : null;
     },
   });
@@ -1897,6 +1785,7 @@ function LinkRequestCard({
 
 
   const release = async () => {
+    if (request.house_id !== SUPERBET_MENSAL_ID) return;
     if (!form.promo_link.trim()) {
       toast.error("Informe o link de divulgação.");
       return;
@@ -1926,10 +1815,7 @@ function LinkRequestCard({
       return;
     }
 
-    await sb
-      .from("profiles")
-      .update({ promo_link: link, is_manager: managerSelected })
-      .eq("id", request.user_id);
+    await sb.from("profiles").update({ is_manager: managerSelected }).eq("id", request.user_id);
 
     const { data: existing } = await supabase
       .from("affiliate_deals")
@@ -2256,6 +2142,7 @@ function AffiliateLinksCard({
   const [saving, setSaving] = useState<string | null>(null);
 
   const save = async (r: AdminLinkRequest) => {
+    if (r.house_id !== SUPERBET_MENSAL_ID || r.user_id !== profile.id) return;
     const link = (drafts[r.id] ?? r.promo_link).trim();
     setSaving(r.id);
     const sb = supabase as unknown as { from: (t: string) => any };
@@ -2287,7 +2174,7 @@ function AffiliateLinksCard({
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary">
-            {requests.length} casa{requests.length === 1 ? "" : "s"} · {liberados} liberado
+            {requests.length} link{requests.length === 1 ? "" : "s"} · {liberados} liberado
             {liberados === 1 ? "" : "s"}
           </Badge>
           <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -2298,7 +2185,7 @@ function AffiliateLinksCard({
         <div className="grid gap-3 border-t border-border/60 px-4 py-4">
           {requests.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Este afiliado ainda não possui casas com link solicitado.
+              Nenhum link cadastrado para a Superbet Mensal.
             </p>
           ) : (
             requests.map((r) => (
@@ -2309,6 +2196,7 @@ function AffiliateLinksCard({
                     {r.status}
                   </Badge>
                 </div>
+                <p className="text-xs text-muted-foreground">Criado em {new Date(r.created_at).toLocaleDateString("pt-BR")}</p>
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
                     className="min-w-0 flex-1 font-mono text-xs"

@@ -13,11 +13,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { brl, type DealRow } from "@/lib/panel";
 import { HouseBadge, houseLogo } from "@/components/HouseBadge";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [
     { title: "Painel do afiliado | Wolf in Sheep Affiliates" },
     { name: "description", content: "Acompanhe acordos, CPAs, ganhos e sua rede de afiliados." },
+    { property: "og:title", content: "Painel do afiliado | Wolf in Sheep Affiliates" },
+    { property: "og:description", content: "Acompanhe acordos, CPAs, ganhos e sua rede de afiliados." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
   ]}),
   component: DashboardPage,
 });
@@ -29,7 +34,7 @@ function DashboardPage() {
     queryKey: ["my-deals", user?.id], enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase.from("affiliate_deals").select("*, betting_houses(name)")
-        .eq("affiliate_id", user!.id).order("created_at", { ascending: false });
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID).order("created_at", { ascending: false });
       if (error) throw error; return (data ?? []) as unknown as DealRow[];
     },
   });
@@ -37,7 +42,7 @@ function DashboardPage() {
     queryKey: ["my-payouts", user?.id], enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase.from("withdrawals").select("amount, status, created_at")
-        .eq("user_id", user!.id).order("created_at", { ascending: true });
+        .eq("user_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID).order("created_at", { ascending: true });
       if (error) throw error; return (data ?? []) as { amount:number|string; status:string; created_at:string }[];
     },
   });
@@ -52,7 +57,7 @@ function DashboardPage() {
     queryKey: ["my-house-links", user?.id], enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase.from("link_requests").select("house_id, promo_link, betting_houses(name)")
-        .eq("user_id", user!.id).eq("status", "liberado").order("created_at", { ascending:false });
+        .eq("user_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID).eq("status", "liberado").order("created_at", { ascending:false });
       if (error) throw error;
       return (data ?? []).filter((r) => !!r.promo_link) as unknown as {house_id:string; promo_link:string; betting_houses?:{name:string}|null}[];
     },
@@ -65,7 +70,7 @@ function DashboardPage() {
       const { data, error } = await supabase
         .from("betting_houses")
         .select("*")
-        .ilike("name", "%superbet%")
+        .eq("id", SUPERBET_MENSAL_ID)
         .order("name");
       if (error) throw error;
       return (data ?? []) as { id: string; name: string; logo_url: string | null; is_active?: boolean; pause_message?: string | null }[];
@@ -211,7 +216,7 @@ function DashboardPage() {
 
         {visibleLinks.length > 0 && <section className="space-y-3">
           <div className="flex items-center justify-between"><h3 className="text-base font-semibold">Links de divulgação</h3><Badge variant="secondary">{visibleLinks.length} ativo{visibleLinks.length===1?"":"s"}</Badge></div>
-          {visibleLinks.map(l => <div key={l.house_id} className="action-row">
+          {visibleLinks.map((l, index) => <div key={`${l.house_id}-${index}`} className="action-row">
             <div className="min-w-0 flex-1"><p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{l.betting_houses?.name ?? "Casa"}</p><p className="mt-1 break-all font-mono text-xs">{l.promo_link}</p></div>
             <Button size="sm" className="gap-2" onClick={()=>copyLink(l.promo_link,l.betting_houses?.name ?? "casa")}><Copy className="size-3.5"/>Copiar</Button>
           </div>)}

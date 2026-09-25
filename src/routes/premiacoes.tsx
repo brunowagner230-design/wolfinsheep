@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AWARD_TIERS, tierProgress } from "@/lib/awards";
 import { brl, type DealRow } from "@/lib/panel";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 
 export const Route = createFileRoute("/premiacoes")({
   head: () => ({
@@ -16,12 +17,12 @@ export const Route = createFileRoute("/premiacoes")({
       {
         name: "description",
         content:
-          "Placas de premiação por faturamento em CPA: 10K, 30K, 50K, 100K, 250K, 500K e 1M com progresso em tempo real.",
+          "Placas de premiação por faturamento em CPA: 50K, 100K, 250K, 500K e 1M com progresso em tempo real.",
       },
       { property: "og:title", content: "Premiações | Wolf in Sheep Affiliates" },
       {
         property: "og:description",
-        content: "Conquiste as placas de faturamento em CPA de 10K até 1M.",
+        content: "Conquiste as placas de faturamento em CPA de 50K até 1M.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -43,7 +44,7 @@ function AwardsPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*")
-        .eq("affiliate_id", user!.id);
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
       return (data ?? []) as unknown as DealRow[];
     },

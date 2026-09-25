@@ -18,6 +18,10 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Acessar painel | Wolf in Sheep Affiliates" },
       { name: "description", content: "Acesse seu painel de afiliado Wolf in Sheep." },
+      { property: "og:title", content: "Acessar painel | Wolf in Sheep Affiliates" },
+      { property: "og:description", content: "Acesse seu painel de afiliado Wolf in Sheep." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   validateSearch: (search: Record<string, unknown>): { ref?: string } =>
