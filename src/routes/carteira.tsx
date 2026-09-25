@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BanknoteArrowUp,
@@ -107,9 +108,9 @@ function WalletPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*, betting_houses(name, withdrawals_enabled)")
-        .eq("affiliate_id", user!.id);
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
-      return (data ?? []).filter((d: any) => String(d.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
+      return (data ?? []) as unknown as DealRow[];
     },
   });
 
@@ -136,7 +137,7 @@ function WalletPage() {
       if (error) throw error;
       return (data ?? []).filter((w: any) => {
         if (!w.house_id) return true;
-        return String(w.betting_houses?.name ?? "").toLowerCase().includes("superbet");
+        return w.house_id === SUPERBET_MENSAL_ID;
       }) as unknown as (WithdrawalRow & {
         house_id: string | null;
         betting_houses?: { name: string } | null;

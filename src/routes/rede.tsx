@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -122,18 +123,18 @@ function NetworkPage() {
       const { data, error } = await supabase
         .from("network_plans")
         .select("*, betting_houses(name)")
-        .eq("upline_id", user!.id);
+        .eq("upline_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
-      return (data ?? []).filter((plan: any) => String(plan.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as NetworkPlanRow[];
+      return (data ?? []) as unknown as NetworkPlanRow[];
     },
   });
 
   const { data: houses = [] } = useQuery({
     queryKey: ["houses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("betting_houses").select("*").order("name");
+      const { data, error } = await supabase.from("betting_houses").select("*").eq("id", SUPERBET_MENSAL_ID).order("name");
       if (error) throw error;
-      return (data ?? []).filter((house: any) => String(house.name ?? "").toLowerCase().includes("superbet")) as unknown as HouseRow[];
+      return (data ?? []) as unknown as HouseRow[];
     },
   });
 
@@ -146,7 +147,7 @@ function NetworkPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("house_id, cpa_amount")
-        .eq("affiliate_id", user!.id);
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
       return (data ?? []).filter((deal: any) => String(deal.house_id ?? "") !== "").filter((deal: any) => mySuperbetHouseIds.has(deal.house_id)).map((deal: any) => ({ house_id: deal.house_id, cpa_amount: deal.cpa_amount })) as { house_id: string | null; cpa_amount: number | string }[];
     },
@@ -624,6 +625,10 @@ function PlanDialog({
   const save = async () => {
     if (!houseId) {
       toast.error("Selecione a casa de aposta");
+      return;
+    }
+    if (houseId !== SUPERBET_MENSAL_ID || !houses.some((house) => house.id === houseId)) {
+      toast.error("Somente a Superbet Mensal está disponível.");
       return;
     }
     if (cap <= 0) {
