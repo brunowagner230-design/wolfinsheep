@@ -1,6 +1,5 @@
 const houses = [
   { name: "Bet365", color: "oklch(0.72 0.17 150)" },
-  { name: "Betano", color: "oklch(0.78 0.17 75)" },
   { name: "Superbet", color: "oklch(0.68 0.2 25)" },
   { name: "KTO", color: "oklch(0.75 0.18 200)" },
   { name: "Betfair", color: "oklch(0.8 0.16 95)" },
