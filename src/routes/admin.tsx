@@ -114,12 +114,6 @@ function safeSheetName(name: string, used: Set<string>) {
   return candidate;
 }
 
-const isRemovedHouse = (name?: string | null) =>
-  String(name ?? "").trim().toLowerCase() === "betano";
-
-const isRemovedLink = (link?: string | null) =>
-  /betano/i.test(String(link ?? ""));
-
 function AdminPage() {
   const { isAdmin, loading, user } = useAuth();
   const qc = useQueryClient();
@@ -1045,7 +1039,7 @@ function AdminPage() {
         <TabsContent value="casas" className="pt-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle><p className="mt-1 text-xs text-muted-foreground">A Betano fica fora da área pública. A pausa da operação é sincronizada com os afiliados após a migration do banco.</p></div>
+              <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle></div>
               <HouseDialog onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })} />
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
