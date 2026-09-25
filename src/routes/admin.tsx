@@ -37,6 +37,7 @@ import { HouseBadge } from "@/components/HouseBadge";
 import { TicketChat } from "@/components/SupportChat";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 import {
   brl,
   type DealRow,
@@ -75,6 +76,8 @@ export const Route = createFileRoute("/admin")({
         property: "og:description",
         content: "Gestão de afiliados, casas de aposta e acordos de CPA.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AdminPage,
@@ -118,9 +121,9 @@ function AdminPage() {
   const { isAdmin, loading, user } = useAuth();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
-  const [houseFilter, setHouseFilter] = useState("todas");
+  const [houseFilter, setHouseFilter] = useState(SUPERBET_MENSAL_ID);
   const [statusFilter, setStatusFilter] = useState("pendente");
-  const [affiliateHouseFilter, setAffiliateHouseFilter] = useState("todas");
+  const [affiliateHouseFilter, setAffiliateHouseFilter] = useState(SUPERBET_MENSAL_ID);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -139,9 +142,9 @@ function AdminPage() {
     queryKey: ["houses"],
     enabled: isAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase.from("betting_houses").select("*").order("name");
+      const { data, error } = await supabase.from("betting_houses").select("*").eq("id", SUPERBET_MENSAL_ID).order("name");
       if (error) throw error;
-      return (data ?? []).filter((house: any) => String(house.name ?? "").toLowerCase().includes("superbet")) as unknown as HouseRow[];
+      return (data ?? []) as unknown as HouseRow[];
     },
   });
 
@@ -152,9 +155,10 @@ function AdminPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*, betting_houses(name), profiles(full_name, email)")
+        .eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((deal: any) => String(deal.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
+      return (data ?? []) as unknown as DealRow[];
     },
   });
 
@@ -166,9 +170,10 @@ function AdminPage() {
       const { data, error } = await sb
         .from("link_requests")
         .select("*, betting_houses(name), profiles(full_name, email)")
+        .eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((request: any) => String(request.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as AdminLinkRequest[];
+      return (data ?? []) as AdminLinkRequest[];
     },
   });
 
@@ -179,9 +184,10 @@ function AdminPage() {
       const { data, error } = await supabase
         .from("withdrawals")
         .select("*, profiles(full_name, email), betting_houses(name)")
+        .eq("house_id", SUPERBET_MENSAL_ID)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((withdrawal: any) => String(withdrawal.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as (WithdrawalRow & {
+      return (data ?? []) as unknown as (WithdrawalRow & {
         betting_houses?: { name: string } | null;
       })[];
     },
@@ -284,7 +290,7 @@ function AdminPage() {
   };
 
   const q = search.trim().toLowerCase();
-  const matchHouse = (id?: string | null) => houseFilter === "todas" || id === houseFilter;
+  const matchHouse = (id?: string | null) => id === SUPERBET_MENSAL_ID;
 
   const houseAffiliateIds = new Set(
     deals.filter((d) => matchHouse(d.house_id)).map((d) => d.affiliate_id),
@@ -297,7 +303,7 @@ function AdminPage() {
       p.full_name.toLowerCase().includes(q) ||
       (p.phone ?? "").toLowerCase().includes(q) ||
       p.referral_code.toLowerCase().includes(q);
-    const okHouse = houseFilter === "todas" || houseAffiliateIds.has(p.id);
+    const okHouse = houseAffiliateIds.has(p.id) || linkRequests.some((r) => r.user_id === p.id);
     return okText && okHouse;
   });
 
@@ -692,7 +698,6 @@ function AdminPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas as casas</SelectItem>
                 {houses.map((h) => (
                   <SelectItem key={h.id} value={h.id}>
                     {h.name}
@@ -889,7 +894,6 @@ function AdminPage() {
                       <SelectValue placeholder="Selecione a casa" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todas">Todas as casas</SelectItem>
                       {houses.map((h) => (
                         <SelectItem key={h.id} value={h.id}>
                           {h.name}
@@ -948,30 +952,16 @@ function AdminPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <PromoLinkCell
-                          profile={p}
-                          houseSelected={affiliateHouseFilter !== "todas"}
-                          request={
-                            affiliateHouseFilter === "todas"
-                              ? undefined
-                              : linkRequests
-                                  .filter(
-                                    (r) =>
-                                      r.user_id === p.id &&
-                                      r.house_id === affiliateHouseFilter &&
-                                      r.status !== "rejeitado",
-                                  )
-                                  .sort(
-                                    (a, b) =>
-                                      Number(b.status === "liberado") - Number(a.status === "liberado") ||
-                                      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-                                  )[0]
-                          }
-                          onSaved={() => {
-                            qc.invalidateQueries({ queryKey: ["admin-profiles"] });
-                            qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
-                          }}
-                        />
+                        <div className="min-w-[260px] space-y-2">
+                          {linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID).length === 0 ? (
+                            <p className="text-xs text-muted-foreground">Nenhum link cadastrado para a Superbet Mensal.</p>
+                          ) : linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID).map((r) => (
+                            <div key={r.id} className="border-b border-border/60 pb-2 last:border-0">
+                              <p className="break-all font-mono text-xs">{r.promo_link || "Link ainda não informado"}</p>
+                              <p className="text-xs text-muted-foreground">{r.status} · {new Date(r.created_at).toLocaleDateString("pt-BR")}</p>
+                            </div>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <DealDialog
