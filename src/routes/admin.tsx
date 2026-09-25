@@ -368,9 +368,9 @@ function AdminPage() {
     const getHouseName = (houseId: string | null, fallback?: string | null) =>
       houses.find((house) => house.id === houseId)?.name ?? fallback ?? "Casa não identificada";
     const getLink = (affiliateId: string, houseId: string | null) =>
-      visibleLinks.find(
+      visibleLinks.filter(
         (request) => request.user_id === affiliateId && request.house_id === houseId,
-      )?.promo_link ?? "";
+      ).map((request) => request.promo_link).filter(Boolean).join("\n");
 
     visibleDeals.forEach((deal) => {
       const profile = getProfile(deal.affiliate_id);
@@ -403,7 +403,7 @@ function AdminPage() {
       const key = `${request.user_id}:${request.house_id}`;
       const current = rowsByKey.get(key);
       if (current) {
-        current.link = request.promo_link;
+        current.link = [current.link, request.promo_link].filter(Boolean).join("\n");
         return;
       }
       const profile = getProfile(request.user_id);
@@ -850,7 +850,7 @@ function AdminPage() {
                   <AffiliateLinksCard
                     key={p.id}
                     profile={p}
-                    requests={linkRequests.filter((r) => r.user_id === p.id)}
+                    requests={linkRequests.filter((r) => r.user_id === p.id && r.house_id === SUPERBET_MENSAL_ID)}
                     onSaved={() => {
                       qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
                       qc.invalidateQueries({ queryKey: ["admin-profiles"] });
@@ -871,7 +871,6 @@ function AdminPage() {
                     E-mails cadastrados ({
                       filteredProfiles.filter(
                         (p) =>
-                          affiliateHouseFilter === "todas" ||
                           deals.some(
                             (d) =>
                               d.affiliate_id === p.id &&
@@ -920,7 +919,6 @@ function AdminPage() {
                   {filteredProfiles
                     .filter(
                       (p) =>
-                        affiliateHouseFilter === "todas" ||
                         deals.some(
                           (d) =>
                             d.affiliate_id === p.id &&
