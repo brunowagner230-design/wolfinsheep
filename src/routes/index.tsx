@@ -23,6 +23,8 @@ export const Route = createFileRoute("/")({
         content:
           "Os melhores acordos CPA de iGaming. Pagamentos rápidos, transparentes e mais de R$ 15 milhões já liberados para afiliados.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Home,
@@ -32,7 +34,7 @@ const features = [
   {
     icon: TrendingUp,
     title: "Indicações CPA iGaming",
-    text: "Indique jogadores e afiliados para as principais casas de aposta do mercado e monetize cada conversão com acordos CPA claros.",
+    text: "Indique jogadores e afiliados na operação Superbet Mensal e acompanhe cada conversão com um acordo CPA claro.",
   },
   {
     icon: Gift,

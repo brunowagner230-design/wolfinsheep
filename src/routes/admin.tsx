@@ -1065,7 +1065,7 @@ function AdminPage() {
                         {h.is_active === false ? <PlayCircle className="size-4 text-success" /> : <PauseCircle className="size-4 text-amber-500" />}
                         {h.is_active === false ? "Reativar" : "Pausar"}
                       </Button>
-                      {h.name.toLowerCase().includes("superbet") && (
+                      {h.id === SUPERBET_MENSAL_ID && (
                         <Button
                           variant={h.withdrawals_enabled ? "default" : "outline"}
                           size="sm"
