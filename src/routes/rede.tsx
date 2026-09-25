@@ -124,7 +124,7 @@ function NetworkPage() {
         .select("*, betting_houses(name)")
         .eq("upline_id", user!.id);
       if (error) throw error;
-      return (data ?? []) as unknown as NetworkPlanRow[];
+      return (data ?? []).filter((plan: any) => String(plan.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as NetworkPlanRow[];
     },
   });
 
@@ -133,9 +133,11 @@ function NetworkPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("betting_houses").select("*").order("name");
       if (error) throw error;
-      return (data ?? []) as unknown as HouseRow[];
+      return (data ?? []).filter((house: any) => String(house.name ?? "").toLowerCase().includes("superbet")) as unknown as HouseRow[];
     },
   });
+
+  const mySuperbetHouseIds = useMemo(() => new Set(houses.map((house) => house.id)), [houses]);
 
   const { data: myDeals = [] } = useQuery({
     queryKey: ["my-deals-caps", user?.id],
@@ -146,7 +148,7 @@ function NetworkPage() {
         .select("house_id, cpa_amount")
         .eq("affiliate_id", user!.id);
       if (error) throw error;
-      return (data ?? []) as { house_id: string | null; cpa_amount: number | string }[];
+      return (data ?? []).filter((deal: any) => String(deal.house_id ?? "") !== "").filter((deal: any) => mySuperbetHouseIds.has(deal.house_id)).map((deal: any) => ({ house_id: deal.house_id, cpa_amount: deal.cpa_amount })) as { house_id: string | null; cpa_amount: number | string }[];
     },
   });
 
