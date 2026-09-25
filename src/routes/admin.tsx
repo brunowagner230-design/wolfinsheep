@@ -860,9 +860,45 @@ function AdminPage() {
         <TabsContent value="afiliados" className="pt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">
-                E-mails cadastrados ({filteredProfiles.length})
-              </CardTitle>
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <CardTitle className="text-base">
+                    E-mails cadastrados ({
+                      filteredProfiles.filter(
+                        (p) =>
+                          affiliateHouseFilter === "todas" ||
+                          deals.some(
+                            (d) =>
+                              d.affiliate_id === p.id &&
+                              d.house_id === affiliateHouseFilter,
+                          ),
+                      ).length
+                    })
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Selecione a casa para mostrar somente os afiliados vinculados a ela.
+                  </p>
+                </div>
+                <div className="w-full sm:w-64">
+                  <Label className="mb-2 block text-xs font-semibold">Casa de aposta</Label>
+                  <Select
+                    value={affiliateHouseFilter}
+                    onValueChange={setAffiliateHouseFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a casa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todas">Todas as casas</SelectItem>
+                      {houses.map((h) => (
+                        <SelectItem key={h.id} value={h.id}>
+                          {h.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <Table>
@@ -877,7 +913,17 @@ function AdminPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProfiles.map((p) => (
+                  {filteredProfiles
+                    .filter(
+                      (p) =>
+                        affiliateHouseFilter === "todas" ||
+                        deals.some(
+                          (d) =>
+                            d.affiliate_id === p.id &&
+                            d.house_id === affiliateHouseFilter,
+                        ),
+                    )
+                    .map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.full_name || "—"}</TableCell>
                       <TableCell>{p.email}</TableCell>
