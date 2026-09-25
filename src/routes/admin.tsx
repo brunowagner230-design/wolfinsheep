@@ -950,7 +950,21 @@ function AdminPage() {
                       <TableCell>
                         <PromoLinkCell
                           profile={p}
-                          onSaved={() => qc.invalidateQueries({ queryKey: ["admin-profiles"] })}
+                          houseSelected={affiliateHouseFilter !== "todas"}
+                          request={
+                            affiliateHouseFilter === "todas"
+                              ? undefined
+                              : linkRequests.find(
+                                  (r) =>
+                                    r.user_id === p.id &&
+                                    r.house_id === affiliateHouseFilter &&
+                                    r.status !== "rejeitado",
+                                )
+                          }
+                          onSaved={() => {
+                            qc.invalidateQueries({ queryKey: ["admin-profiles"] });
+                            qc.invalidateQueries({ queryKey: ["admin-link-requests"] });
+                          }}
                         />
                       </TableCell>
                       <TableCell className="text-right">
@@ -1749,15 +1763,49 @@ function MetricsRow({ deal, onSaved }: { deal: DealRow; onSaved: () => void }) {
   );
 }
 
-function PromoLinkCell({ profile, onSaved }: { profile: ProfileRow; onSaved: () => void }) {
-  const [link, setLink] = useState(profile.promo_link ?? "");
+function PromoLinkCell({
+  profile,
+  request,
+  houseSelected,
+  onSaved,
+}: {
+  profile: ProfileRow;
+  request?: AdminLinkRequest;
+  houseSelected: boolean;
+  onSaved: () => void;
+}) {
+  const [link, setLink] = useState(
+    houseSelected ? request?.promo_link ?? "" : profile.promo_link ?? "",
+  );
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
+    const value = link.trim().slice(0, 500);
     setSaving(true);
+
+    if (houseSelected) {
+      if (!request) {
+        setSaving(false);
+        toast.error("Este afiliado não possui um link cadastrado para esta casa.");
+        return;
+      }
+      const { error } = await supabase
+        .from("link_requests")
+        .update({ promo_link: value })
+        .eq("id", request.id);
+      setSaving(false);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Link da casa salvo!");
+      onSaved();
+      return;
+    }
+
     const { error } = await supabase
       .from("profiles")
-      .update({ promo_link: link.trim().slice(0, 500) })
+      .update({ promo_link: value })
       .eq("id", profile.id);
     setSaving(false);
     if (error) {
@@ -1773,7 +1821,7 @@ function PromoLinkCell({ profile, onSaved }: { profile: ProfileRow; onSaved: () 
       <Input
         value={link}
         onChange={(e) => setLink(e.target.value)}
-        placeholder="https://..."
+        placeholder={houseSelected ? "Link desta casa" : "https://..."}
         className="h-9 text-xs"
         maxLength={500}
       />
