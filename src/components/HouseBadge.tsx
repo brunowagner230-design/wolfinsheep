@@ -1,8 +1,6 @@
-import betanoLogo from "@/assets/betano-logo.png";
 import apostaTudoLogo from "@/assets/aposta-tudo.jpeg";
 
 const LOGOS: Record<string, string> = {
-  betano: betanoLogo,
   "aposta-tudo": apostaTudoLogo,
   "aposta tudo": apostaTudoLogo,
 };
