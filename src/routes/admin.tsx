@@ -717,7 +717,7 @@ function AdminPage() {
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Building2 className="size-4 text-primary" />
-            <span><strong className="text-foreground">{houseFilter === "todas" ? houses.length : 1}</strong> casa(s), cada uma em sua aba</span>
+            <span><strong className="text-foreground">{houses.length}</strong> operação ativa na planilha</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <FileSpreadsheet className="size-4 text-primary" />
@@ -1008,7 +1008,6 @@ function AdminPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div><CardTitle className="text-base">Operações por casa ({houses.length})</CardTitle></div>
-              <HouseDialog onSaved={() => qc.invalidateQueries({ queryKey: ["houses"] })} />
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {houses.map((h) => (

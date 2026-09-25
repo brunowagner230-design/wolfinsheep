@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { AWARD_TIERS, tierProgress } from "@/lib/awards";
 import { brl, type DealRow } from "@/lib/panel";
+import { SUPERBET_MENSAL_ID } from "@/lib/operation";
 
 export const Route = createFileRoute("/premiacoes")({
   head: () => ({
@@ -43,7 +44,7 @@ function AwardsPage() {
       const { data, error } = await supabase
         .from("affiliate_deals")
         .select("*")
-        .eq("affiliate_id", user!.id);
+        .eq("affiliate_id", user!.id).eq("house_id", SUPERBET_MENSAL_ID);
       if (error) throw error;
       return (data ?? []) as unknown as DealRow[];
     },
