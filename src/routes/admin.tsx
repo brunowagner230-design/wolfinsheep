@@ -292,10 +292,6 @@ function AdminPage() {
   const q = search.trim().toLowerCase();
   const matchHouse = (id?: string | null) => id === SUPERBET_MENSAL_ID;
 
-  const houseAffiliateIds = new Set(
-    deals.filter((d) => matchHouse(d.house_id)).map((d) => d.affiliate_id),
-  );
-
   const filteredProfiles = profiles.filter((p) => {
     const okText =
       !q ||
@@ -303,8 +299,7 @@ function AdminPage() {
       p.full_name.toLowerCase().includes(q) ||
       (p.phone ?? "").toLowerCase().includes(q) ||
       p.referral_code.toLowerCase().includes(q);
-    const okHouse = houseAffiliateIds.has(p.id) || linkRequests.some((r) => r.user_id === p.id);
-    return okText && okHouse;
+    return okText;
   });
 
   const filteredDeals = deals.filter((d) => {
