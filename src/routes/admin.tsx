@@ -141,7 +141,7 @@ function AdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("betting_houses").select("*").order("name");
       if (error) throw error;
-      return (data ?? []).filter((house: any) => !isRemovedHouse(house.name)) as unknown as HouseRow[];
+      return (data ?? []).filter((house: any) => String(house.name ?? "").toLowerCase().includes("superbet")) as unknown as HouseRow[];
     },
   });
 
@@ -154,7 +154,7 @@ function AdminPage() {
         .select("*, betting_houses(name), profiles(full_name, email)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((deal: any) => !isRemovedHouse(deal.betting_houses?.name)) as unknown as DealRow[];
+      return (data ?? []).filter((deal: any) => String(deal.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as DealRow[];
     },
   });
 
@@ -168,7 +168,7 @@ function AdminPage() {
         .select("*, betting_houses(name), profiles(full_name, email)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((request: any) => !isRemovedHouse(request.betting_houses?.name)) as AdminLinkRequest[];
+      return (data ?? []).filter((request: any) => String(request.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as AdminLinkRequest[];
     },
   });
 
@@ -181,7 +181,7 @@ function AdminPage() {
         .select("*, profiles(full_name, email), betting_houses(name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []).filter((withdrawal: any) => !isRemovedHouse(withdrawal.betting_houses?.name)) as unknown as (WithdrawalRow & {
+      return (data ?? []).filter((withdrawal: any) => String(withdrawal.betting_houses?.name ?? "").toLowerCase().includes("superbet")) as unknown as (WithdrawalRow & {
         betting_houses?: { name: string } | null;
       })[];
     },
@@ -1781,7 +1781,7 @@ function PromoLinkCell({
   onSaved: () => void;
 }) {
   const [link, setLink] = useState(
-    houseSelected ? request?.promo_link ?? "" : isRemovedLink(profile.promo_link) ? "" : profile.promo_link ?? "",
+    houseSelected ? request?.promo_link ?? "" : profile.promo_link ?? "",
   );
   const [saving, setSaving] = useState(false);
 
