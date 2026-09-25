@@ -1,0 +1,4 @@
+- [ ] Restrict active pages and writes to Superbet Mensal by house ID.
+- [ ] Show every Superbet link per affiliate in administration without global fallback.
+- [ ] Remove Betano-linked operational data safely and verify Superbet totals.
+- [ ] Verify live pages and build diagnostics.
